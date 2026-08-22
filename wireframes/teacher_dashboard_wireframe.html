@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>EduInSight — Teacher Dashboard</title>
+
+    <style>
+        :root {
+            --navy: #0B1F33;
+            --ocean: #12344D;
+            --teal: #2A9D8F;
+            --teal-dark: #21867B;
+            --aqua: #76C7C0;
+            --ivory: #F7F4ED;
+            --white: #FFFFFF;
+            --text: #17212B;
+            --muted: #66727D;
+            --border: #DDD6C8;
+            --soft-teal: #E6F4F1;
+            --soft-blue: #EAF1F5;
+            --soft-amber: #FFF1DC;
+            --soft-red: #FDEBED;
+            --red: #D94A5A;
+            --green: #17806D;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--text);
+            background: var(--ivory);
+            font-family: Arial, sans-serif;
+        }
+
+        button,
+        select,
+        input,
+        textarea {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .page {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 255px 1fr;
+        }
+
+        /* Sidebar */
+
+        .sidebar {
+            min-height: 100vh;
+            height: 100vh;
+            padding: 28px 18px;
+            color: white;
+            background:
+                radial-gradient(circle at 10% 8%,
+                    rgba(118, 199, 192, 0.15),
+                    transparent 28%),
+                linear-gradient(180deg,
+                    var(--navy),
+                    var(--ocean));
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+        }
+
+        .logo {
+            margin: 0 12px 35px;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            font-size: 23px;
+            font-weight: bold;
+        }
+
+        .logo-mark {
+            width: 42px;
+            height: 38px;
+            padding: 7px;
+            border: 3px solid var(--aqua);
+            display: flex;
+            align-items: end;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .logo-mark span {
+            width: 5px;
+            background: var(--aqua);
+        }
+
+        .logo-mark span:nth-child(1) {
+            height: 9px;
+        }
+
+        .logo-mark span:nth-child(2) {
+            height: 16px;
+        }
+
+        .logo-mark span:nth-child(3) {
+            height: 24px;
+        }
+
+        .navigation {
+            display: grid;
+            gap: 7px;
+        }
+
+        .nav-item {
+            width: 100%;
+            padding: 14px 16px;
+            color: #E5EFF3;
+            border: 0;
+            border-radius: 9px;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            text-align: left;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .nav-item.active {
+            color: white;
+            background: rgba(0, 0, 0, 0.2);
+            box-shadow: inset 4px 0 0 var(--aqua);
+        }
+
+        .profile {
+            margin-top: auto;
+            padding: 18px 8px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
+
+        .avatar {
+            width: 45px;
+            height: 45px;
+            color: var(--navy);
+            background: var(--aqua);
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-weight: bold;
+        }
+
+        .profile small {
+            display: block;
+            margin-top: 3px;
+            color: #BDD1D9;
+        }
+
+        /* Main area */
+
+        .main {
+            min-width: 0;
+        }
+
+        .topbar {
+            min-height: 86px;
+            padding: 18px 32px;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .topbar h1 {
+            margin: 0;
+            color: var(--navy);
+            font-size: 27px;
+        }
+
+        .topbar p {
+            margin: 5px 0 0;
+            color: var(--muted);
+        }
+
+        .top-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .select,
+        .search {
+            height: 42px;
+            padding: 0 12px;
+            color: var(--text);
+            border: 1px solid #CAD3D6;
+            border-radius: 8px;
+            background: white;
+            outline: none;
+        }
+
+        .search {
+            width: 220px;
+        }
+
+        .select:focus,
+        .search:focus,
+        .action-form input:focus,
+        .action-form select:focus,
+        .action-form textarea:focus {
+            border-color: var(--teal);
+            box-shadow: 0 0 0 4px rgba(42, 157, 143, 0.12);
+        }
+
+        .content {
+            max-width: 1500px;
+            margin: auto;
+            padding: 25px 32px 42px;
+        }
+
+        /* Metric cards */
+
+        .cards {
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .card,
+        .panel {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 13px;
+        }
+
+        .metric {
+            padding: 19px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .metric-icon {
+            width: 48px;
+            height: 48px;
+            color: var(--ocean);
+            border-radius: 11px;
+            background: var(--soft-blue);
+            display: grid;
+            place-items: center;
+            font-size: 22px;
+        }
+
+        .metric:nth-child(2) .metric-icon {
+            color: #B66A00;
+            background: var(--soft-amber);
+        }
+
+        .metric:nth-child(3) .metric-icon {
+            color: var(--red);
+            background: var(--soft-red);
+        }
+
+        .metric:nth-child(4) .metric-icon {
+            color: var(--teal-dark);
+            background: var(--soft-teal);
+        }
+
+        .metric small {
+            color: var(--muted);
+        }
+
+        .metric strong {
+            display: block;
+            margin-top: 4px;
+            color: var(--navy);
+            font-size: 27px;
+        }
+
+        /* Dashboard grid */
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns:
+                minmax(0, 1.25fr) minmax(330px, 0.75fr);
+            gap: 20px;
+        }
+
+        .panel {
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .panel-header h2 {
+            margin: 0;
+            color: var(--navy);
+            font-size: 19px;
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        /* Filters */
+
+        .filters {
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-button {
+            padding: 8px 11px;
+            color: var(--muted);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: white;
+        }
+
+        .filter-button.active {
+            color: var(--teal-dark);
+            border-color: var(--teal);
+            background: var(--soft-teal);
+            font-weight: bold;
+        }
+
+        /* Table */
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #E8E2D9;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        th {
+            color: var(--muted);
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        tbody tr {
+            cursor: pointer;
+        }
+
+        tbody tr:hover {
+            background: #F7FAF9;
+        }
+
+        .topic {
+            color: var(--ocean);
+            font-weight: bold;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 8px;
+            border-radius: 14px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .high {
+            color: #B42331;
+            background: var(--soft-red);
+        }
+
+        .medium {
+            color: #9A6000;
+            background: var(--soft-amber);
+        }
+
+        .low {
+            color: #17665B;
+            background: var(--soft-teal);
+        }
+
+        .trend-up {
+            color: var(--red);
+        }
+
+        .trend-stable {
+            color: var(--muted);
+        }
+
+        .trend-down {
+            color: var(--green);
+        }
+
+        .empty-message {
+            display: none;
+            padding: 28px;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        /* Chart */
+
+        .chart {
+            height: 185px;
+            padding: 12px 4px 0;
+            border-bottom: 1px solid #CCD6D9;
+            display: flex;
+            align-items: flex-end;
+            gap: 12px;
+        }
+
+        .bar-wrap {
+            flex: 1;
+            color: var(--muted);
+            text-align: center;
+            font-size: 11px;
+        }
+
+        .bar {
+            width: 100%;
+            min-height: 8px;
+            margin-bottom: 7px;
+            border-radius: 6px 6px 0 0;
+            background: linear-gradient(var(--aqua),
+                    var(--teal));
+        }
+
+        .legend {
+            margin-top: 12px;
+            color: var(--muted);
+            font-size: 12px;
+        }
+
+        /* AI insight */
+
+        .insight {
+            margin-top: 18px;
+            padding: 17px;
+            border: 1px solid #A9DDD7;
+            border-radius: 10px;
+            background: linear-gradient(135deg,
+                    #F3FBF9,
+                    #EAF5F7);
+        }
+
+        .insight strong {
+            color: var(--teal-dark);
+        }
+
+        .insight p {
+            margin: 8px 0;
+            line-height: 1.55;
+        }
+
+        /* Distribution and actions */
+
+        .items-list {
+            display: grid;
+            gap: 12px;
+        }
+
+        .list-item {
+            padding: 13px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+        }
+
+        .item-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .list-item p {
+            margin: 7px 0;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .progress-track {
+            height: 7px;
+            background: #E8EEEE;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--teal);
+        }
+
+        /* Buttons */
+
+        .link-button {
+            padding: 0;
+            color: var(--teal-dark);
+            border: 0;
+            background: transparent;
+            font-weight: bold;
+        }
+
+        .primary-button,
+        .secondary-button {
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .primary-button {
+            color: white;
+            border: 0;
+            background: var(--teal);
+        }
+
+        .primary-button:hover {
+            background: var(--teal-dark);
+        }
+
+        .secondary-button {
+            color: var(--ocean);
+            border: 1px solid var(--border);
+            background: white;
+        }
+
+        /* Details dialog */
+
+        .detail-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            padding: 20px;
+            background: rgba(6, 22, 35, 0.48);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .detail-overlay.open {
+            display: flex;
+        }
+
+        .dialog {
+            width: min(760px, 100%);
+            max-height: 92vh;
+            overflow-y: auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 24px 65px rgba(0, 0, 0, 0.25);
+        }
+
+        .dialog-header {
+            padding: 20px 23px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .dialog-header h2 {
+            margin: 3px 0 0;
+            color: var(--navy);
+        }
+
+        .close-button {
+            padding: 0;
+            color: var(--muted);
+            border: 0;
+            background: transparent;
+            font-size: 25px;
+        }
+
+        .dialog-body {
+            padding: 22px;
+        }
+
+        .dialog-summary {
+            line-height: 1.6;
+        }
+
+        .summary-grid {
+            margin: 16px 0;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .summary-box {
+            padding: 12px;
+            border-radius: 8px;
+            background: var(--soft-blue);
+        }
+
+        .summary-box small {
+            color: var(--muted);
+        }
+
+        .summary-box strong {
+            display: block;
+            margin-top: 5px;
+        }
+
+        .section-title {
+            margin: 22px 0 9px;
+            color: var(--ocean);
+        }
+
+        .evidence {
+            margin: 8px 0;
+            padding: 12px 14px;
+            border-left: 4px solid var(--aqua);
+            background: #F5F8F7;
+            line-height: 1.5;
+        }
+
+        .priority-reason {
+            padding: 14px;
+            border-radius: 9px;
+            background: #FFF8EC;
+        }
+
+        .priority-reason li {
+            margin: 7px 0;
+        }
+
+        .suggestion {
+            padding: 14px;
+            border-radius: 9px;
+            background: var(--soft-teal);
+            line-height: 1.5;
+        }
+
+        .dialog-actions {
+            padding: 17px 22px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 9px;
+        }
+
+        /* Action form */
+
+        .action-form {
+            display: none;
+            margin-top: 17px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+            gap: 10px;
+        }
+
+        .action-form.open {
+            display: grid;
+        }
+
+        .action-form input,
+        .action-form select,
+        .action-form textarea {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #C9D2D5;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        .action-form textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        @media (max-width: 1100px) {
+            .cards {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .page {
+                display: block;
+            }
+
+            .sidebar {
+                position: static;
+                min-height: auto;
+                height: auto;
+            }
+
+            .navigation {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .profile {
+                display: none;
+            }
+
+            .topbar {
+                padding: 18px;
+                align-items: flex-start;
+            }
+
+            .top-actions {
+                display: none;
+            }
+
+            .content {
+                padding: 18px;
+            }
+
+            .cards {
+                grid-template-columns: 1fr;
+            }
+
+            .panel {
+                overflow-x: auto;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="page">
+
+        <aside class="sidebar">
+
+            <div class="logo">
+                <div class="logo-mark">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+
+                <strong>EduInSight</strong>
+            </div>
+
+            <nav class="navigation">
+
+                <button class="nav-item active" data-section="overview">
+                    <span>⌂</span>
+                    <span>Overview</span>
+                </button>
+
+                <button class="nav-item" data-section="insights">
+                    <span>◉</span>
+                    <span>Learning Insights</span>
+                </button>
+
+                <button class="nav-item" data-section="feedback">
+                    <span>▤</span>
+                    <span>Feedback</span>
+                </button>
+
+                <button class="nav-item" data-section="actions">
+                    <span>✓</span>
+                    <span>Actions</span>
+                </button>
+
+                <button class="nav-item" data-section="reports">
+                    <span>▥</span>
+                    <span>Reports</span>
+                </button>
+
+                <a class="nav-item" href="login_wireframe.html">
+                    <span>↪</span>
+                    <span>Sign Out</span>
+                </a>
+
+            </nav>
+
+            <div class="profile">
+                <span class="avatar">DF</span>
+
+                <div>
+                    <strong>Dr. Fatima </strong>
+                    <small>Teacher View</small>
+                </div>
+            </div>
+
+        </aside>
+
+        <section class="main">
+
+            <header class="topbar">
+
+                <div>
+                    <h1>Good Morning, Dr. Fatima Sahar</h1>
+
+                    <p>
+                        Data Structures & Algorithms · BSCS 3A
+                    </p>
+                </div>
+
+                <div class="top-actions">
+
+                    <input type="search" class="search" id="searchInput" placeholder="Search learning issue...">
+
+                    <select class="select" id="periodSelect">
+                        <option>Last 24 hours</option>
+                        <option>Last 7 days</option>
+                        <option>Last 14 days</option>
+                        <option>Last 30 days</option>
+                        <option>Last 3 months</option>
+                        <option>This semester</option>
+                    </select>
+
+                </div>
+
+            </header>
+
+            <div class="content">
+
+                <section class="cards">
+
+                    <article class="card metric">
+                        <span class="metric-icon">▤</span>
+
+                        <div>
+                            <small>Total Feedback</small>
+                            <strong>120</strong>
+                        </div>
+                    </article>
+
+                    <article class="card metric">
+                        <span class="metric-icon">!</span>
+
+                        <div>
+                            <small>Learning Concerns</small>
+                            <strong>48</strong>
+                        </div>
+                    </article>
+
+                    <article class="card metric">
+                        <span class="metric-icon">⚑</span>
+
+                        <div>
+                            <small>High Priority</small>
+                            <strong>3</strong>
+                        </div>
+                    </article>
+
+                    <article class="card metric">
+                        <span class="metric-icon">✓</span>
+
+                        <div>
+                            <small>Resolved</small>
+                            <strong>18</strong>
+                        </div>
+                    </article>
+
+                </section>
+
+                <div class="dashboard-grid">
+
+                    <section class="panel" id="bottleneckPanel">
+
+                        <div class="panel-header">
+                            <h2>Top Learning Bottlenecks</h2>
+
+                            <div class="filters">
+
+                                <button class="filter-button active" data-filter="all">
+                                    All
+                                </button>
+
+                                <button class="filter-button" data-filter="high">
+                                    High
+                                </button>
+
+                                <button class="filter-button" data-filter="medium">
+                                    Medium
+                                </button>
+
+                            </div>
+                        </div>
+
+                        <div class="panel-body" style="padding: 0;">
+
+                            <table>
+
+                                <thead>
+                                    <tr>
+                                        <th>Learning problem</th>
+                                        <th>Reports</th>
+                                        <th>Share</th>
+                                        <th>Trend</th>
+                                        <th>Priority</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody id="issueRows">
+
+                                    <tr data-priority="high" data-topic="Pointers with abstraction">
+                                        <td class="topic">
+                                            Pointers with abstraction
+                                        </td>
+
+                                        <td>12</td>
+                                        <td>25%</td>
+
+                                        <td class="trend-up">
+                                            ↗ Increasing
+                                        </td>
+
+                                        <td>
+                                            <span class="badge high">
+                                                High
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                    <tr data-priority="medium" data-topic="Runtime polymorphism">
+                                        <td class="topic">
+                                            Runtime polymorphism
+                                        </td>
+
+                                        <td>9</td>
+                                        <td>19%</td>
+
+                                        <td class="trend-stable">
+                                            — Stable
+                                        </td>
+
+                                        <td>
+                                            <span class="badge medium">
+                                                Medium
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                    <tr data-priority="medium" data-topic="Exception handling">
+                                        <td class="topic">
+                                            Exception handling
+                                        </td>
+
+                                        <td>7</td>
+                                        <td>15%</td>
+
+                                        <td class="trend-up">
+                                            ↗ Increasing
+                                        </td>
+
+                                        <td>
+                                            <span class="badge medium">
+                                                Medium
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                    <tr data-priority="low" data-topic="File handling">
+                                        <td class="topic">
+                                            File handling
+                                        </td>
+
+                                        <td>5</td>
+                                        <td>10%</td>
+
+                                        <td class="trend-down">
+                                            ↘ Improving
+                                        </td>
+
+                                        <td>
+                                            <span class="badge low">
+                                                Low
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+
+                            <div class="empty-message" id="emptyMessage">
+                                No matching learning problems.
+                            </div>
+
+                        </div>
+
+                    </section>
+
+                    <section class="panel">
+
+                        <div class="panel-header">
+                            <h2>Feedback Trend</h2>
+
+                            <select class="select">
+                                <option>Last 24 hours</option>
+                                <option>Last 7 days</option>
+                                <option>Last 14 days</option>
+                                <option>Last 30 days</option>
+                                <option>Last 3 months</option>
+                                <option>This semester</option>
+                            </select>
+                        </div>
+
+                        <div class="panel-body">
+
+                            <div class="chart">
+
+                                <div class="bar-wrap">
+                                    <div class="bar" style="height: 35%;"></div>
+                                    Mon
+                                </div>
+
+                                <div class="bar-wrap">
+                                    <div class="bar" style="height: 48%;"></div>
+                                    Tue
+                                </div>
+
+                                <div class="bar-wrap">
+                                    <div class="bar" style="height: 70%;"></div>
+                                    Wed
+                                </div>
+
+                                <div class="bar-wrap">
+                                    <div class="bar" style="height: 54%;"></div>
+                                    Thu
+                                </div>
+
+                                <div class="bar-wrap">
+                                    <div class="bar" style="height: 44%;"></div>
+                                    Fri
+                                </div>
+
+                                <div class="bar-wrap">
+                                    <div class="bar" style="height: 61%;"></div>
+                                    Sat
+                                </div>
+
+                                <div class="bar-wrap">
+                                    <div class="bar" style="height: 82%;"></div>
+                                    Sun
+                                </div>
+
+                            </div>
+
+                            <div class="legend">
+                                Feedback received by day · prototype data
+                            </div>
+
+                            <div class="insight">
+
+                                <strong>✦ AI Insight</strong>
+
+                                <p>
+                                    Students understand pointers and abstraction
+                                    separately but struggle to connect them in
+                                    runtime polymorphism.
+                                </p>
+
+                                <button class="link-button" id="viewInsightButton">
+                                    View evidence →
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+                    <section class="panel">
+
+                        <div class="panel-header">
+                            <h2>Feedback Distribution</h2>
+                        </div>
+
+                        <div class="panel-body">
+
+                            <div class="items-list">
+
+                                <div class="list-item">
+                                    <div class="item-top">
+                                        <strong>
+                                            Academic learning difficulties
+                                        </strong>
+
+                                        <strong>40% (48)</48)< /strong>
+                                    </div>
+
+                                    <div class="progress-track">
+                                        <div class="progress-fill" style="width: 40%;"></div>
+                                    </div>
+                                </div>
+
+                                <div class="list-item">
+                                    <div class="item-top">
+                                        <strong>Teaching delivery</strong>
+                                        <strong>22% (26)</strong>
+                                    </div>
+
+                                    <div class="progress-track">
+                                        <div class="progress-fill" style="width: 22%;"></div>
+                                    </div>
+                                </div>
+
+                                <div class="list-item">
+                                    <div class="item-top">
+                                        <strong>
+                                            Assessment and assignments
+                                        </strong>
+
+                                        <strong>18% (22)</strong>
+                                    </div>
+
+                                    <div class="progress-track">
+                                        <div class="progress-fill" style="width: 18%;"></div>
+                                    </div>
+                                </div>
+
+                                <div class="list-item">
+                                    <div class="item-top">
+                                        <strong>Learning resources</strong>
+                                        <strong>12% (14)</strong>
+                                    </div>
+
+                                    <div class="progress-track">
+                                        <div class="progress-fill" style="width: 12%;"></div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+                    <section class="panel" id="actionPanel">
+
+                        <div class="panel-header">
+                            <h2>Action Progress</h2>
+
+                            <button class="link-button" id="viewActionsButton">
+                                View all →
+                            </button>
+                        </div>
+
+                        <div class="panel-body">
+
+                            <div class="items-list" id="actionsList">
+
+                                <div class="list-item">
+
+                                    <div class="item-top">
+                                        <strong>
+                                            Pointer–object visual recap
+                                        </strong>
+
+                                        <span class="badge medium">
+                                            In progress
+                                        </span>
+                                    </div>
+
+                                    <p>
+                                        Linked issue:
+                                        Pointers with abstraction
+                                    </p>
+
+                                    <div class="progress-track">
+                                        <div class="progress-fill" style="width: 60%;"></div>
+                                    </div>
+
+                                </div>
+
+                                <div class="list-item">
+
+                                    <div class="item-top">
+                                        <strong>
+                                            Exception-flow practice session
+                                        </strong>
+
+                                        <span class="badge low">
+                                            Completed
+                                        </span>
+                                    </div>
+
+                                    <p>
+                                        Linked issue: Exception handling
+                                    </p>
+
+                                    <div class="progress-track">
+                                        <div class="progress-fill" style="width: 100%;"></div>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Learning bottleneck details -->
+
+    <div class="detail-overlay" id="detailOverlay">
+
+        <article class="dialog">
+
+            <header class="dialog-header">
+
+                <div>
+                    <small>Learning bottleneck</small>
+
+                    <h2 id="detailTitle">
+                        Pointers with abstraction
+                    </h2>
+                </div>
+
+                <button class="close-button" id="closeDetailButton" type="button">
+                    ×
+                </button>
+
+            </header>
+
+            <div class="dialog-body">
+
+                <p class="dialog-summary">
+                    Students appear to understand pointers and abstraction
+                    separately, but several comments suggest difficulty
+                    connecting them during runtime polymorphism.
+                </p>
+
+                <div class="summary-grid">
+
+                    <div class="summary-box">
+                        <small>Related feedback</small>
+                        <strong>12 reports</strong>
+                    </div>
+
+                    <div class="summary-box">
+                        <small>Feedback share</small>
+                        <strong>25% of learning feedback</strong>
+                    </div>
+
+                    <div class="summary-box">
+                        <small>Priority</small>
+                        <strong class="trend-up">High</strong>
+                    </div>
+
+                </div>
+
+                <h3 class="section-title">
+                    Supporting evidence
+                </h3>
+
+                <div class="evidence">
+                    “Pointers aur abstract classes ka relation samajh
+                    nahi aa raha.”
+                </div>
+
+                <div class="evidence">
+                    “I understand pointers separately but cannot apply
+                    them in polymorphism.”
+                </div>
+
+                <div class="evidence">
+                    “Base-class pointer derived object ko call kese
+                    karta hai?”
+                </div>
+
+                <h3 class="section-title">
+                    Why this is high priority
+                </h3>
+
+                <div class="priority-reason">
+                    <ul>
+                        <li>12 related submissions</li>
+
+                        <li>
+                            Reports increased after the relevant lecture
+                        </li>
+
+                        <li>
+                            The issue affects understanding of later
+                            polymorphism concepts
+                        </li>
+
+                        <li>
+                            The same concern appears in two sections
+                        </li>
+                    </ul>
+                </div>
+
+                <h3 class="section-title">
+                    AI-suggested response
+                </h3>
+
+                <div class="suggestion">
+                    Use a visual base-pointer/derived-object diagram,
+                    demonstrate one short virtual-function example and
+                    collect follow-up feedback after a focused clarification
+                    session. Teacher review is required.
+                </div>
+
+                <form class="action-form" id="actionForm">
+
+                    <strong>Create teaching action</strong>
+
+                    <input type="text" id="actionTitle" value="Pointer–object visual recap" required>
+
+                    <select id="actionStatus">
+                        <option>Planned</option>
+                        <option>In progress</option>
+                        <option>Completed</option>
+                    </select>
+
+                    <textarea id="studentUpdate"
+                        placeholder="Student-facing update...">An additional explanation and practice session will be conducted.</textarea>
+
+                    <button class="primary-button" type="submit">
+                        Save Action
+                    </button>
+
+                </form>
+
+            </div>
+
+            <footer class="dialog-actions">
+
+                <button class="secondary-button" id="acknowledgeButton" type="button">
+                    Acknowledge
+                </button>
+
+                <button class="primary-button" id="createActionButton" type="button">
+                    Create Action
+                </button>
+
+            </footer>
+
+        </article>
+
+    </div>
+
+    <script>
+        const detailOverlay =
+            document.getElementById("detailOverlay");
+
+        const detailTitle =
+            document.getElementById("detailTitle");
+
+        const closeDetailButton =
+            document.getElementById("closeDetailButton");
+
+        const viewInsightButton =
+            document.getElementById("viewInsightButton");
+
+        const viewActionsButton =
+            document.getElementById("viewActionsButton");
+
+        const acknowledgeButton =
+            document.getElementById("acknowledgeButton");
+
+        const createActionButton =
+            document.getElementById("createActionButton");
+
+        const actionForm =
+            document.getElementById("actionForm");
+
+        const actionTitle =
+            document.getElementById("actionTitle");
+
+        const actionStatus =
+            document.getElementById("actionStatus");
+
+        const actionsList =
+            document.getElementById("actionsList");
+
+        const searchInput =
+            document.getElementById("searchInput");
+
+        const emptyMessage =
+            document.getElementById("emptyMessage");
+
+        const issueRows =
+            Array.from(
+                document.querySelectorAll("#issueRows tr")
+            );
+
+        const filterButtons =
+            Array.from(
+                document.querySelectorAll(".filter-button")
+            );
+
+        const navigationButtons =
+            Array.from(
+                document.querySelectorAll(
+                    ".nav-item[data-section]"
+                )
+            );
+
+        function openDetails(topic) {
+            detailTitle.textContent =
+                topic || "Pointers with abstraction";
+
+            detailOverlay.classList.add("open");
+        }
+
+        function closeDetails() {
+            detailOverlay.classList.remove("open");
+            actionForm.classList.remove("open");
+        }
+
+        issueRows.forEach(
+            function (row) {
+                row.addEventListener(
+                    "click",
+                    function () {
+                        openDetails(row.dataset.topic);
+                    }
+                );
+            }
+        );
+
+        viewInsightButton.addEventListener(
+            "click",
+            function () {
+                openDetails(
+                    "Pointers with abstraction"
+                );
+            }
+        );
+
+        closeDetailButton.addEventListener(
+            "click",
+            closeDetails
+        );
+
+        detailOverlay.addEventListener(
+            "click",
+            function (event) {
+                if (event.target === detailOverlay) {
+                    closeDetails();
+                }
+            }
+        );
+
+        acknowledgeButton.addEventListener(
+            "click",
+            function () {
+                acknowledgeButton.textContent =
+                    "✓ Acknowledged";
+
+                acknowledgeButton.disabled = true;
+            }
+        );
+
+        createActionButton.addEventListener(
+            "click",
+            function () {
+                actionForm.classList.toggle("open");
+
+                if (
+                    actionForm.classList.contains("open")
+                ) {
+                    actionTitle.focus();
+                }
+            }
+        );
+
+        actionForm.addEventListener(
+            "submit",
+            function (event) {
+                event.preventDefault();
+
+                let progressAmount = 20;
+
+                if (
+                    actionStatus.value === "In progress"
+                ) {
+                    progressAmount = 60;
+                }
+
+                if (
+                    actionStatus.value === "Completed"
+                ) {
+                    progressAmount = 100;
+                }
+
+                const newAction =
+                    document.createElement("div");
+
+                newAction.className = "list-item";
+
+                newAction.innerHTML = `
+                    <div class="item-top">
+                        <strong>
+                            ${actionTitle.value}
+                        </strong>
+
+                        <span class="badge medium">
+                            ${actionStatus.value}
+                        </span>
+                    </div>
+
+                    <p>
+                        Linked issue:
+                        ${detailTitle.textContent}
+                    </p>
+
+                    <div class="progress-track">
+                        <div
+                            class="progress-fill"
+                            style="width: ${progressAmount}%;"
+                        ></div>
+                    </div>
+                `;
+
+                actionsList.prepend(newAction);
+
+                actionForm.classList.remove("open");
+
+                createActionButton.textContent =
+                    "✓ Action saved";
+
+                setTimeout(
+                    closeDetails,
+                    700
+                );
+            }
+        );
+
+        function filterRows() {
+            const activeFilter =
+                document.querySelector(
+                    ".filter-button.active"
+                ).dataset.filter;
+
+            const searchText =
+                searchInput.value
+                    .trim()
+                    .toLowerCase();
+
+            let visibleRows = 0;
+
+            issueRows.forEach(
+                function (row) {
+                    const matchesPriority =
+                        activeFilter === "all" ||
+                        row.dataset.priority ===
+                        activeFilter;
+
+                    const matchesSearch =
+                        row.dataset.topic
+                            .toLowerCase()
+                            .includes(searchText);
+
+                    const shouldShow =
+                        matchesPriority &&
+                        matchesSearch;
+
+                    row.style.display =
+                        shouldShow ? "" : "none";
+
+                    if (shouldShow) {
+                        visibleRows++;
+                    }
+                }
+            );
+
+            emptyMessage.style.display =
+                visibleRows === 0
+                    ? "block"
+                    : "none";
+        }
+
+        filterButtons.forEach(
+            function (button) {
+                button.addEventListener(
+                    "click",
+                    function () {
+                        filterButtons.forEach(
+                            function (otherButton) {
+                                otherButton.classList.remove(
+                                    "active"
+                                );
+                            }
+                        );
+
+                        button.classList.add("active");
+
+                        filterRows();
+                    }
+                );
+            }
+        );
+
+        searchInput.addEventListener(
+            "input",
+            filterRows
+        );
+
+        viewActionsButton.addEventListener(
+            "click",
+            function () {
+                document
+                    .getElementById("actionPanel")
+                    .scrollIntoView({
+                        behavior: "smooth"
+                    });
+            }
+        );
+
+        navigationButtons.forEach(
+            function (button) {
+                button.addEventListener(
+                    "click",
+                    function () {
+                        navigationButtons.forEach(
+                            function (otherButton) {
+                                otherButton.classList.remove(
+                                    "active"
+                                );
+                            }
+                        );
+
+                        button.classList.add("active");
+
+                        const section =
+                            button.dataset.section;
+
+                        if (
+                            section === "insights" ||
+                            section === "feedback"
+                        ) {
+                            document
+                                .getElementById(
+                                    "bottleneckPanel"
+                                )
+                                .scrollIntoView({
+                                    behavior: "smooth"
+                                });
+                        } else if (
+                            section === "actions"
+                        ) {
+                            document
+                                .getElementById(
+                                    "actionPanel"
+                                )
+                                .scrollIntoView({
+                                    behavior: "smooth"
+                                });
+                        } else {
+                            window.scrollTo({
+                                top: 0,
+                                behavior: "smooth"
+                            });
+                        }
+                    }
+                );
+            }
+        );
+    </script>
+</body>
+
+</html>

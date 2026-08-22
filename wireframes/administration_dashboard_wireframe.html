@@ -1,0 +1,1977 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>EduInSight — Administration Dashboard</title>
+
+    <style>
+        :root {
+            --navy: #0B1F33;
+            --ocean: #12344D;
+            --teal: #2A9D8F;
+            --teal-dark: #21867B;
+            --aqua: #76C7C0;
+            --ivory: #F7F4ED;
+            --white: #FFFFFF;
+            --text: #17212B;
+            --muted: #66727D;
+            --border: #DDD6C8;
+            --soft-teal: #E6F4F1;
+            --soft-blue: #EAF1F5;
+            --soft-amber: #FFF1DC;
+            --soft-red: #FDEBED;
+            --red: #D94A5A;
+            --amber: #D98200;
+            --green: #17806D;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            color: var(--text);
+            background: var(--ivory);
+            font-family: Arial, sans-serif;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .page {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 260px 1fr;
+        }
+
+        /* Sidebar */
+
+        .sidebar {
+            min-height: 100vh;
+            height: 100vh;
+            padding: 28px 18px;
+            color: white;
+            background:
+                radial-gradient(circle at 10% 8%,
+                    rgba(118, 199, 192, 0.15),
+                    transparent 28%),
+                linear-gradient(180deg,
+                    var(--navy),
+                    var(--ocean));
+            display: flex;
+            flex-direction: column;
+            position: sticky;
+            top: 0;
+        }
+
+        .logo {
+            margin: 0 12px 35px;
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            font-size: 23px;
+            font-weight: bold;
+        }
+
+        .logo-mark {
+            width: 42px;
+            height: 38px;
+            padding: 7px;
+            border: 3px solid var(--aqua);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .logo-mark span {
+            width: 5px;
+            background: var(--aqua);
+        }
+
+        .logo-mark span:nth-child(1) {
+            height: 9px;
+        }
+
+        .logo-mark span:nth-child(2) {
+            height: 16px;
+        }
+
+        .logo-mark span:nth-child(3) {
+            height: 24px;
+        }
+
+        .navigation {
+            display: grid;
+            gap: 7px;
+        }
+
+        .nav-item {
+            width: 100%;
+            padding: 14px 16px;
+            color: #E5EFF3;
+            border: 0;
+            border-radius: 9px;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            text-align: left;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .nav-item.active {
+            color: white;
+            background: rgba(0, 0, 0, 0.2);
+            box-shadow: inset 4px 0 0 var(--aqua);
+        }
+
+        .profile {
+            margin-top: auto;
+            padding: 18px 8px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 11px;
+        }
+
+        .avatar {
+            width: 45px;
+            height: 45px;
+            color: var(--navy);
+            background: var(--aqua);
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            font-weight: bold;
+        }
+
+        .profile small {
+            display: block;
+            margin-top: 3px;
+            color: #BDD1D9;
+        }
+
+        /* Main area */
+
+        .main {
+            min-width: 0;
+        }
+
+        .topbar {
+            min-height: 88px;
+            padding: 18px 32px;
+            background: white;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .topbar h1 {
+            margin: 0;
+            color: var(--navy);
+            font-size: 27px;
+        }
+
+        .topbar p {
+            margin: 5px 0 0;
+            color: var(--muted);
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search,
+        .select {
+            height: 42px;
+            padding: 0 12px;
+            color: var(--text);
+            border: 1px solid #CAD3D6;
+            border-radius: 8px;
+            background: white;
+            outline: none;
+        }
+
+        .search {
+            width: 230px;
+        }
+
+        .search:focus,
+        .select:focus,
+        .action-form input:focus,
+        .action-form select:focus,
+        .action-form textarea:focus {
+            border-color: var(--teal);
+            box-shadow: 0 0 0 4px rgba(42, 157, 143, 0.12);
+        }
+
+        .content {
+            max-width: 1500px;
+            margin: auto;
+            padding: 25px 32px 45px;
+        }
+
+        /* Metric cards */
+
+        .metrics {
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .metric-card,
+        .panel {
+            background: white;
+            border: 1px solid var(--border);
+            border-radius: 13px;
+        }
+
+        .metric-card {
+            padding: 19px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .metric-icon {
+            width: 48px;
+            height: 48px;
+            color: var(--ocean);
+            border-radius: 11px;
+            background: var(--soft-blue);
+            display: grid;
+            place-items: center;
+            font-size: 21px;
+        }
+
+        .metric-card:nth-child(2) .metric-icon {
+            color: var(--red);
+            background: var(--soft-red);
+        }
+
+        .metric-card:nth-child(3) .metric-icon {
+            color: var(--amber);
+            background: var(--soft-amber);
+        }
+
+        .metric-card:nth-child(4) .metric-icon {
+            color: var(--teal-dark);
+            background: var(--soft-teal);
+        }
+
+        .metric-card small {
+            color: var(--muted);
+        }
+
+        .metric-card strong {
+            display: block;
+            margin-top: 4px;
+            color: var(--navy);
+            font-size: 27px;
+        }
+
+        /* Main dashboard grid */
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns:
+                minmax(0, 1.35fr) minmax(330px, 0.65fr);
+            gap: 20px;
+        }
+
+        .panel {
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .panel-header h2 {
+            margin: 0;
+            color: var(--navy);
+            font-size: 19px;
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        /* Filters */
+
+        .filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .filter-button {
+            padding: 8px 11px;
+            color: var(--muted);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            background: white;
+        }
+
+        .filter-button.active {
+            color: var(--teal-dark);
+            border-color: var(--teal);
+            background: var(--soft-teal);
+            font-weight: bold;
+        }
+
+        /* Issue table */
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 14px 12px;
+            border-bottom: 1px solid #E8E2D9;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        th {
+            color: var(--muted);
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        tbody tr {
+            cursor: pointer;
+        }
+
+        tbody tr:hover {
+            background: #F7FAF9;
+        }
+
+        .issue-title {
+            color: var(--ocean);
+            font-weight: bold;
+        }
+
+        .issue-area {
+            display: block;
+            margin-top: 4px;
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 8px;
+            border-radius: 14px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+
+        .high {
+            color: #B42331;
+            background: var(--soft-red);
+        }
+
+        .medium {
+            color: #9A6000;
+            background: var(--soft-amber);
+        }
+
+        .low {
+            color: #17665B;
+            background: var(--soft-teal);
+        }
+
+        .under-review {
+            color: #8A5A16;
+            background: var(--soft-amber);
+        }
+
+        .in-progress {
+            color: #17665B;
+            background: var(--soft-teal);
+        }
+
+        .unassigned {
+            color: #A42E3D;
+            background: var(--soft-red);
+        }
+
+        .empty-message {
+            display: none;
+            padding: 30px;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        /* Department distribution */
+
+        .distribution-list {
+            display: grid;
+            gap: 15px;
+        }
+
+        .distribution-row {
+            display: grid;
+            gap: 7px;
+        }
+
+        .distribution-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .distribution-top span:last-child {
+            color: var(--muted);
+        }
+
+        .progress-track {
+            height: 8px;
+            background: #E7EEEE;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg,
+                    var(--aqua),
+                    var(--teal));
+        }
+
+        /* Activity and actions */
+
+        .activity-list {
+            display: grid;
+            gap: 13px;
+        }
+
+        .activity-item {
+            padding: 13px;
+            border: 1px solid var(--border);
+            border-radius: 9px;
+        }
+
+        .activity-top {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .activity-item p {
+            margin: 7px 0 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        .insight {
+            padding: 17px;
+            border: 1px solid #A9DDD7;
+            border-radius: 10px;
+            background: linear-gradient(135deg,
+                    #F3FBF9,
+                    #EAF5F7);
+        }
+
+        .insight strong {
+            color: var(--teal-dark);
+        }
+
+        .insight p {
+            margin: 9px 0;
+            line-height: 1.55;
+        }
+
+        /* Buttons */
+
+        .primary-button,
+        .secondary-button {
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .primary-button {
+            color: white;
+            border: 0;
+            background: var(--teal);
+        }
+
+        .primary-button:hover {
+            background: var(--teal-dark);
+        }
+
+        .secondary-button {
+            color: var(--ocean);
+            border: 1px solid var(--border);
+            background: white;
+        }
+
+        .link-button {
+            padding: 0;
+            color: var(--teal-dark);
+            border: 0;
+            background: transparent;
+            font-weight: bold;
+        }
+
+        /* Issue details dialog */
+
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 20;
+            padding: 20px;
+            background: rgba(6, 22, 35, 0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .overlay.open {
+            display: flex;
+        }
+
+        .dialog {
+            width: min(820px, 100%);
+            max-height: 92vh;
+            overflow-y: auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.25);
+        }
+
+        .dialog-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .dialog-header h2 {
+            margin: 4px 0 0;
+            color: var(--navy);
+        }
+
+        .close-button {
+            padding: 0;
+            color: var(--muted);
+            border: 0;
+            background: transparent;
+            font-size: 26px;
+        }
+
+        .dialog-body {
+            padding: 23px;
+        }
+
+        .dialog-summary {
+            line-height: 1.6;
+        }
+
+        .summary-grid {
+            margin: 17px 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .summary-box {
+            padding: 12px;
+            border-radius: 8px;
+            background: var(--soft-blue);
+        }
+
+        .summary-box small {
+            color: var(--muted);
+        }
+
+        .summary-box strong {
+            display: block;
+            margin-top: 5px;
+        }
+
+        .section-title {
+            margin: 22px 0 9px;
+            color: var(--ocean);
+        }
+
+        .evidence {
+            margin: 8px 0;
+            padding: 12px 14px;
+            border-left: 4px solid var(--aqua);
+            background: #F5F8F7;
+            line-height: 1.5;
+        }
+
+        .priority-reason {
+            padding: 14px;
+            border-radius: 9px;
+            background: #FFF8EC;
+        }
+
+        .priority-reason li {
+            margin: 7px 0;
+        }
+
+        .ai-suggestion {
+            padding: 14px;
+            border-radius: 9px;
+            background: var(--soft-teal);
+            line-height: 1.5;
+        }
+
+        .action-form {
+            display: none;
+            margin-top: 18px;
+            padding: 17px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            gap: 11px;
+        }
+
+        .action-form.open {
+            display: grid;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 11px;
+        }
+
+        .action-form label {
+            display: grid;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: bold;
+        }
+
+        .action-form input,
+        .action-form select,
+        .action-form textarea {
+            width: 100%;
+            padding: 11px;
+            border: 1px solid #C9D2D5;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        .action-form textarea {
+            min-height: 90px;
+            resize: vertical;
+        }
+
+        .full-field {
+            grid-column: 1 / -1;
+        }
+
+        .dialog-actions {
+            padding: 17px 23px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* Toast message */
+
+        .toast {
+            display: none;
+            position: fixed;
+            right: 25px;
+            bottom: 25px;
+            z-index: 40;
+            max-width: 360px;
+            padding: 15px 18px;
+            color: white;
+            border-radius: 9px;
+            background: var(--ocean);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .toast.show {
+            display: block;
+        }
+
+        @media (max-width: 1150px) {
+            .metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .page {
+                display: block;
+            }
+
+            .sidebar {
+                position: static;
+                min-height: auto;
+                height: auto;
+            }
+
+            .navigation {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .profile {
+                display: none;
+            }
+
+            .topbar {
+                padding: 18px;
+            }
+
+            .top-actions {
+                display: none;
+            }
+
+            .content {
+                padding: 18px;
+            }
+
+            .metrics {
+                grid-template-columns: 1fr;
+            }
+
+            .panel {
+                overflow-x: auto;
+            }
+
+            .summary-grid,
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .full-field {
+                grid-column: auto;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="page">
+
+        <aside class="sidebar">
+
+            <div class="logo">
+                <div class="logo-mark">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+
+                <strong>EduInSight</strong>
+            </div>
+
+            <nav class="navigation">
+
+                <button class="nav-item active" data-section="overview">
+                    <span>⌂</span>
+                    <span>Overview</span>
+                </button>
+
+                <button class="nav-item" data-section="issues">
+                    <span>⚑</span>
+                    <span>Priority Issues</span>
+                </button>
+
+                <button class="nav-item" data-section="departments">
+                    <span>▦</span>
+                    <span>Departments</span>
+                </button>
+
+                <button class="nav-item" data-section="actions">
+                    <span>✓</span>
+                    <span>Action Tracking</span>
+                </button>
+
+                <button class="nav-item" data-section="updates">
+                    <span>◉</span>
+                    <span>Student Updates</span>
+                </button>
+
+                <button class="nav-item" data-section="reports">
+                    <span>▥</span>
+                    <span>Reports</span>
+                </button>
+
+                <a href="login_wireframe.html" class="nav-item">
+                    <span>↪</span>
+                    <span>Sign Out</span>
+                </a>
+
+            </nav>
+
+            <div class="profile">
+                <span class="avatar">AU</span>
+
+                <div>
+                    <strong>Admin User</strong>
+                    <small>Administration View</small>
+                </div>
+            </div>
+
+        </aside>
+
+        <section class="main">
+
+            <header class="topbar">
+
+                <div>
+                    <h1>Administration Overview</h1>
+
+                    <p>
+                        Demo University · Institutional feedback intelligence
+                    </p>
+                </div>
+
+                <div class="top-actions">
+
+                    <input type="search" class="search" id="searchInput" placeholder="Search problem or area...">
+
+                    <select class="select" id="periodSelect">
+                        <option>Last 30 days</option>
+                        <option>Last 7 days</option>
+                        <option>This semester</option>
+                    </select>
+
+                </div>
+
+            </header>
+
+            <div class="content">
+
+                <section class="metrics">
+
+                    <article class="metric-card">
+                        <span class="metric-icon">▤</span>
+
+                        <div>
+                            <small>Total Feedback</small>
+                            <strong>684</strong>
+                        </div>
+                    </article>
+
+                    <article class="metric-card">
+                        <span class="metric-icon">⚑</span>
+
+                        <div>
+                            <small>High-Priority Issues</small>
+                            <strong>8</strong>
+                        </div>
+                    </article>
+
+                    <article class="metric-card">
+                        <span class="metric-icon">◷</span>
+
+                        <div>
+                            <small>Under Review</small>
+                            <strong>17</strong>
+                        </div>
+                    </article>
+
+                    <article class="metric-card">
+                        <span class="metric-icon">✓</span>
+
+                        <div>
+                            <small>Resolved</small>
+                            <strong id="resolvedCount">42</strong>
+                        </div>
+                    </article>
+
+                </section>
+
+                <div class="dashboard-grid">
+
+                    <!-- Priority issues -->
+
+                    <section class="panel" id="issuesPanel">
+
+                        <div class="panel-header">
+
+                            <h2>Priority Institutional Problems</h2>
+
+                            <div class="filters">
+
+                                <button class="filter-button active" data-filter="all">
+                                    All
+                                </button>
+
+                                <button class="filter-button" data-filter="high">
+                                    High
+                                </button>
+
+                                <button class="filter-button" data-filter="medium">
+                                    Medium
+                                </button>
+
+                                <button class="filter-button" data-filter="unassigned">
+                                    Unassigned
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                        <div class="panel-body" style="padding: 0;">
+
+                            <table>
+
+                                <thead>
+                                    <tr>
+                                        <th>Problem</th>
+                                        <th>Reports</th>
+                                        <th>Trend</th>
+                                        <th>Priority</th>
+                                        <th>Owner</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody id="issueRows">
+
+                                    <tr data-priority="high" data-assignment="assigned"
+                                        data-title="Unreliable Wi-Fi during online assessments"
+                                        data-area="IT, Wi-Fi and LMS">
+                                        <td>
+                                            <span class="issue-title">
+                                                Unreliable Wi-Fi during assessments
+                                            </span>
+
+                                            <span class="issue-area">
+                                                IT, Wi-Fi and LMS
+                                            </span>
+                                        </td>
+
+                                        <td>34</td>
+
+                                        <td style="color: var(--red);">
+                                            ↗ Increasing
+                                        </td>
+
+                                        <td>
+                                            <span class="badge high">
+                                                High
+                                            </span>
+                                        </td>
+
+                                        <td>IT Department</td>
+
+                                        <td>
+                                            <span class="badge in-progress">
+                                                In progress
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                    <tr data-priority="high" data-assignment="unassigned"
+                                        data-title="Overlapping assignment deadlines" data-area="Academic programmes">
+                                        <td>
+                                            <span class="issue-title">
+                                                Overlapping assignment deadlines
+                                            </span>
+
+                                            <span class="issue-area">
+                                                Academic programmes
+                                            </span>
+                                        </td>
+
+                                        <td>28</td>
+
+                                        <td style="color: var(--red);">
+                                            ↗ Increasing
+                                        </td>
+
+                                        <td>
+                                            <span class="badge high">
+                                                High
+                                            </span>
+                                        </td>
+
+                                        <td>Not assigned</td>
+
+                                        <td>
+                                            <span class="badge unassigned">
+                                                Unassigned
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                    <tr data-priority="high" data-assignment="assigned"
+                                        data-title="Insufficient laboratory equipment"
+                                        data-area="Laboratory facilities">
+                                        <td>
+                                            <span class="issue-title">
+                                                Insufficient laboratory equipment
+                                            </span>
+
+                                            <span class="issue-area">
+                                                Laboratory facilities
+                                            </span>
+                                        </td>
+
+                                        <td>23</td>
+
+                                        <td style="color: var(--muted);">
+                                            — Stable
+                                        </td>
+
+                                        <td>
+                                            <span class="badge high">
+                                                High
+                                            </span>
+                                        </td>
+
+                                        <td>Facilities Department</td>
+
+                                        <td>
+                                            <span class="badge under-review">
+                                                Under review
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                    <tr data-priority="medium" data-assignment="assigned"
+                                        data-title="Library resources unavailable for core courses"
+                                        data-area="Library and learning resources">
+                                        <td>
+                                            <span class="issue-title">
+                                                Missing core-course library resources
+                                            </span>
+
+                                            <span class="issue-area">
+                                                Library and learning resources
+                                            </span>
+                                        </td>
+
+                                        <td>18</td>
+
+                                        <td style="color: var(--green);">
+                                            ↘ Improving
+                                        </td>
+
+                                        <td>
+                                            <span class="badge medium">
+                                                Medium
+                                            </span>
+                                        </td>
+
+                                        <td>Library Management</td>
+
+                                        <td>
+                                            <span class="badge in-progress">
+                                                In progress
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                    <tr data-priority="medium" data-assignment="unassigned"
+                                        data-title="Delays in student-record correction" data-area="Student records">
+                                        <td>
+                                            <span class="issue-title">
+                                                Delays in record correction
+                                            </span>
+
+                                            <span class="issue-area">
+                                                Student records
+                                            </span>
+                                        </td>
+
+                                        <td>14</td>
+
+                                        <td style="color: var(--muted);">
+                                            — Stable
+                                        </td>
+
+                                        <td>
+                                            <span class="badge medium">
+                                                Medium
+                                            </span>
+                                        </td>
+
+                                        <td>Not assigned</td>
+
+                                        <td>
+                                            <span class="badge unassigned">
+                                                Unassigned
+                                            </span>
+                                        </td>
+                                    </tr>
+
+                                </tbody>
+
+                            </table>
+
+                            <div class="empty-message" id="emptyMessage">
+                                No matching institutional problems.
+                            </div>
+
+                        </div>
+
+                    </section>
+
+                    <!-- Department distribution -->
+
+                    <section class="panel" id="departmentsPanel">
+
+                        <div class="panel-header">
+                            <h2>Feedback by Responsible Area</h2>
+                        </div>
+
+                        <div class="panel-body">
+
+                            <div class="distribution-list">
+
+                                <div class="distribution-row">
+                                    <div class="distribution-top">
+                                        <strong>Courses and Teaching</strong>
+                                        <span>31% · 212</span>
+                                    </div>
+
+                                    <div class="progress-track">
+                                        <div class="progress-fill" style="width: 31%;"></div>
+                                    </div>
+                                </div>
+
+                                <div class="distribution-row">
+                                    <div class="distribution-top">
+                                        <strong>IT, Wi-Fi and LMS</strong>
+                                        <span>21% · 144</span>
+                                    </div>
+
+                                    <div class="progress-track">
+                                        <div class="progress-fill" style="width: 21%;"></div>
+                                    </div>
+                                </div>
+
+                                <div class="distribution-row">
+                                    <div class="distribution-top">
+                                        <strong>
+                                            Assessments and Examinations
+                                        </strong>
+
+                                        <span>18% · 123</span>
+                                    </div>
+
+                                    <div class="progress-track">
+                                        <div class="progress-fill" style="width: 18%;"></div>
+                                    </div>
+                                </div>
+
+                                <div class="distribution-row">
+                                    <div class="distribution-top">
+                                        <strong>
+                                            Laboratories and Facilities
+                                        </strong>
+
+                                        <span>14% · 96</span>
+                                    </div>
+
+                                    <div class="progress-track">
+                                        <div class="progress-fill" style="width: 14%;"></div>
+                                    </div>
+                                </div>
+
+                                <div class="distribution-row">
+                                    <div class="distribution-top">
+                                        <strong>
+                                            Library and Learning Resources
+                                        </strong>
+
+                                        <span>9% · 62</span>
+                                    </div>
+
+                                    <div class="progress-track">
+                                        <div class="progress-fill" style="width: 9%;"></div>
+                                    </div>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+                    <!-- AI summary -->
+
+                    <section class="panel">
+
+                        <div class="panel-header">
+                            <h2>Institutional AI Summary</h2>
+                        </div>
+
+                        <div class="panel-body">
+
+                            <div class="insight">
+
+                                <strong>✦ Current institutional insight</strong>
+
+                                <p>
+                                    Wi-Fi disruption during time-sensitive online
+                                    assessments is the fastest-growing operational
+                                    problem. Reports appear across three academic
+                                    departments and require coordinated review by
+                                    IT and examination services.
+                                </p>
+
+                                <button class="link-button" id="viewTopIssueButton">
+                                    Review evidence →
+                                </button>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+                    <!-- Action tracking -->
+
+                    <section class="panel" id="actionsPanel">
+
+                        <div class="panel-header">
+
+                            <h2>Recent Action Activity</h2>
+
+                            <button class="link-button" id="viewAllActionsButton">
+                                View all →
+                            </button>
+
+                        </div>
+
+                        <div class="panel-body">
+
+                            <div class="activity-list" id="activityList">
+
+                                <div class="activity-item">
+
+                                    <div class="activity-top">
+                                        <strong>
+                                            Review peak-hour access-point capacity
+                                        </strong>
+
+                                        <span class="badge in-progress">
+                                            In progress
+                                        </span>
+                                    </div>
+
+                                    <p>
+                                        IT Department · Due 29 August
+                                    </p>
+
+                                </div>
+
+                                <div class="activity-item">
+
+                                    <div class="activity-top">
+                                        <strong>
+                                            Purchase additional lab equipment
+                                        </strong>
+
+                                        <span class="badge under-review">
+                                            Under review
+                                        </span>
+                                    </div>
+
+                                    <p>
+                                        Facilities Department · Due 5 September
+                                    </p>
+
+                                </div>
+
+                                <div class="activity-item">
+
+                                    <div class="activity-top">
+                                        <strong>
+                                            Add requested digital library resources
+                                        </strong>
+
+                                        <span class="badge low">
+                                            Completed
+                                        </span>
+                                    </div>
+
+                                    <p>
+                                        Library Management · Completed 20 August
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Issue details and action assignment -->
+
+    <div class="overlay" id="issueOverlay">
+
+        <article class="dialog">
+
+            <header class="dialog-header">
+
+                <div>
+                    <small>Institutional problem cluster</small>
+
+                    <h2 id="dialogTitle">
+                        Unreliable Wi-Fi during online assessments
+                    </h2>
+                </div>
+
+                <button type="button" class="close-button" id="closeDialogButton">
+                    ×
+                </button>
+
+            </header>
+
+            <div class="dialog-body">
+
+                <p class="dialog-summary" id="dialogSummary">
+                    Students report repeated Wi-Fi disconnections during
+                    online quizzes and assessments. The problem appears
+                    across several departments and has increased during
+                    the current assessment period.
+                </p>
+
+                <div class="summary-grid">
+
+                    <div class="summary-box">
+                        <small>Related feedback</small>
+                        <strong>34 reports</strong>
+                    </div>
+
+                    <div class="summary-box">
+                        <small>Affected areas</small>
+                        <strong>3 departments</strong>
+                    </div>
+
+                    <div class="summary-box">
+                        <small>Trend</small>
+                        <strong style="color: var(--red);">
+                            Increasing
+                        </strong>
+                    </div>
+
+                    <div class="summary-box">
+                        <small>Priority</small>
+                        <strong style="color: var(--red);">
+                            High
+                        </strong>
+                    </div>
+
+                </div>
+
+                <h3 class="section-title">
+                    Supporting multilingual evidence
+                </h3>
+
+                <div class="evidence">
+                    “Wi-Fi disconnects repeatedly during online quizzes.”
+                </div>
+
+                <div class="evidence">
+                    “Quiz ke waqt internet bar bar disconnect hota hai.”
+                </div>
+
+                <div class="evidence" dir="auto">
+                    “آن لائن امتحان کے دوران وائی فائی بار بار بند ہو جاتا ہے۔”
+                </div>
+
+                <div class="evidence">
+                    “Online assessment mein Wi-Fi bilkul reliable nahi hai.”
+                </div>
+
+                <h3 class="section-title">
+                    Why this issue is high priority
+                </h3>
+
+                <div class="priority-reason">
+                    <ul>
+                        <li>34 related feedback submissions</li>
+
+                        <li>
+                            Reports have increased during the assessment period
+                        </li>
+
+                        <li>
+                            The problem affects time-sensitive assessments
+                        </li>
+
+                        <li>
+                            Feedback appears across three departments
+                        </li>
+                    </ul>
+                </div>
+
+                <h3 class="section-title">
+                    AI-suggested routing and response
+                </h3>
+
+                <div class="ai-suggestion">
+                    <strong>Suggested responsible unit:</strong>
+                    IT Department
+
+                    <br><br>
+
+                    <strong>Suggested supporting unit:</strong>
+                    Examination Office
+
+                    <br><br>
+
+                    <strong>Suggested next step:</strong>
+                    Review peak-hour network capacity and access-point
+                    performance during scheduled online assessments.
+
+                    <br><br>
+
+                    These are AI-generated suggestions. Final assignment
+                    and action decisions must be made by authorised staff.
+                </div>
+
+                <form class="action-form" id="actionForm">
+
+                    <strong>Assign institutional action</strong>
+
+                    <div class="form-grid">
+
+                        <label>
+                            Responsible department
+
+                            <select id="responsibleDepartment" required>
+                                <option value="">
+                                    Select responsible department
+                                </option>
+
+                                <option>IT Department</option>
+                                <option>Examination Office</option>
+                                <option>Academic Department</option>
+                                <option>Student Affairs</option>
+                                <option>Library Management</option>
+                                <option>Facilities Department</option>
+                                <option>Transport Office</option>
+                                <option>Finance Department</option>
+                                <option>University Administration</option>
+                            </select>
+                        </label>
+
+                        <label>
+                            Action status
+
+                            <select id="actionStatus" required>
+                                <option>Assigned</option>
+                                <option>Under review</option>
+                                <option>In progress</option>
+                                <option>Completed</option>
+                            </select>
+                        </label>
+
+                        <label class="full-field">
+                            Action title
+
+                            <input type="text" id="actionTitle" value="Review peak-hour network capacity" required>
+                        </label>
+
+                        <label>
+                            Responsible person
+
+                            <input type="text" id="responsiblePerson" placeholder="Enter action owner" required>
+                        </label>
+
+                        <label>
+                            Deadline
+
+                            <input type="date" id="deadline" required>
+                        </label>
+
+                        <label class="full-field">
+                            Internal action note
+
+                            <textarea id="internalNote"
+                                placeholder="Describe the planned institutional response..."></textarea>
+                        </label>
+
+                        <label class="full-field">
+                            Student-facing update
+
+                            <textarea id="studentUpdate"
+                                placeholder="Write the update students will be allowed to see...">The university is reviewing Wi-Fi performance during online assessments. The issue has been assigned to the IT Department.</textarea>
+                        </label>
+
+                    </div>
+
+                    <button type="submit" class="primary-button">
+                        Save and Assign Action
+                    </button>
+
+                </form>
+
+            </div>
+
+            <footer class="dialog-actions">
+
+                <button type="button" class="secondary-button" id="markReviewButton">
+                    Mark Under Review
+                </button>
+
+                <button type="button" class="primary-button" id="assignActionButton">
+                    Assign Action
+                </button>
+
+            </footer>
+
+        </article>
+
+    </div>
+
+    <div class="toast" id="toastMessage">
+        Action saved successfully.
+    </div>
+
+    <script>
+        const issueOverlay =
+            document.getElementById("issueOverlay");
+
+        const closeDialogButton =
+            document.getElementById("closeDialogButton");
+
+        const dialogTitle =
+            document.getElementById("dialogTitle");
+
+        const dialogSummary =
+            document.getElementById("dialogSummary");
+
+        const viewTopIssueButton =
+            document.getElementById("viewTopIssueButton");
+
+        const assignActionButton =
+            document.getElementById("assignActionButton");
+
+        const markReviewButton =
+            document.getElementById("markReviewButton");
+
+        const actionForm =
+            document.getElementById("actionForm");
+
+        const responsibleDepartment =
+            document.getElementById("responsibleDepartment");
+
+        const actionStatus =
+            document.getElementById("actionStatus");
+
+        const actionTitle =
+            document.getElementById("actionTitle");
+
+        const responsiblePerson =
+            document.getElementById("responsiblePerson");
+
+        const deadline =
+            document.getElementById("deadline");
+
+        const activityList =
+            document.getElementById("activityList");
+
+        const toastMessage =
+            document.getElementById("toastMessage");
+
+        const searchInput =
+            document.getElementById("searchInput");
+
+        const emptyMessage =
+            document.getElementById("emptyMessage");
+
+        const issueRows =
+            Array.from(
+                document.querySelectorAll("#issueRows tr")
+            );
+
+        const filterButtons =
+            Array.from(
+                document.querySelectorAll(".filter-button")
+            );
+
+        const navigationButtons =
+            Array.from(
+                document.querySelectorAll(
+                    ".nav-item[data-section]"
+                )
+            );
+
+        function openIssueDialog(title, area) {
+            dialogTitle.textContent =
+                title ||
+                "Unreliable Wi-Fi during online assessments";
+
+            if (area) {
+                dialogSummary.textContent =
+                    `Students have submitted repeated feedback concerning
+                    ${title.toLowerCase()} in the ${area} area. The cluster
+                    requires evidence review and assignment to an authorised
+                    action owner.`;
+            } else {
+                dialogSummary.textContent =
+                    "Students report repeated Wi-Fi disconnections during " +
+                    "online quizzes and assessments. The problem appears " +
+                    "across several departments and has increased during " +
+                    "the current assessment period.";
+            }
+
+            issueOverlay.classList.add("open");
+        }
+
+        function closeIssueDialog() {
+            issueOverlay.classList.remove("open");
+            actionForm.classList.remove("open");
+        }
+
+        issueRows.forEach(
+            function (row) {
+                row.addEventListener(
+                    "click",
+                    function () {
+                        openIssueDialog(
+                            row.dataset.title,
+                            row.dataset.area
+                        );
+                    }
+                );
+            }
+        );
+
+        viewTopIssueButton.addEventListener(
+            "click",
+            function () {
+                openIssueDialog(
+                    "Unreliable Wi-Fi during online assessments"
+                );
+            }
+        );
+
+        closeDialogButton.addEventListener(
+            "click",
+            closeIssueDialog
+        );
+
+        issueOverlay.addEventListener(
+            "click",
+            function (event) {
+                if (event.target === issueOverlay) {
+                    closeIssueDialog();
+                }
+            }
+        );
+
+        assignActionButton.addEventListener(
+            "click",
+            function () {
+                actionForm.classList.toggle("open");
+
+                if (
+                    actionForm.classList.contains("open")
+                ) {
+                    responsibleDepartment.focus();
+                }
+            }
+        );
+
+        markReviewButton.addEventListener(
+            "click",
+            function () {
+                markReviewButton.textContent =
+                    "✓ Under Review";
+
+                markReviewButton.disabled = true;
+
+                showToast(
+                    "Issue status changed to Under Review."
+                );
+            }
+        );
+
+        function showToast(message) {
+            toastMessage.textContent = message;
+            toastMessage.classList.add("show");
+
+            setTimeout(
+                function () {
+                    toastMessage.classList.remove("show");
+                },
+                2600
+            );
+        }
+
+        actionForm.addEventListener(
+            "submit",
+            function (event) {
+                event.preventDefault();
+
+                const newActivity =
+                    document.createElement("div");
+
+                newActivity.className =
+                    "activity-item";
+
+                let statusClass =
+                    "under-review";
+
+                if (
+                    actionStatus.value === "In progress"
+                ) {
+                    statusClass = "in-progress";
+                }
+
+                if (
+                    actionStatus.value === "Completed"
+                ) {
+                    statusClass = "low";
+                }
+
+                newActivity.innerHTML = `
+                    <div class="activity-top">
+                        <strong>
+                            ${actionTitle.value}
+                        </strong>
+
+                        <span class="badge ${statusClass}">
+                            ${actionStatus.value}
+                        </span>
+                    </div>
+
+                    <p>
+                        ${responsibleDepartment.value}
+                        · Owner: ${responsiblePerson.value}
+                        · Deadline: ${deadline.value}
+                    </p>
+                `;
+
+                activityList.prepend(newActivity);
+
+                actionForm.classList.remove("open");
+
+                assignActionButton.textContent =
+                    "✓ Action Assigned";
+
+                showToast(
+                    "Action assigned successfully. " +
+                    "The student-facing update is ready to publish."
+                );
+
+                setTimeout(
+                    closeIssueDialog,
+                    1000
+                );
+            }
+        );
+
+        function filterIssueRows() {
+            const activeFilter =
+                document.querySelector(
+                    ".filter-button.active"
+                ).dataset.filter;
+
+            const searchText =
+                searchInput.value
+                    .trim()
+                    .toLowerCase();
+
+            let visibleRows = 0;
+
+            issueRows.forEach(
+                function (row) {
+                    let matchesFilter = false;
+
+                    if (activeFilter === "all") {
+                        matchesFilter = true;
+                    } else if (
+                        activeFilter === "unassigned"
+                    ) {
+                        matchesFilter =
+                            row.dataset.assignment ===
+                            "unassigned";
+                    } else {
+                        matchesFilter =
+                            row.dataset.priority ===
+                            activeFilter;
+                    }
+
+                    const searchableText =
+                        (
+                            row.dataset.title +
+                            " " +
+                            row.dataset.area
+                        ).toLowerCase();
+
+                    const matchesSearch =
+                        searchableText.includes(
+                            searchText
+                        );
+
+                    const shouldDisplay =
+                        matchesFilter &&
+                        matchesSearch;
+
+                    row.style.display =
+                        shouldDisplay ? "" : "none";
+
+                    if (shouldDisplay) {
+                        visibleRows++;
+                    }
+                }
+            );
+
+            emptyMessage.style.display =
+                visibleRows === 0
+                    ? "block"
+                    : "none";
+        }
+
+        filterButtons.forEach(
+            function (button) {
+                button.addEventListener(
+                    "click",
+                    function () {
+                        filterButtons.forEach(
+                            function (otherButton) {
+                                otherButton.classList.remove(
+                                    "active"
+                                );
+                            }
+                        );
+
+                        button.classList.add("active");
+
+                        filterIssueRows();
+                    }
+                );
+            }
+        );
+
+        searchInput.addEventListener(
+            "input",
+            filterIssueRows
+        );
+
+        navigationButtons.forEach(
+            function (button) {
+                button.addEventListener(
+                    "click",
+                    function () {
+                        navigationButtons.forEach(
+                            function (otherButton) {
+                                otherButton.classList.remove(
+                                    "active"
+                                );
+                            }
+                        );
+
+                        button.classList.add("active");
+
+                        const section =
+                            button.dataset.section;
+
+                        if (section === "issues") {
+                            document
+                                .getElementById(
+                                    "issuesPanel"
+                                )
+                                .scrollIntoView({
+                                    behavior: "smooth"
+                                });
+                        } else if (
+                            section === "departments"
+                        ) {
+                            document
+                                .getElementById(
+                                    "departmentsPanel"
+                                )
+                                .scrollIntoView({
+                                    behavior: "smooth"
+                                });
+                        } else if (
+                            section === "actions" ||
+                            section === "updates"
+                        ) {
+                            document
+                                .getElementById(
+                                    "actionsPanel"
+                                )
+                                .scrollIntoView({
+                                    behavior: "smooth"
+                                });
+                        } else {
+                            window.scrollTo({
+                                top: 0,
+                                behavior: "smooth"
+                            });
+                        }
+                    }
+                );
+            }
+        );
+
+        document
+            .getElementById("viewAllActionsButton")
+            .addEventListener(
+                "click",
+                function () {
+                    document
+                        .getElementById(
+                            "actionsPanel"
+                        )
+                        .scrollIntoView({
+                            behavior: "smooth"
+                        });
+                }
+            );
+    </script>
+</body>
+
+</html>

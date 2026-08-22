@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>EduInSight — Student Dashboard</title>
+
+  <style>
+    :root {
+      --navy: #0B1F33;
+      --deep-ocean: #12344D;
+      --teal: #2A9D8F;
+      --teal-dark: #21867B;
+      --aqua: #76C7C0;
+      --ivory: #F7F4ED;
+      --white: #FFFFFF;
+      --text: #17212B;
+      --muted: #66727D;
+      --border: #DDD6C8;
+      --blue-soft: #E8F1F6;
+      --teal-soft: #E3F4F1;
+      --amber: #D98B28;
+      --amber-soft: #FFF1DC;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background: var(--ivory);
+      font-family: Arial, sans-serif;
+    }
+
+    button {
+      font: inherit;
+      cursor: pointer;
+    }
+
+    .dashboard {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 255px 1fr;
+    }
+
+    /* Sidebar */
+
+    .sidebar {
+      min-height: 100vh;
+      padding: 28px 18px;
+      color: white;
+      background:
+        radial-gradient(circle at 10% 8%,
+          rgba(118, 199, 192, 0.15),
+          transparent 28%),
+        linear-gradient(180deg,
+          var(--navy),
+          var(--deep-ocean));
+      display: flex;
+      flex-direction: column;
+    }
+
+    .logo {
+      margin: 0 12px 35px;
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-size: 23px;
+      font-weight: bold;
+    }
+
+    .logo-mark {
+      width: 42px;
+      height: 38px;
+      padding: 7px;
+      color: var(--aqua);
+      border: 3px solid var(--aqua);
+      display: flex;
+      align-items: end;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .logo-mark span {
+      width: 5px;
+      background: var(--aqua);
+    }
+
+    .logo-mark span:nth-child(1) {
+      height: 9px;
+    }
+
+    .logo-mark span:nth-child(2) {
+      height: 16px;
+    }
+
+    .logo-mark span:nth-child(3) {
+      height: 24px;
+    }
+
+    .navigation {
+      display: grid;
+      gap: 7px;
+    }
+
+    .nav-item {
+      width: 100%;
+      padding: 14px 16px;
+      color: #E5EFF3;
+      border: 0;
+      border-radius: 9px;
+      background: transparent;
+      display: flex;
+      align-items: center;
+      gap: 13px;
+      text-align: left;
+    }
+
+    .nav-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .nav-item.active {
+      color: white;
+      background: rgba(0, 0, 0, 0.2);
+      box-shadow: inset 4px 0 0 var(--aqua);
+    }
+
+    .nav-icon {
+      width: 25px;
+      text-align: center;
+      font-size: 19px;
+    }
+
+    .student-profile {
+      margin-top: auto;
+      padding: 18px 8px 0;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .avatar {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      color: var(--navy);
+      background: var(--aqua);
+      display: grid;
+      place-items: center;
+      font-weight: bold;
+    }
+
+    .student-profile div {
+      display: grid;
+      gap: 3px;
+    }
+
+    .student-profile small {
+      color: #BDD1D9;
+    }
+
+    /* Main area */
+
+    .main {
+      min-width: 0;
+    }
+
+    .topbar {
+      min-height: 88px;
+      padding: 18px 32px;
+      background: white;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .welcome h1 {
+      margin: 0;
+      color: var(--navy);
+      font-size: 27px;
+    }
+
+    .welcome p {
+      margin: 5px 0 0;
+      color: var(--muted);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .search {
+      width: 245px;
+      padding: 11px 14px;
+      border: 1px solid #CAD4D8;
+      border-radius: 8px;
+      background: #FCFCFA;
+    }
+
+    .notification {
+      width: 42px;
+      height: 42px;
+      border: 1px solid #CAD4D8;
+      border-radius: 50%;
+      background: white;
+      position: relative;
+    }
+
+    .notification::after {
+      content: "3";
+      position: absolute;
+      top: -4px;
+      right: -3px;
+      width: 18px;
+      height: 18px;
+      color: white;
+      background: #E76F51;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 11px;
+      font-weight: bold;
+    }
+
+    .content {
+      padding: 24px 30px 35px;
+    }
+
+    /* Feedback banner */
+
+    .feedback-banner {
+      padding: 25px 30px;
+      border: 1px solid rgba(42, 157, 143, 0.28);
+      border-radius: 14px;
+      background:
+        linear-gradient(100deg,
+          #EAF7F5,
+          #F4FAF8);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .feedback-banner h2 {
+      margin: 0;
+      color: var(--navy);
+      font-size: 24px;
+    }
+
+    .feedback-banner p {
+      margin: 8px 0 17px;
+      color: var(--muted);
+    }
+
+    .primary-button {
+      padding: 12px 19px;
+      color: white;
+      border: 0;
+      border-radius: 8px;
+      background: var(--teal);
+      box-shadow: 0 7px 16px rgba(42, 157, 143, 0.2);
+      font-weight: bold;
+    }
+
+    .primary-button:hover {
+      background: var(--teal-dark);
+      transform: translateY(-1px);
+    }
+
+    .language-support {
+      color: var(--deep-ocean);
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    /* Status cards */
+
+    .status-cards {
+      margin: 20px 0;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 17px;
+    }
+
+    .status-card {
+      padding: 19px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: white;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .status-icon {
+      width: 49px;
+      height: 49px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-size: 21px;
+      font-weight: bold;
+    }
+
+    .submitted .status-icon,
+    .received .status-icon {
+      color: var(--deep-ocean);
+      background: var(--blue-soft);
+    }
+
+    .review .status-icon {
+      color: var(--amber);
+      background: var(--amber-soft);
+    }
+
+    .action .status-icon {
+      color: var(--teal-dark);
+      background: var(--teal-soft);
+    }
+
+    .status-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .status-card strong {
+      display: block;
+      margin-top: 3px;
+      color: var(--navy);
+      font-size: 27px;
+    }
+
+    /* Dashboard content */
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1.45fr 1fr;
+      gap: 18px;
+    }
+
+    .panel {
+      padding: 21px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: white;
+    }
+
+    .panel-heading {
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-heading h3,
+    .panel>h3 {
+      margin: 0;
+      color: var(--navy);
+      font-size: 19px;
+    }
+
+    .text-button {
+      color: var(--teal-dark);
+      border: 0;
+      background: transparent;
+      font-weight: bold;
+    }
+
+    /* Recent feedback */
+
+    .feedback-row {
+      padding: 14px 0;
+      border-top: 1px solid #E8E2D8;
+      display: grid;
+      grid-template-columns: 40px 1fr auto 90px;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .feedback-number {
+      width: 34px;
+      height: 34px;
+      border-radius: 7px;
+      background: #F0F3F3;
+      display: grid;
+      place-items: center;
+      font-weight: bold;
+    }
+
+    .feedback-information {
+      display: grid;
+      gap: 4px;
+    }
+
+    .feedback-information small,
+    .feedback-date {
+      color: var(--muted);
+    }
+
+    .status {
+      padding: 6px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      white-space: nowrap;
+    }
+
+    .under-review {
+      color: #9A5A10;
+      background: var(--amber-soft);
+    }
+
+    .action-taken {
+      color: #136D65;
+      background: var(--teal-soft);
+    }
+
+    .received-status {
+      color: var(--deep-ocean);
+      background: var(--blue-soft);
+    }
+
+    /* Timeline */
+
+    .timeline {
+      margin: 20px 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .timeline li {
+      min-height: 67px;
+      padding: 0 0 18px 38px;
+      position: relative;
+    }
+
+    .timeline li::before {
+      content: "";
+      position: absolute;
+      top: 4px;
+      left: 7px;
+      width: 15px;
+      height: 15px;
+      border: 3px solid #AEB9BE;
+      border-radius: 50%;
+      background: white;
+    }
+
+    .timeline li::after {
+      content: "";
+      position: absolute;
+      top: 23px;
+      bottom: 0;
+      left: 15px;
+      width: 2px;
+      background: #D5DCDE;
+    }
+
+    .timeline li:last-child::after {
+      display: none;
+    }
+
+    .timeline .complete::before {
+      border-color: var(--teal);
+      background: var(--teal);
+    }
+
+    .timeline .current::before {
+      border-color: var(--amber);
+      background: var(--amber-soft);
+    }
+
+    .timeline b,
+    .timeline small {
+      display: block;
+    }
+
+    .timeline small {
+      margin-top: 4px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .complete b {
+      color: var(--teal-dark);
+    }
+
+    .current b {
+      color: var(--amber);
+    }
+
+    /* Updates and help */
+
+    .updates {
+      margin-top: 18px;
+    }
+
+    .update {
+      padding: 14px 0;
+      border-top: 1px solid #E8E2D8;
+      display: grid;
+      gap: 5px;
+    }
+
+    .update small {
+      color: var(--muted);
+    }
+
+    .help-panel {
+      background:
+        linear-gradient(135deg,
+          #FFFFFF,
+          #EFF8F6);
+    }
+
+    .help-panel p {
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    /* Responsive design */
+
+    @media (max-width: 1050px) {
+      .dashboard {
+        grid-template-columns: 82px 1fr;
+      }
+
+      .logo {
+        margin-left: 1px;
+      }
+
+      .logo strong,
+      .nav-item span:last-child,
+      .student-profile div {
+        display: none;
+      }
+
+      .nav-item {
+        justify-content: center;
+      }
+
+      .student-profile {
+        justify-content: center;
+      }
+
+      .status-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 760px) {
+      .dashboard {
+        display: block;
+      }
+
+      .sidebar {
+        min-height: auto;
+        padding: 13px 18px;
+        flex-direction: row;
+        align-items: center;
+      }
+
+      .logo {
+        margin: 0;
+      }
+
+      .logo strong {
+        display: block;
+      }
+
+      .navigation {
+        display: none;
+      }
+
+      .student-profile {
+        margin: 0 0 0 auto;
+        padding: 0;
+        border: 0;
+      }
+
+      .topbar {
+        padding: 18px;
+      }
+
+      .search,
+      .top-actions strong {
+        display: none;
+      }
+
+      .content {
+        padding: 16px;
+      }
+
+      .feedback-banner {
+        display: block;
+      }
+
+      .language-support {
+        display: block;
+        margin-top: 20px;
+      }
+
+      .status-cards {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .feedback-row {
+        grid-template-columns: 38px 1fr auto;
+      }
+
+      .feedback-date {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="dashboard">
+
+    <aside class="sidebar">
+      <div class="logo">
+        <div class="logo-mark">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+
+        <strong>EduInSight</strong>
+      </div>
+
+      <nav class="navigation">
+        <button class="nav-item active">
+          <span class="nav-icon">⌂</span>
+          <span>Home</span>
+        </button>
+
+        <button class="nav-item" id="submitNavigation">
+          <span class="nav-icon">✎</span>
+          <span>Submit Feedback</span>
+        </button>
+
+        <button class="nav-item">
+          <span class="nav-icon">▤</span>
+          <span>My Feedback</span>
+        </button>
+
+        <button class="nav-item">
+          <span class="nav-icon">◉</span>
+          <span>University Updates</span>
+        </button>
+
+        <button class="nav-item">
+          <span class="nav-icon">♢</span>
+          <span>Notifications</span>
+        </button>
+      </nav>
+
+      <div class="student-profile">
+        <span class="avatar">SM</span>
+
+        <div>
+          <strong>Sajda Maryam</strong>
+          <small>Student View</small>
+        </div>
+      </div>
+    </aside>
+
+    <section class="main">
+
+      <header class="topbar">
+        <div class="welcome">
+          <h1>Good Morning, S. Maryam</h1>
+          <p>BS Computer Science · Semester 3</p>
+        </div>
+
+        <div class="top-actions">
+          <input type="search" class="search" placeholder="Search...">
+
+          <button class="notification" title="Notifications">
+            ♢
+          </button>
+
+          <span class="avatar">SM</span>
+          <strong>Maryam</strong>
+        </div>
+      </header>
+
+      <div class="content">
+
+        <section class="feedback-banner">
+          <div>
+            <h2>Your voice can improve learning</h2>
+
+            <p>
+              Share what is working, where you are struggling,
+              or what needs attention.
+            </p>
+
+            <button type="button" class="primary-button"
+              onclick="window.location.href='submit_feedback_wireframe.html'">
+              Submit New Feedback →
+            </button>
+          </div>
+
+          <span class="language-support">
+            English · Urdu · Roman Urdu · Mixed
+          </span>
+        </section>
+
+        <section class="status-cards">
+
+          <article class="status-card submitted">
+            <span class="status-icon">▤</span>
+
+            <div>
+              <p>Total Submitted</p>
+              <strong>6</strong>
+            </div>
+          </article>
+
+          <article class="status-card received">
+            <span class="status-icon">↓</span>
+
+            <div>
+              <p>Received</p>
+              <strong>2</strong>
+            </div>
+          </article>
+
+          <article class="status-card review">
+            <span class="status-icon">◷</span>
+
+            <div>
+              <p>Under Review</p>
+              <strong>1</strong>
+            </div>
+          </article>
+
+          <article class="status-card action">
+            <span class="status-icon">✓</span>
+
+            <div>
+              <p>Action Taken</p>
+              <strong>3</strong>
+            </div>
+          </article>
+
+        </section>
+
+        <section class="dashboard-grid">
+
+          <article class="panel">
+            <div class="panel-heading">
+              <h3>My Recent Feedback</h3>
+
+              <button class="text-button">
+                View all feedback →
+              </button>
+            </div>
+
+            <div class="feedback-row">
+              <span class="feedback-number">1</span>
+
+              <span class="feedback-information">
+                <strong>Pointers and abstraction</strong>
+                <small>Object-Oriented Programming</small>
+              </span>
+
+              <span class="status under-review">
+                Under Review
+              </span>
+
+              <small class="feedback-date">2 days ago</small>
+            </div>
+
+            <div class="feedback-row">
+              <span class="feedback-number">2</span>
+
+              <span class="feedback-information">
+                <strong>Wi-Fi disconnects in Lab 2</strong>
+                <small>Campus Facilities</small>
+              </span>
+
+              <span class="status action-taken">
+                Action Taken
+              </span>
+
+              <small class="feedback-date">6 days ago</small>
+            </div>
+
+            <div class="feedback-row">
+              <span class="feedback-number">3</span>
+
+              <span class="feedback-information">
+                <strong>Assignment instructions unclear</strong>
+                <small>Data Structures</small>
+              </span>
+
+              <span class="status received-status">
+                Received
+              </span>
+
+              <small class="feedback-date">1 week ago</small>
+            </div>
+          </article>
+
+          <article class="panel">
+            <h3>Feedback Status</h3>
+
+            <ol class="timeline">
+              <li class="complete">
+                <b>Submitted</b>
+                <small>
+                  Your feedback was submitted successfully.
+                </small>
+              </li>
+
+              <li class="complete">
+                <b>Analysed</b>
+                <small>
+                  EduInSight identified the reported issue.
+                </small>
+              </li>
+
+              <li class="current">
+                <b>Under Review</b>
+                <small>
+                  The relevant team is reviewing the evidence.
+                </small>
+              </li>
+
+              <li>
+                <b>Action Update</b>
+                <small>
+                  You will be notified when action is taken.
+                </small>
+              </li>
+            </ol>
+          </article>
+
+          <article class="panel">
+            <div class="panel-heading">
+              <h3>Latest University Updates</h3>
+
+              <button class="text-button">
+                View all updates
+              </button>
+            </div>
+
+            <div class="updates">
+              <div class="update">
+                <strong>
+                  Additional OOP clarification session scheduled
+                  for Monday
+                </strong>
+
+                <small>18 August 2026 · Academics</small>
+              </div>
+
+              <div class="update">
+                <strong>
+                  Lab 2 network maintenance completed
+                </strong>
+
+                <small>15 August 2026 · Campus Facilities</small>
+              </div>
+            </div>
+          </article>
+
+          <article class="panel help-panel">
+            <h3>Need help expressing your feedback?</h3>
+
+            <p>
+              View examples and practical guidance for writing
+              clear and useful feedback.
+            </p>
+
+            <button class="primary-button">
+              View Feedback Guide →
+            </button>
+          </article>
+
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const submitFeedbackButton =
+      document.getElementById("submitFeedbackButton");
+
+    const submitNavigation =
+      document.getElementById("submitNavigation");
+
+    function showNextStep() {
+      alert(
+        "Next screen: multilingual student feedback form."
+      );
+    }
+
+    function showNextStep() {
+      window.location.href =
+        "submit_feedback_wireframe.html";
+    }
+
+    submitNavigation.addEventListener(
+      "click",
+      showNextStep
+    );
+  </script>
+</body>
+
+</html>

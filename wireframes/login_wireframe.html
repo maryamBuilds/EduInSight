@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduInSight — Login Wireframe</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            color: #222;
+            background: #eeeeee;
+        }
+
+        .login-page {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 45% 55%;
+        }
+
+        .product-panel {
+            padding: 48px;
+            background: #d7d7d7;
+            border-right: 2px solid #777;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 25px;
+            font-weight: bold;
+        }
+
+        .logo-mark {
+            width: 45px;
+            height: 40px;
+            padding: 7px;
+            border: 3px solid #222;
+            display: flex;
+            align-items: end;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .logo-mark span {
+            width: 6px;
+            background: #222;
+        }
+
+        .logo-mark span:nth-child(1) {
+            height: 10px;
+        }
+
+        .logo-mark span:nth-child(2) {
+            height: 17px;
+        }
+
+        .logo-mark span:nth-child(3) {
+            height: 25px;
+        }
+
+        .product-message {
+            margin: auto;
+            max-width: 520px;
+            text-align: center;
+        }
+
+        .product-message h1 {
+            margin-bottom: 18px;
+            font-size: 40px;
+            line-height: 1.2;
+        }
+
+        .product-message p {
+            font-size: 18px;
+            line-height: 1.6;
+        }
+
+        .process {
+            margin-top: 45px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .process-item {
+            min-width: 85px;
+            padding: 13px 8px;
+            border: 2px solid #666;
+            background: #eeeeee;
+            font-weight: bold;
+        }
+
+        .languages {
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .form-panel {
+            padding: 40px;
+            display: grid;
+            place-items: center;
+            background: #f7f7f7;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 500px;
+            padding: 42px;
+            background: white;
+            border: 2px solid #777;
+        }
+
+        .login-card h2 {
+            margin: 0 0 8px;
+            text-align: center;
+            font-size: 30px;
+        }
+
+        .subtitle {
+            margin-bottom: 30px;
+            text-align: center;
+            color: #555;
+        }
+
+        .field {
+            display: grid;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .field label {
+            font-weight: bold;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #777;
+            background: #fafafa;
+            font-size: 16px;
+        }
+
+        .options {
+            margin-bottom: 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .options label {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        .text-button {
+            border: 0;
+            background: transparent;
+            text-decoration: underline;
+        }
+
+        .sign-in {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #222;
+            background: #444;
+            color: white;
+            font-size: 17px;
+            font-weight: bold;
+        }
+
+        .register {
+            margin: 25px 0 0;
+            text-align: center;
+        }
+
+        .account-note {
+            margin: 24px 0 0;
+            padding-top: 18px;
+            border-top: 1px solid #aaa;
+            color: #555;
+            font-size: 13px;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        @media (max-width: 800px) {
+            .login-page {
+                grid-template-columns: 1fr;
+            }
+
+            .product-panel {
+                min-height: 430px;
+                border-right: 0;
+                border-bottom: 2px solid #777;
+            }
+
+            .product-message h1 {
+                font-size: 30px;
+            }
+
+            .form-panel {
+                padding: 25px 15px;
+            }
+
+            .login-card {
+                padding: 28px 22px;
+            }
+        }
+
+        /* EduInSight visual identity */
+
+        body {
+            color: #17212B;
+            background: #F7F4ED;
+        }
+
+        .product-panel {
+            color: #FFFFFF;
+            background:
+                radial-gradient(circle at 15% 15%,
+                    rgba(118, 199, 192, 0.16),
+                    transparent 32%),
+                linear-gradient(145deg,
+                    #0B1F33 0%,
+                    #12344D 100%);
+            border-right: 0;
+        }
+
+        .logo-mark {
+            color: #76C7C0;
+            border-color: #76C7C0;
+        }
+
+        .logo-mark span {
+            background: #76C7C0;
+        }
+
+        .product-message h1 {
+            color: #FFFFFF;
+        }
+
+        .product-message h1::after {
+            content: "";
+            display: block;
+            width: 75px;
+            height: 4px;
+            margin: 22px auto 0;
+            border-radius: 20px;
+            background: #2A9D8F;
+        }
+
+        .product-message p {
+            color: #D6E3E8;
+        }
+
+        .process-item {
+            color: #FFFFFF;
+            border: 1px solid rgba(118, 199, 192, 0.55);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        .process>span {
+            color: #76C7C0;
+        }
+
+        .languages {
+            color: #C4D9DF;
+        }
+
+        .form-panel {
+            background: #F7F4ED;
+        }
+
+        .login-card {
+            border: 1px solid #DDD6C8;
+            border-radius: 18px;
+            background: #FFFFFF;
+            box-shadow: 0 20px 55px rgba(11, 31, 51, 0.12);
+        }
+
+        .login-card h2 {
+            color: #0B1F33;
+        }
+
+        .subtitle {
+            color: #66727D;
+        }
+
+        .field label {
+            color: #17212B;
+        }
+
+        .field input {
+            color: #17212B;
+            border: 1px solid #C9D2D5;
+            border-radius: 9px;
+            background: #FCFCFA;
+            transition: 0.2s ease;
+        }
+
+        .field input:focus {
+            border-color: #2A9D8F;
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(42, 157, 143, 0.12);
+        }
+
+        .options {
+            color: #66727D;
+        }
+
+        .text-button {
+            color: #167D75;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .text-button:hover {
+            color: #0B5E58;
+            text-decoration: underline;
+        }
+
+        .sign-in {
+            color: #FFFFFF;
+            border: 0;
+            border-radius: 9px;
+            background: #2A9D8F;
+            box-shadow: 0 8px 20px rgba(42, 157, 143, 0.22);
+            transition: 0.2s ease;
+        }
+
+        .sign-in:hover {
+            background: #21867B;
+            transform: translateY(-1px);
+        }
+
+        .account-note {
+            color: #66727D;
+            border-top-color: #E4DED2;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="login-page">
+
+        <section class="product-panel">
+            <div class="logo">
+                <div class="logo-mark" aria-label="EduInSight graph logo">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+
+                EduInSight
+            </div>
+
+            <div class="product-message">
+                <h1>Student voice. Clear insight. Visible action.</h1>
+
+                <p>
+                    EduInSight converts multilingual student feedback into
+                    evidence-backed academic and institutional improvements.
+                </p>
+
+                <div class="process">
+                    <div class="process-item">Feedback</div>
+                    <span>→</span>
+                    <div class="process-item">Insight</div>
+                    <span>→</span>
+                    <div class="process-item">Action</div>
+                    <span>→</span>
+                    <div class="process-item">Update</div>
+                </div>
+            </div>
+
+            <p class="languages">
+                English · Urdu · Roman Urdu · Mixed Urdu–English
+            </p>
+        </section>
+
+        <section class="form-panel">
+            <form class="login-card" id="loginForm">
+
+                <h2>Welcome back</h2>
+
+                <p class="subtitle">
+                    Sign in to continue to EduInSight
+                </p>
+
+                <div class="field">
+                    <label for="email">University email</label>
+
+                    <input type="email" id="email" placeholder="you@university.edu.pk" required>
+                </div>
+
+                <div class="field">
+                    <label for="password">Password</label>
+
+                    <input type="password" id="password" placeholder="Enter your password" required>
+                </div>
+
+                <div class="options">
+                    <label>
+                        <input type="checkbox">
+                        Remember me
+                    </label>
+
+                    <button type="button" class="text-button">
+                        Forgot password?
+                    </button>
+                </div>
+
+                <button type="submit" class="sign-in">
+                    Sign In
+                </button>
+
+                <p class="register">
+                    Student?
+                    <button type="button" class="text-button">
+                        Create an account
+                    </button>
+                </p>
+
+                <p class="account-note">
+                    Teacher and administrator accounts are issued or approved
+                    by the university. Users do not select their role during login.
+                </p>
+
+            </form>
+        </section>
+
+    </main>
+
+    <script>
+        const loginForm = document.getElementById("loginForm");
+
+        loginForm.addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            alert(
+                "Wireframe demonstration only. Authentication will be connected during backend development."
+            );
+        });
+    </script>
+</body>
+
+</html>
