@@ -348,7 +348,7 @@ STABLE
 SECURITY DEFINER
 SET search_path = ''
 AS $$
-  SELECT pg_catalog.coalesce(pg_catalog.array_agg(course_section_id), '{}')
+  SELECT COALESCE(pg_catalog.array_agg(course_section_id), ARRAY[]::uuid[])
   FROM public.teacher_assignments
   WHERE teacher_id = p_teacher_id;
 $$;
@@ -386,7 +386,7 @@ STABLE
 SECURITY DEFINER
 SET search_path = ''
 AS $$
-  SELECT pg_catalog.coalesce(pg_catalog.array_agg(course_section_id), '{}')
+  SELECT COALESCE(pg_catalog.array_agg(course_section_id), ARRAY[]::uuid[])
   FROM public.teacher_assignments
   WHERE teacher_id = auth.uid();
 $$;
@@ -441,7 +441,7 @@ BEGIN
   INSERT INTO public.profiles (id, full_name, email, role, programme, study_structure, study_stage, avatar_initials)
   VALUES (
     NEW.id,
-    pg_catalog.coalesce(NEW.raw_user_meta_data->>'full_name', ''),
+    COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
     NEW.email,
     'student',
     NEW.raw_user_meta_data->>'programme',

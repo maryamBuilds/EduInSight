@@ -608,11 +608,11 @@ BEGIN
   RETURN QUERY
   UPDATE public.actions
   SET
-    title = pg_catalog.coalesce(p_title, public.actions.title),
-    status = pg_catalog.coalesce(p_status, public.actions.status),
-    responsible_department = pg_catalog.coalesce(p_responsible_department, public.actions.responsible_department),
-    responsible_person = pg_catalog.coalesce(p_responsible_person, public.actions.responsible_person),
-    deadline = pg_catalog.coalesce(p_deadline, public.actions.deadline),
+    title = COALESCE(p_title, public.actions.title),
+    status = COALESCE(p_status, public.actions.status),
+    responsible_department = COALESCE(p_responsible_department, public.actions.responsible_department),
+    responsible_person = COALESCE(p_responsible_person, public.actions.responsible_person),
+    deadline = COALESCE(p_deadline, public.actions.deadline),
     updated_at = pg_catalog.now()
   WHERE public.actions.id = p_action_id
     AND public.actions.action_type = 'teaching'
