@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+/*
+  EduInSight — approved visual identity palette
+  Navy:   #0B1F33
+  Ocean:  #12344D
+  Teal:   #2A9D8F
+  Teal-dark: #21867B
+  Aqua:   #76C7C0
+  Ivory:  #F7F4ED
+*/
+
+@theme {
+  --color-navy: #0B1F33;
+  --color-ocean: #12344D;
+  --color-teal: #2A9D8F;
+  --color-teal-dark: #21867B;
+  --color-aqua: #76C7C0;
+  --color-ivory: #F7F4ED;
+
+  --color-text: #17212B;
+  --color-muted: #66727D;
+  --color-border: #DDD6C8;
+
+  --color-soft-teal: #E6F4F1;
+  --color-soft-blue: #EAF1F5;
+  --color-soft-amber: #FFF1DC;
+  --color-soft-red: #FDEBED;
+
+  --color-success: #17806D;
+  --color-danger: #D94A5A;
+  --color-warning: #D98B28;
+}
+
+/* Base styles */
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  color: var(--color-text);
+  background: var(--color-ivory);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
