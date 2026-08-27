@@ -1,276 +1,336 @@
--- EduInSight — Row Level Security policies
+-- EduInSight — Row Level Security policies and table privileges
 -- Migration: 003_rls_policies.sql
 --
+-- This file configures RLS policies and table-level GRANTs.
 -- RLS controls which ROWS each role can access on base tables.
--- Column-level filtering (e.g. hiding student_id from teachers) is
--- handled by the views and functions in 002_views.sql, NOT by RLS.
+-- Column-level filtering is handled by views/RPCs in 002_views.sql.
+--
+-- Table privileges are configured as follows:
+--   - All privileges revoked from anon and authenticated on every app table
+--   - Reference tables receive SELECT for authenticated (for dropdowns)
+--   - All other data access goes through views or SECURITY DEFINER RPCs
 --
 -- Role summary:
---   student     — own profile, own feedback (INSERT only),
---                 published updates scoped to own feedback chain,
---                 reference data
---   teacher     — NO direct access to base feedback/extracted_issues/
---                 cluster_feedback/actions/action_updates tables;
---                 ALL data access through views in 002_views.sql
---   admin       — management access to non-sensitive data on base tables;
---                 sensitive feedback through sensitive_feedback_for_admin()
+--   student  — own profile, own feedback (via submit_feedback RPC),
+--              own enrolments, published updates (via view), reference data
+--   teacher  — own profile, own assignments, teacher-safe views/RPCs,
+--              NO direct base-table access to feedback/clusters/actions
+--   admin    — management access to non-sensitive data on base tables;
+--              sensitive feedback through sensitive_feedback_for_admin()
 --
--- SECURITY NOTES (v2 — security review corrections):
---   1. Teacher SELECT policy on base feedback table REMOVED.
---      Teachers access feedback ONLY through feedback_for_teacher view,
---      which excludes student_id (column-level anonymisation).
---   2. Student UPDATE policy on feedback REMOVED.
---      Students can INSERT but cannot modify protected fields
---      (status, student_id, is_sensitive, analysed_at, reference_number).
---   3. Admin SELECT/UPDATE on base feedback EXCLUDES is_sensitive = true.
---      Sensitive feedback accessible only through
---      sensitive_feedback_for_admin() SECURITY DEFINER function.
---   4. Action updates scoped to student's own feedback chain via view.
---   5. Teacher write policies on analysis/management tables REMOVED
---      (write operations handled by admin/AI pipeline via service role).
+-- Security validation tests live in supabase/tests/database_security.sql
+-- (not in production migrations).
 
 -- ============================================================================
--- ENABLE RLS ON ALL APPLICATION TABLES
+-- 1. ENABLE RLS ON ALL APPLICATION TABLES
 -- ============================================================================
 
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE departments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE courses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE course_sections ENABLE ROW LEVEL SECURITY;
-ALTER TABLE teacher_assignments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE feedback ENABLE ROW LEVEL SECURITY;
-ALTER TABLE extracted_issues ENABLE ROW LEVEL SECURITY;
-ALTER TABLE issue_clusters ENABLE ROW LEVEL SECURITY;
-ALTER TABLE cluster_feedback ENABLE ROW LEVEL SECURITY;
-ALTER TABLE cluster_tag_synonyms ENABLE ROW LEVEL SECURITY;
-ALTER TABLE actions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE action_updates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.departments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.courses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.course_sections ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.teacher_assignments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.course_enrolments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.feedback ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.extracted_issues ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.issue_clusters ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.cluster_feedback ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.cluster_tag_synonyms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.actions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.action_updates ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================================
+-- 2. TABLE PRIVILEGES
+-- ============================================================================
+-- Revoke everything from anon and authenticated, then grant back the minimum.
+-- Teachers access data through views/RPCs (which run as owner, bypassing RLS
+-- and table-level grants).  Students use submit_feedback RPC instead of
+-- direct INSERT.  No anon access to any application data.
+
+-- Revoke from anon on ALL application tables
+REVOKE ALL ON public.profiles FROM anon;
+REVOKE ALL ON public.departments FROM anon;
+REVOKE ALL ON public.courses FROM anon;
+REVOKE ALL ON public.course_sections FROM anon;
+REVOKE ALL ON public.teacher_assignments FROM anon;
+REVOKE ALL ON public.course_enrolments FROM anon;
+REVOKE ALL ON public.feedback FROM anon;
+REVOKE ALL ON public.extracted_issues FROM anon;
+REVOKE ALL ON public.issue_clusters FROM anon;
+REVOKE ALL ON public.cluster_feedback FROM anon;
+REVOKE ALL ON public.cluster_tag_synonyms FROM anon;
+REVOKE ALL ON public.actions FROM anon;
+REVOKE ALL ON public.action_updates FROM anon;
+
+-- Revoke from authenticated on ALL application tables
+REVOKE ALL ON public.profiles FROM authenticated;
+REVOKE ALL ON public.departments FROM authenticated;
+REVOKE ALL ON public.courses FROM authenticated;
+REVOKE ALL ON public.course_sections FROM authenticated;
+REVOKE ALL ON public.teacher_assignments FROM authenticated;
+REVOKE ALL ON public.course_enrolments FROM authenticated;
+REVOKE ALL ON public.feedback FROM authenticated;
+REVOKE ALL ON public.extracted_issues FROM authenticated;
+REVOKE ALL ON public.issue_clusters FROM authenticated;
+REVOKE ALL ON public.cluster_feedback FROM authenticated;
+REVOKE ALL ON public.cluster_tag_synonyms FROM authenticated;
+REVOKE ALL ON public.actions FROM authenticated;
+REVOKE ALL ON public.action_updates FROM authenticated;
+
+-- Grant back minimum required table-level privileges for authenticated.
+-- Reference tables: SELECT for dropdowns (RLS policies restrict rows).
+GRANT SELECT ON public.departments TO authenticated;
+GRANT SELECT ON public.courses TO authenticated;
+GRANT SELECT ON public.course_sections TO authenticated;
+GRANT SELECT ON public.cluster_tag_synonyms TO authenticated;
+
+-- Profiles: SELECT needed for own-profile and admin user management RLS.
+GRANT SELECT ON public.profiles TO authenticated;
+
+-- Teacher assignments: SELECT needed for own-assignment RLS policy.
+GRANT SELECT ON public.teacher_assignments TO authenticated;
+
+-- Course enrolments: SELECT needed for own-enrolment RLS policy.
+GRANT SELECT ON public.course_enrolments TO authenticated;
+
+-- Feedback: SELECT needed for own-feedback RLS policy.
+-- No INSERT grant: students submit through submit_feedback RPC only.
+GRANT SELECT ON public.feedback TO authenticated;
+
+-- All other tables (extracted_issues, issue_clusters, cluster_feedback,
+-- actions, action_updates): NO table-level grants for authenticated.
+-- Teachers access via views/RPCs; students access via published_action_updates
+-- view; admins access via RLS policies (which require the SELECT grant below).
+GRANT SELECT ON public.extracted_issues TO authenticated;
+GRANT SELECT ON public.issue_clusters TO authenticated;
+GRANT SELECT ON public.cluster_feedback TO authenticated;
+GRANT SELECT ON public.actions TO authenticated;
+GRANT SELECT ON public.action_updates TO authenticated;
+
+-- Admin UPDATE grants (needed for admin RLS UPDATE policies to take effect).
+GRANT UPDATE ON public.profiles TO authenticated;
+GRANT UPDATE ON public.feedback TO authenticated;
+
+-- Admin write grants for reference and management tables.
+GRANT INSERT, UPDATE, DELETE ON public.departments TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.courses TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.course_sections TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.teacher_assignments TO authenticated;
+GRANT INSERT, DELETE ON public.course_enrolments TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.extracted_issues TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.issue_clusters TO authenticated;
+GRANT INSERT, DELETE ON public.cluster_feedback TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.cluster_tag_synonyms TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.actions TO authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.action_updates TO authenticated;
+
+-- ============================================================================
+-- 3. RLS POLICIES
+-- ============================================================================
+
+-- --------------------------------------------------------------------------
 -- PROFILES
--- ============================================================================
+-- --------------------------------------------------------------------------
 
--- All authenticated users can read their own profile
-CREATE POLICY profiles_read_own ON profiles
+CREATE POLICY profiles_read_own ON public.profiles
   FOR SELECT TO authenticated
   USING (id = auth.uid());
 
--- Admins can read all profiles (user management)
-CREATE POLICY profiles_admin_read ON profiles
+CREATE POLICY profiles_admin_read ON public.profiles
   FOR SELECT TO authenticated
-  USING (get_user_role() = 'admin');
+  USING (private.get_user_role() = 'admin');
 
--- Admins can update any profile (role assignment, deactivation)
-CREATE POLICY profiles_admin_update ON profiles
+CREATE POLICY profiles_admin_update ON public.profiles
   FOR UPDATE TO authenticated
-  USING (get_user_role() = 'admin');
+  USING (private.get_user_role() = 'admin');
 
--- Admins can insert profiles (e.g. pre-creating teacher accounts)
-CREATE POLICY profiles_admin_insert ON profiles
+CREATE POLICY profiles_admin_insert ON public.profiles
   FOR INSERT TO authenticated
-  WITH CHECK (get_user_role() = 'admin');
+  WITH CHECK (private.get_user_role() = 'admin');
 
--- ============================================================================
--- DEPARTMENTS (reference data — read by all; managed by admin)
--- ============================================================================
+-- --------------------------------------------------------------------------
+-- DEPARTMENTS (reference data: read by all; managed by admin)
+-- --------------------------------------------------------------------------
 
-CREATE POLICY departments_read_all ON departments
+CREATE POLICY departments_read_all ON public.departments
   FOR SELECT TO authenticated
   USING (true);
 
-CREATE POLICY departments_admin_write ON departments
+CREATE POLICY departments_admin_write ON public.departments
   FOR ALL TO authenticated
-  USING (get_user_role() = 'admin')
-  WITH CHECK (get_user_role() = 'admin');
+  USING (private.get_user_role() = 'admin')
+  WITH CHECK (private.get_user_role() = 'admin');
 
--- ============================================================================
--- COURSES (reference data — read by all; managed by admin)
--- ============================================================================
+-- --------------------------------------------------------------------------
+-- COURSES (reference data: read by all; managed by admin)
+-- --------------------------------------------------------------------------
 
-CREATE POLICY courses_read_all ON courses
+CREATE POLICY courses_read_all ON public.courses
   FOR SELECT TO authenticated
   USING (true);
 
-CREATE POLICY courses_admin_write ON courses
+CREATE POLICY courses_admin_write ON public.courses
   FOR ALL TO authenticated
-  USING (get_user_role() = 'admin')
-  WITH CHECK (get_user_role() = 'admin');
+  USING (private.get_user_role() = 'admin')
+  WITH CHECK (private.get_user_role() = 'admin');
 
--- ============================================================================
--- COURSE SECTIONS
--- ============================================================================
+-- --------------------------------------------------------------------------
+-- COURSE SECTIONS (reference data: read by all; managed by admin)
+-- --------------------------------------------------------------------------
 
--- Everyone reads course sections (needed for dropdowns)
-CREATE POLICY course_sections_read_all ON course_sections
+CREATE POLICY course_sections_read_all ON public.course_sections
   FOR SELECT TO authenticated
   USING (true);
 
-CREATE POLICY course_sections_admin_write ON course_sections
+CREATE POLICY course_sections_admin_write ON public.course_sections
   FOR ALL TO authenticated
-  USING (get_user_role() = 'admin')
-  WITH CHECK (get_user_role() = 'admin');
+  USING (private.get_user_role() = 'admin')
+  WITH CHECK (private.get_user_role() = 'admin');
 
--- ============================================================================
+-- --------------------------------------------------------------------------
 -- TEACHER ASSIGNMENTS
--- ============================================================================
+-- --------------------------------------------------------------------------
 
--- Teachers read their own assignments
-CREATE POLICY teacher_assignments_read_own ON teacher_assignments
+CREATE POLICY teacher_assignments_read_own ON public.teacher_assignments
   FOR SELECT TO authenticated
   USING (
-    get_user_role() = 'teacher' AND teacher_id = auth.uid()
+    private.get_user_role() = 'teacher' AND teacher_id = auth.uid()
   );
 
--- Admins read all assignments
-CREATE POLICY teacher_assignments_admin_read ON teacher_assignments
+CREATE POLICY teacher_assignments_admin_read ON public.teacher_assignments
   FOR SELECT TO authenticated
-  USING (get_user_role() = 'admin');
+  USING (private.get_user_role() = 'admin');
 
--- Admins manage assignments (assign teachers to courses)
-CREATE POLICY teacher_assignments_admin_write ON teacher_assignments
+CREATE POLICY teacher_assignments_admin_write ON public.teacher_assignments
   FOR ALL TO authenticated
-  USING (get_user_role() = 'admin')
-  WITH CHECK (get_user_role() = 'admin');
+  USING (private.get_user_role() = 'admin')
+  WITH CHECK (private.get_user_role() = 'admin');
 
--- ============================================================================
--- FEEDBACK
--- ============================================================================
--- TEACHERS: no SELECT policy on the base table.
--- Teachers access feedback ONLY through the feedback_for_teacher view
--- (002_views.sql) which excludes student_id for anonymisation.
---
--- STUDENTS: INSERT only. No UPDATE policy — students cannot modify
--- protected fields (status, is_sensitive, analysed_at, reference_number,
--- student_id, submitted_at).
+-- --------------------------------------------------------------------------
+-- COURSE ENROLMENTS
+-- --------------------------------------------------------------------------
 
--- Students read their own feedback
-CREATE POLICY feedback_student_read ON feedback
+CREATE POLICY course_enrolments_student_read ON public.course_enrolments
   FOR SELECT TO authenticated
   USING (
-    get_user_role() = 'student' AND student_id = auth.uid()
+    private.get_user_role() = 'student' AND student_id = auth.uid()
   );
 
--- Students insert their own feedback (student_id must match caller)
-CREATE POLICY feedback_student_insert ON feedback
+CREATE POLICY course_enrolments_admin_read ON public.course_enrolments
+  FOR SELECT TO authenticated
+  USING (private.get_user_role() = 'admin');
+
+CREATE POLICY course_enrolments_admin_insert ON public.course_enrolments
   FOR INSERT TO authenticated
-  WITH CHECK (
-    get_user_role() = 'student' AND student_id = auth.uid()
+  WITH CHECK (private.get_user_role() = 'admin');
+
+CREATE POLICY course_enrolments_admin_delete ON public.course_enrolments
+  FOR DELETE TO authenticated
+  USING (private.get_user_role() = 'admin');
+
+-- --------------------------------------------------------------------------
+-- FEEDBACK
+-- --------------------------------------------------------------------------
+-- Students: read own feedback only.  INSERT via submit_feedback RPC (no
+-- direct INSERT policy).  No UPDATE policy (protected fields locked).
+-- Teachers: no policy (access via feedback_for_teacher view only).
+-- Admins: read/update non-sensitive feedback only.
+
+CREATE POLICY feedback_student_read ON public.feedback
+  FOR SELECT TO authenticated
+  USING (
+    private.get_user_role() = 'student' AND student_id = auth.uid()
   );
 
--- Admins read NON-SENSITIVE feedback only.
--- Sensitive feedback is accessible only through
--- sensitive_feedback_for_admin() SECURITY DEFINER function (002_views.sql).
-CREATE POLICY feedback_admin_read ON feedback
+CREATE POLICY feedback_admin_read ON public.feedback
   FOR SELECT TO authenticated
-  USING (get_user_role() = 'admin' AND is_sensitive = false);
+  USING (private.get_user_role() = 'admin' AND is_sensitive = false);
 
--- Admins update NON-SENSITIVE feedback (change status, analysed_at).
--- Sensitive feedback updates must go through dedicated admin workflows.
-CREATE POLICY feedback_admin_update ON feedback
+CREATE POLICY feedback_admin_update ON public.feedback
   FOR UPDATE TO authenticated
-  USING (get_user_role() = 'admin' AND is_sensitive = false);
+  USING (private.get_user_role() = 'admin' AND is_sensitive = false);
 
--- ============================================================================
+-- --------------------------------------------------------------------------
 -- EXTRACTED ISSUES
--- ============================================================================
--- TEACHERS: no SELECT policy on the base table.
--- Teachers access extracted issues ONLY through the
--- extracted_issues_for_teacher view (002_views.sql).
+-- --------------------------------------------------------------------------
+-- Teachers: no policy (access via extracted_issues_for_teacher view only).
 
--- Admins read all extracted issues
-CREATE POLICY extracted_issues_admin_read ON extracted_issues
+CREATE POLICY extracted_issues_admin_read ON public.extracted_issues
   FOR SELECT TO authenticated
-  USING (get_user_role() = 'admin');
+  USING (private.get_user_role() = 'admin');
 
--- Admins manage extracted issues
-CREATE POLICY extracted_issues_admin_write ON extracted_issues
+CREATE POLICY extracted_issues_admin_write ON public.extracted_issues
   FOR ALL TO authenticated
-  USING (get_user_role() = 'admin')
-  WITH CHECK (get_user_role() = 'admin');
+  USING (private.get_user_role() = 'admin')
+  WITH CHECK (private.get_user_role() = 'admin');
 
--- ============================================================================
+-- --------------------------------------------------------------------------
 -- ISSUE CLUSTERS
--- ============================================================================
--- TEACHERS: no SELECT policy on the base table.
--- Teachers access clusters ONLY through the clusters_for_teacher view
--- (002_views.sql).
+-- --------------------------------------------------------------------------
+-- Teachers: no policy (access via clusters_for_teacher view only).
 
--- Admins read all clusters
-CREATE POLICY clusters_admin_read ON issue_clusters
+CREATE POLICY clusters_admin_read ON public.issue_clusters
   FOR SELECT TO authenticated
-  USING (get_user_role() = 'admin');
+  USING (private.get_user_role() = 'admin');
 
--- Admins manage clusters
-CREATE POLICY clusters_admin_write ON issue_clusters
+CREATE POLICY clusters_admin_write ON public.issue_clusters
   FOR ALL TO authenticated
-  USING (get_user_role() = 'admin')
-  WITH CHECK (get_user_role() = 'admin');
+  USING (private.get_user_role() = 'admin')
+  WITH CHECK (private.get_user_role() = 'admin');
 
--- ============================================================================
+-- --------------------------------------------------------------------------
 -- CLUSTER FEEDBACK (junction table)
--- ============================================================================
--- TEACHERS: no SELECT policy on the base table.
+-- --------------------------------------------------------------------------
 
--- Admins read and manage all junctions
-CREATE POLICY cluster_feedback_admin_read ON cluster_feedback
+CREATE POLICY cluster_feedback_admin_read ON public.cluster_feedback
   FOR SELECT TO authenticated
-  USING (get_user_role() = 'admin');
+  USING (private.get_user_role() = 'admin');
 
-CREATE POLICY cluster_feedback_admin_write ON cluster_feedback
+CREATE POLICY cluster_feedback_admin_write ON public.cluster_feedback
   FOR ALL TO authenticated
-  USING (get_user_role() = 'admin')
-  WITH CHECK (get_user_role() = 'admin');
+  USING (private.get_user_role() = 'admin')
+  WITH CHECK (private.get_user_role() = 'admin');
 
--- ============================================================================
--- CLUSTER TAG SYNONYMS
--- ============================================================================
+-- --------------------------------------------------------------------------
+-- CLUSTER TAG SYNONYMS (reference data: read by all; managed by admin)
+-- --------------------------------------------------------------------------
 
--- All authenticated users can read synonyms (needed for cross-language grouping)
-CREATE POLICY cluster_tag_synonyms_read ON cluster_tag_synonyms
+CREATE POLICY cluster_tag_synonyms_read ON public.cluster_tag_synonyms
   FOR SELECT TO authenticated
   USING (true);
 
--- Admins manage synonyms
-CREATE POLICY cluster_tag_synonyms_admin_write ON cluster_tag_synonyms
+CREATE POLICY cluster_tag_synonyms_admin_write ON public.cluster_tag_synonyms
   FOR ALL TO authenticated
-  USING (get_user_role() = 'admin')
-  WITH CHECK (get_user_role() = 'admin');
+  USING (private.get_user_role() = 'admin')
+  WITH CHECK (private.get_user_role() = 'admin');
 
--- ============================================================================
+-- --------------------------------------------------------------------------
 -- ACTIONS
--- ============================================================================
--- TEACHERS: no SELECT/INSERT/UPDATE policies on the base table.
--- Teaching-action write operations are handled by admin or the
--- AI pipeline via the Supabase service role (bypasses RLS).
+-- --------------------------------------------------------------------------
+-- Teachers: no policy (access via teacher RPCs only).
 
--- Admins read all actions
-CREATE POLICY actions_admin_read ON actions
+CREATE POLICY actions_admin_read ON public.actions
   FOR SELECT TO authenticated
-  USING (get_user_role() = 'admin');
+  USING (private.get_user_role() = 'admin');
 
--- Admins manage all actions
-CREATE POLICY actions_admin_write ON actions
+CREATE POLICY actions_admin_write ON public.actions
   FOR ALL TO authenticated
-  USING (get_user_role() = 'admin')
-  WITH CHECK (get_user_role() = 'admin');
+  USING (private.get_user_role() = 'admin')
+  WITH CHECK (private.get_user_role() = 'admin');
 
--- ============================================================================
+-- --------------------------------------------------------------------------
 -- ACTION UPDATES
--- ============================================================================
--- STUDENTS: no direct SELECT policy on the base table.
--- Students access published updates ONLY through the
--- published_action_updates view (002_views.sql), which scopes results
--- to the student's own feedback chain via cluster_feedback.
---
--- TEACHERS: no policies on the base table.
+-- --------------------------------------------------------------------------
+-- Students: no policy (access via published_action_updates view only).
+-- Teachers: no policy (access via teacher RPCs only).
 
--- Admins read all updates
-CREATE POLICY action_updates_admin_read ON action_updates
+CREATE POLICY action_updates_admin_read ON public.action_updates
   FOR SELECT TO authenticated
-  USING (get_user_role() = 'admin');
+  USING (private.get_user_role() = 'admin');
 
--- Admins manage all updates (publish, approve, edit)
-CREATE POLICY action_updates_admin_write ON action_updates
+CREATE POLICY action_updates_admin_write ON public.action_updates
   FOR ALL TO authenticated
-  USING (get_user_role() = 'admin')
-  WITH CHECK (get_user_role() = 'admin');
+  USING (private.get_user_role() = 'admin')
+  WITH CHECK (private.get_user_role() = 'admin');
+
+-- Security validation tests moved to supabase/tests/database_security.sql
