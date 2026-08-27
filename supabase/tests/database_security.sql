@@ -174,17 +174,19 @@ END $$;
 DO $$
 DECLARE
   v_restricted text[] := ARRAY[
-    'get_teacher_section_ids', 'is_teacher_assigned_to_section',
-    'get_my_section_ids', 'handle_new_user'
+    'get_teacher_section_ids(uuid)',
+    'is_teacher_assigned_to_section(uuid, uuid)',
+    'get_my_section_ids()',
+    'handle_new_user()'
   ];
-  v_fn text;
+  v_sig text;
 BEGIN
-  FOREACH v_fn IN ARRAY v_restricted LOOP
-    IF has_function_privilege('authenticated', 'private.' || v_fn || '()', 'EXECUTE') THEN
-      RAISE EXCEPTION 'private.% must NOT be executable by authenticated', v_fn;
+  FOREACH v_sig IN ARRAY v_restricted LOOP
+    IF has_function_privilege('authenticated', 'private.' || v_sig, 'EXECUTE') THEN
+      RAISE EXCEPTION 'private.% must NOT be executable by authenticated', v_sig;
     END IF;
-    IF has_function_privilege('anon', 'private.' || v_fn || '()', 'EXECUTE') THEN
-      RAISE EXCEPTION 'private.% must NOT be executable by anon', v_fn;
+    IF has_function_privilege('anon', 'private.' || v_sig, 'EXECUTE') THEN
+      RAISE EXCEPTION 'private.% must NOT be executable by anon', v_sig;
     END IF;
   END LOOP;
 
