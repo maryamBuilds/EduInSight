@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import type { ReactNode } from 'react'
 import {
   Home,
@@ -19,6 +19,7 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import type { UserRole } from '@/lib/types'
+import { useAuth } from '@/context/AuthContext'
 import { Logo } from './Logo'
 import { getInitials } from '@/lib/utils'
 
@@ -109,8 +110,16 @@ interface SidebarProps {
  * - Mobile (<768px): hidden; layouts render a drawer instance instead.
  */
 export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose }: SidebarProps) {
+  const { logout } = useAuth()
+  const navigate = useNavigate()
   const navItems = NAV_MAP[role]
   const initials = getInitials(fullName)
+
+  const handleLogout = async () => {
+    await logout()
+    onNavigate?.()
+    navigate('/login', { replace: true })
+  }
 
   /* ── Mobile drawer ── */
   if (mobile) {
@@ -162,17 +171,14 @@ export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose }: 
             </NavLink>
           ))}
 
-          {/* Sign out (teacher & admin only) */}
-          {(role === 'teacher' || role === 'admin') && (
-            <NavLink
-              to="/login"
-              onClick={onNavigate}
-              className="flex items-center gap-[13px] rounded-[9px] px-4 py-3.5 text-left text-[#E5EFF3] transition-colors hover:bg-white/[0.08]"
-            >
-              <LogOut className="h-[19px] w-[19px] shrink-0" aria-hidden="true" />
-              Sign Out
-            </NavLink>
-          )}
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex w-full items-center gap-[13px] rounded-[9px] px-4 py-3.5 text-left text-[#E5EFF3] transition-colors hover:bg-white/[0.08]"
+          >
+            <LogOut className="h-[19px] w-[19px] shrink-0" aria-hidden="true" />
+            Sign Out
+          </button>
         </nav>
 
         {extra}
@@ -234,17 +240,14 @@ export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose }: 
           </NavLink>
         ))}
 
-        {/* Sign out (teacher & admin only) */}
-        {(role === 'teacher' || role === 'admin') && (
-          <NavLink
-            to="/login"
-            onClick={onNavigate}
-            className="flex items-center gap-[13px] rounded-[9px] px-4 py-3.5 text-left text-[#E5EFF3] transition-colors hover:bg-white/[0.08]"
-          >
-            <LogOut className="h-[19px] w-[19px] shrink-0" aria-hidden="true" />
-            <span className="max-lg:hidden">Sign Out</span>
-          </NavLink>
-        )}
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="flex w-full items-center gap-[13px] rounded-[9px] px-4 py-3.5 text-left text-[#E5EFF3] transition-colors hover:bg-white/[0.08]"
+        >
+          <LogOut className="h-[19px] w-[19px] shrink-0" aria-hidden="true" />
+          <span className="max-lg:hidden">Sign Out</span>
+        </button>
       </nav>
 
       {extra}
