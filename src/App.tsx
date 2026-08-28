@@ -14,6 +14,7 @@ import Register from '@/pages/Register'
 import ForgotPassword from '@/pages/ForgotPassword'
 import ResetPassword from '@/pages/ResetPassword'
 import SubmitFeedback from '@/pages/SubmitFeedback'
+import StudentDashboard from '@/pages/student/StudentDashboard'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -208,7 +209,7 @@ export default function App() {
       <Route element={<ProtectedLayout />}>
         <Route element={<RoleGuard allowedRole="student" />}>
           <Route element={<StudentLayout />}>
-            <Route path="/student" element={<Placeholder label="Student Dashboard — Stage 6" />} />
+            <Route path="/student" element={<StudentDashboard />} />
             <Route path="/student/submit" element={<SubmitFeedback />} />
             <Route path="/student/feedback" element={<Placeholder label="My Feedback — Stage 7" />} />
             <Route path="/student/feedback/:id" element={<Placeholder label="Feedback Detail — Stage 7" />} />
