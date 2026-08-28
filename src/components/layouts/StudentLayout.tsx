@@ -5,6 +5,7 @@ import { Sidebar } from '../Sidebar'
 import { Topbar } from '../Topbar'
 import { getTimeGreeting } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
+import { useStudentUpdates } from '@/hooks/useStudentUpdates'
 
 /**
  * Dashboard layout for student routes.
@@ -19,6 +20,7 @@ import { useAuth } from '@/context/AuthContext'
 export function StudentLayout() {
   const { profile } = useAuth()
   const location = useLocation()
+  const { unreadCount } = useStudentUpdates()
   const fullName = profile?.full_name ?? 'Student'
   const displayName = fullName.trim().split(/\s+/)[0] || 'Student'
   const subtitle = [profile?.programme, profile?.study_stage]
@@ -27,12 +29,21 @@ export function StudentLayout() {
   const isSubmitPage = location.pathname === '/student/submit'
   const isFeedbackHistory = location.pathname === '/student/feedback'
   const isFeedbackDetail = location.pathname.startsWith('/student/feedback/')
+  const isUpdatesPage = location.pathname === '/student/updates'
+  const isNotificationsPage = location.pathname === '/student/notifications'
+  const isProfilePage = location.pathname === '/student/profile'
   const pageGreeting = isSubmitPage
     ? 'Submit Feedback'
     : isFeedbackHistory
       ? 'My Feedback'
       : isFeedbackDetail
         ? 'Feedback Details'
+        : isUpdatesPage
+          ? 'University Updates'
+          : isNotificationsPage
+            ? 'Notifications'
+            : isProfilePage
+              ? 'My Profile'
         : `${getTimeGreeting()}, ${displayName}`
   const pageSubtitle = isSubmitPage
     ? 'Help your university understand what needs attention.'
@@ -40,6 +51,12 @@ export function StudentLayout() {
       ? 'Track your submissions and approved responses.'
       : isFeedbackDetail
         ? 'Review your original feedback and its progress.'
+        : isUpdatesPage
+          ? 'View approved responses and action announcements.'
+          : isNotificationsPage
+            ? 'See new responses connected to your feedback.'
+            : isProfilePage
+              ? 'Review your student account and educational details.'
         : subtitle
 
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -94,7 +111,9 @@ export function StudentLayout() {
           greeting={pageGreeting}
           subtitle={pageSubtitle}
           avatarName={fullName}
-          notificationCount={3}
+          avatarHref="/student/profile"
+          notificationCount={unreadCount}
+          notificationHref="/student/notifications"
           actions={isSubmitPage ? (
             <Link
               to="/student"
