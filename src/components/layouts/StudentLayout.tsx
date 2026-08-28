@@ -25,6 +25,22 @@ export function StudentLayout() {
     .filter(Boolean)
     .join(' · ') || 'Student View'
   const isSubmitPage = location.pathname === '/student/submit'
+  const isFeedbackHistory = location.pathname === '/student/feedback'
+  const isFeedbackDetail = location.pathname.startsWith('/student/feedback/')
+  const pageGreeting = isSubmitPage
+    ? 'Submit Feedback'
+    : isFeedbackHistory
+      ? 'My Feedback'
+      : isFeedbackDetail
+        ? 'Feedback Details'
+        : `${getTimeGreeting()}, ${displayName}`
+  const pageSubtitle = isSubmitPage
+    ? 'Help your university understand what needs attention.'
+    : isFeedbackHistory
+      ? 'Track your submissions and approved responses.'
+      : isFeedbackDetail
+        ? 'Review your original feedback and its progress.'
+        : subtitle
 
   const [drawerOpen, setDrawerOpen] = useState(false)
   const openDrawer = useCallback(() => setDrawerOpen(true), [])
@@ -75,8 +91,8 @@ export function StudentLayout() {
 
       <section className="min-w-0">
         <Topbar
-          greeting={isSubmitPage ? 'Submit Feedback' : `${getTimeGreeting()}, ${displayName}`}
-          subtitle={isSubmitPage ? 'Help your university understand what needs attention.' : subtitle}
+          greeting={pageGreeting}
+          subtitle={pageSubtitle}
           avatarName={fullName}
           notificationCount={3}
           actions={isSubmitPage ? (

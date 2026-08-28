@@ -213,6 +213,7 @@ export interface PublishedActionUpdate {
   action_type: ActionType
   action_title: string
   action_status: ActionStatus
+  feedback_id: string
 }
 
 // ---------------------------------------------------------------------------

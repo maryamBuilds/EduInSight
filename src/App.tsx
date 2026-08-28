@@ -15,6 +15,8 @@ import ForgotPassword from '@/pages/ForgotPassword'
 import ResetPassword from '@/pages/ResetPassword'
 import SubmitFeedback from '@/pages/SubmitFeedback'
 import StudentDashboard from '@/pages/student/StudentDashboard'
+import MyFeedback from '@/pages/student/MyFeedback'
+import FeedbackDetail from '@/pages/student/FeedbackDetail'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -211,8 +213,8 @@ export default function App() {
           <Route element={<StudentLayout />}>
             <Route path="/student" element={<StudentDashboard />} />
             <Route path="/student/submit" element={<SubmitFeedback />} />
-            <Route path="/student/feedback" element={<Placeholder label="My Feedback — Stage 7" />} />
-            <Route path="/student/feedback/:id" element={<Placeholder label="Feedback Detail — Stage 7" />} />
+            <Route path="/student/feedback" element={<MyFeedback />} />
+            <Route path="/student/feedback/:id" element={<FeedbackDetail />} />
             <Route path="/student/updates" element={<Placeholder label="University Updates — Stage 6" />} />
             <Route path="/student/notifications" element={<Placeholder label="Notifications — Stage 6" />} />
           </Route>
