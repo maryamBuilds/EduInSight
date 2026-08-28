@@ -203,6 +203,18 @@ export interface ActionUpdate {
   created_at: string
 }
 
+/** Student-safe row exposed by the published_action_updates view. */
+export interface PublishedActionUpdate {
+  id: string
+  action_id: string
+  student_facing_message: string
+  published_at: string | null
+  cluster_id: string
+  action_type: ActionType
+  action_title: string
+  action_status: ActionStatus
+}
+
 // ---------------------------------------------------------------------------
 // Priority calculation types
 // ---------------------------------------------------------------------------
@@ -247,7 +259,10 @@ export interface Database {
       actions: { Row: Action; Insert: Omit<Action, 'id' | 'created_at' | 'updated_at' | 'completed_at'>; Update: Partial<Action> }
       action_updates: { Row: ActionUpdate; Insert: Omit<ActionUpdate, 'id' | 'created_at'>; Update: Partial<ActionUpdate> }
     }
-    Views: Record<string, never>
+    Views: {
+      my_feedback: { Row: Feedback }
+      published_action_updates: { Row: PublishedActionUpdate }
+    }
     Functions: {
       submit_feedback: {
         Args: {
