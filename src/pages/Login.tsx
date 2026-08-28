@@ -52,14 +52,14 @@ export default function Login() {
       <form onSubmit={handleSubmit} noValidate>
         <div className="mb-5 grid gap-2">
           <label htmlFor="email" className="font-bold text-text">
-            University email
+            Email address
           </label>
           <input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@university.edu.pk"
+            placeholder="you@example.com"
             required
             autoComplete="email"
             className="w-full rounded-[9px] border border-[#C9D2D5] bg-[#FCFCFA] px-4 py-3.5 text-text transition-colors focus:border-teal focus:shadow-[0_0_0_4px_rgba(42,157,143,0.12)] focus:outline-none"
