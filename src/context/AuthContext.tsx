@@ -49,8 +49,6 @@ export interface RegisterData {
   email: string
   password: string
   programme: string
-  studyStructure: 'semester' | 'year'
-  studyStage: string
 }
 
 // ---------------------------------------------------------------------------
@@ -74,16 +72,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /* ── Restore session and synchronously mirror auth events ── */
   useEffect(() => {
     let mounted = true
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const sessionTimeout = window.setTimeout(() => {
       if (!mounted) return
-      setUser(session?.user ?? null)
-      if (!session?.user) {
-        setProfile(null)
-        setLoading(false)
-      }
+      setAuthError('Your session could not be restored. Please sign in again.')
       setSessionReady(true)
-    })
+      setLoading(false)
+    }, 8000)
+
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        window.clearTimeout(sessionTimeout)
+        if (!mounted) return
+        setUser((current) =>
+          current?.id === session?.user.id ? current : (session?.user ?? null),
+        )
+        if (!session?.user) {
+          setProfile(null)
+          setLoading(false)
+        }
+        setSessionReady(true)
+      })
+      .catch(() => {
+        window.clearTimeout(sessionTimeout)
+        if (!mounted) return
+        setAuthError('Your session could not be restored. Please sign in again.')
+        setSessionReady(true)
+        setLoading(false)
+      })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -99,8 +114,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setRecoveryMode(false)
           setLoading(false)
         } else if (session?.user) {
-          setUser(session.user)
-          setLoading(true)
+          // Keep the existing object for the same user. Token refresh events
+          // must not restart profile loading and trap the app on its loader.
+          setUser((current) =>
+            current?.id === session.user.id ? current : session.user,
+          )
         }
 
         setSessionReady(true)
@@ -109,35 +127,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return () => {
       mounted = false
+      window.clearTimeout(sessionTimeout)
       subscription.unsubscribe()
     }
   }, [])
 
   /* ── Load the profile outside the auth callback to avoid client lock races ── */
+  const userId = user?.id
+
   useEffect(() => {
     let cancelled = false
 
     if (!sessionReady) return
-    if (!user) return
+    if (!userId) return
 
     const loadProfile = async () => {
       // A new-user trigger may need a moment to create the profile row.
       for (let attempt = 0; attempt < 3; attempt += 1) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .maybeSingle()
+        const controller = new AbortController()
+        const requestTimeout = window.setTimeout(() => controller.abort(), 4000)
+        let data: Profile | null = null
+        let requestFailed = true
+
+        try {
+          const result = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .abortSignal(controller.signal)
+            .maybeSingle()
+          data = result.data as Profile | null
+          requestFailed = Boolean(result.error)
+        } catch {
+          // Keep requestFailed true for network errors and timeouts.
+        } finally {
+          window.clearTimeout(requestTimeout)
+        }
 
         if (cancelled) return
 
-        if (!error && data) {
-          const nextProfile = data as Profile
+        if (!requestFailed && data) {
+          const nextProfile = data
           if (!nextProfile.is_active) {
             setAuthError(
               'Your account is inactive. Please contact your university administrator.',
             )
-            await supabase.auth.signOut()
+            setUser(null)
+            setProfile(null)
+            setLoading(false)
+            void supabase.auth.signOut()
             return
           }
 
@@ -156,7 +194,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAuthError(
           'Your account profile could not be loaded. Please try again or contact support.',
         )
-        await supabase.auth.signOut()
+        setUser(null)
+        setProfile(null)
+        setLoading(false)
+        void supabase.auth.signOut()
       }
     }
 
@@ -165,12 +206,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [sessionReady, user])
+  }, [sessionReady, userId])
 
   /* ── Login ── */
   const login = async (email: string, password: string) => {
     setAuthError(null)
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
@@ -188,7 +229,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return { error: error.message }
     }
 
-    // onAuthStateChange → SIGNED_IN will fetch the profile
+    // Use the successful response immediately. The auth event remains useful
+    // for other tabs, but navigation must not depend on its timing.
+    if (data.user) {
+      setLoading(true)
+      setSessionReady(true)
+      setUser((current) =>
+        current?.id === data.user.id ? current : data.user,
+      )
+    }
+
     return { error: null }
   }
 
@@ -202,8 +252,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: {
           full_name: data.fullName,
           programme: data.programme,
-          study_structure: data.studyStructure,
-          study_stage: data.studyStage,
           avatar_initials: data.fullName
             .split(/\s+/)
             .map((n) => n[0])

@@ -1,8 +1,10 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Link, Outlet, useLocation } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import { Sidebar } from '../Sidebar'
 import { Topbar } from '../Topbar'
 import { getTimeGreeting } from '@/lib/utils'
+import { useAuth } from '@/context/AuthContext'
 
 /**
  * Dashboard layout for student routes.
@@ -15,8 +17,14 @@ import { getTimeGreeting } from '@/lib/utils'
  * Placeholder user data will be replaced by real auth context in Stage 4.
  */
 export function StudentLayout() {
-  const fullName = 'Sajda Maryam'
-  const subtitle = 'BS Computer Science · Semester 3'
+  const { profile } = useAuth()
+  const location = useLocation()
+  const fullName = profile?.full_name ?? 'Student'
+  const displayName = fullName.trim().split(/\s+/)[0] || 'Student'
+  const subtitle = [profile?.programme, profile?.study_stage]
+    .filter(Boolean)
+    .join(' · ') || 'Student View'
+  const isSubmitPage = location.pathname === '/student/submit'
 
   const [drawerOpen, setDrawerOpen] = useState(false)
   const openDrawer = useCallback(() => setDrawerOpen(true), [])
@@ -67,10 +75,19 @@ export function StudentLayout() {
 
       <section className="min-w-0">
         <Topbar
-          greeting={`${getTimeGreeting()}, S. Maryam`}
-          subtitle={subtitle}
+          greeting={isSubmitPage ? 'Submit Feedback' : `${getTimeGreeting()}, ${displayName}`}
+          subtitle={isSubmitPage ? 'Help your university understand what needs attention.' : subtitle}
           avatarName={fullName}
           notificationCount={3}
+          actions={isSubmitPage ? (
+            <Link
+              to="/student"
+              className="hidden items-center gap-2 rounded-lg border border-border bg-white px-4 py-2.5 font-semibold text-ocean hover:bg-gray-50 sm:flex"
+            >
+              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              Back to Dashboard
+            </Link>
+          ) : undefined}
           onMenuClick={openDrawer}
           menuExpanded={drawerOpen}
           menuControlsId="mobile-nav-student"

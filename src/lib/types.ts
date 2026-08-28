@@ -248,7 +248,26 @@ export interface Database {
       action_updates: { Row: ActionUpdate; Insert: Omit<ActionUpdate, 'id' | 'created_at'>; Update: Partial<ActionUpdate> }
     }
     Views: Record<string, never>
-    Functions: Record<string, never>
+    Functions: {
+      submit_feedback: {
+        Args: {
+          p_department_id: string
+          p_programme: string
+          p_study_structure: string
+          p_study_stage: string
+          p_university_service: string
+          p_course_id?: string | null
+          p_course_section_id?: string | null
+          p_custom_course_name?: string | null
+          p_feedback_area?: string
+          p_feedback_types?: string[]
+          p_topic?: string | null
+          p_original_text?: string
+          p_is_anonymous?: boolean
+        }
+        Returns: { id: string; reference_number: string }[]
+      }
+    }
     Enums: Record<string, never>
   }
 }
