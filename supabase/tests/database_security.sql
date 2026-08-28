@@ -1,7 +1,7 @@
 -- EduInSight — Database Security Validation Tests
 -- File: supabase/tests/database_security.sql
 --
--- Run AFTER all three migrations (001 → 002 → 003) have been applied.
+-- Run AFTER all migrations (001 → 002 → 003 → 004 → 005) have been applied.
 -- These assertions validate schema integrity and security configuration.
 -- They check named objects individually (not brittle total counts).
 --
@@ -113,7 +113,8 @@ DECLARE
     'submit_feedback', 'teacher_acknowledge_cluster',
     'teacher_read_my_actions', 'teacher_create_action',
     'teacher_update_my_action', 'teacher_publish_update',
-    'teacher_read_my_updates'
+    'teacher_read_my_updates',
+    'admin_create_action'
   ];
   v_private_funcs text[] := ARRAY[
     'get_user_role', 'get_teacher_section_ids',
@@ -229,7 +230,8 @@ DECLARE
     'teacher_create_action(uuid,text,text,text,date)',
     'teacher_update_my_action(uuid,text,text,text,text,date)',
     'teacher_publish_update(uuid,text)',
-    'teacher_read_my_updates()'
+    'teacher_read_my_updates()',
+    'admin_create_action(uuid,text,text,text,text,date,text,text)'
   ];
   v_rpc text;
 BEGIN
@@ -271,7 +273,8 @@ DECLARE
     'sensitive_feedback_for_admin', 'submit_feedback',
     'teacher_acknowledge_cluster', 'teacher_read_my_actions',
     'teacher_create_action', 'teacher_update_my_action',
-    'teacher_publish_update', 'teacher_read_my_updates'
+    'teacher_publish_update', 'teacher_read_my_updates',
+    'admin_create_action'
   ];
   v_fn text;
 BEGIN
@@ -289,7 +292,83 @@ BEGIN
   RAISE NOTICE 'J. All teacher/admin RPCs are SECURITY DEFINER.';
 END $$;
 
--- K. Role-based access patterns (require live test data) -----------------
+-- K. admin_create_action signature and permission checks -------------------
+
+DO $$
+DECLARE
+  v_param_types text[];
+BEGIN
+  -- Verify exact parameter signature: uuid, text, text, text, text, date, text, text
+  SELECT pg_catalog.array_agg(
+    pg_catalog.format_type(p.proargtypes[s.i], NULL)
+    ORDER BY s.i
+  ) INTO v_param_types
+  FROM pg_proc p
+  JOIN pg_namespace n ON n.oid = p.pronamespace
+  CROSS JOIN pg_catalog.generate_series(0, 7) AS s(i)
+  WHERE n.nspname = 'public' AND p.proname = 'admin_create_action';
+
+  IF v_param_types IS NULL OR pg_catalog.array_length(v_param_types, 1) <> 8 THEN
+    RAISE EXCEPTION 'admin_create_action must have exactly 8 parameters, got %',
+      COALESCE(pg_catalog.array_length(v_param_types, 1)::text, 'null');
+  END IF;
+
+  IF v_param_types[1] <> 'uuid' THEN
+    RAISE EXCEPTION 'admin_create_action param 1 must be uuid, got %', v_param_types[1];
+  END IF;
+
+  IF v_param_types[6] <> 'date' THEN
+    RAISE EXCEPTION 'admin_create_action param 6 must be date, got %', v_param_types[6];
+  END IF;
+
+  -- Verify return type is uuid
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+      AND p.proname = 'admin_create_action'
+      AND pg_catalog.format_type(p.prorettype, NULL) = 'uuid'
+  ) THEN
+    RAISE EXCEPTION 'admin_create_action must return uuid';
+  END IF;
+
+  -- anon must NOT have EXECUTE
+  IF has_function_privilege(
+    'anon',
+    'public.admin_create_action(uuid,text,text,text,text,date,text,text)',
+    'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'admin_create_action must NOT be executable by anon';
+  END IF;
+
+  -- authenticated CAN invoke (role validation occurs internally)
+  IF NOT has_function_privilege(
+    'authenticated',
+    'public.admin_create_action(uuid,text,text,text,text,date,text,text)',
+    'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'admin_create_action must be executable by authenticated';
+  END IF;
+
+  RAISE NOTICE 'K. admin_create_action signature and permissions verified.';
+END $$;
+
+-- L. Broad privilege checks -----------------------------------------------
+-- Verify that admin_create_action is not granted to PUBLIC.
+
+DO $$
+BEGIN
+  IF has_function_privilege(
+    'public',
+    'public.admin_create_action(uuid,text,text,text,text,date,text,text)',
+    'EXECUTE'
+  ) THEN
+    RAISE EXCEPTION 'admin_create_action must NOT be granted to PUBLIC';
+  END IF;
+  RAISE NOTICE 'L. admin_create_action is not broadly granted.';
+END $$;
+
+-- M. Role-based access patterns (require live test data) -----------------
 -- Uncomment and adapt with real UUIDs to run per-role tests.
 --
 -- -- Student role
