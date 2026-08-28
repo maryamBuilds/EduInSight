@@ -216,6 +216,61 @@ export interface PublishedActionUpdate {
   feedback_id: string
 }
 
+/** Row shape of the feedback_for_teacher security_barrier view. */
+export interface TeacherFeedbackRow {
+  id: string
+  department_id: string
+  programme: string
+  study_structure: string
+  study_stage: string
+  university_service: string
+  course_id: string | null
+  course_section_id: string | null
+  custom_course_name: string | null
+  feedback_area: string
+  feedback_types: string[]
+  topic: string | null
+  original_text: string
+  language_detected: DetectedLanguage | null
+  is_anonymous: boolean
+  status: FeedbackStatus
+  reference_number: string
+  submitted_at: string
+  analysed_at: string | null
+}
+
+/** Row shape of the extracted_issues_for_teacher view. */
+export interface TeacherExtractedIssueRow {
+  id: string
+  feedback_id: string
+  issue_type: IssueType
+  problem_description: string
+  topic: string | null
+  sentiment: Sentiment
+  semantic_tag: string
+  suggested_category: string | null
+  ai_confidence: number | null
+  review_status: ReviewStatus
+  created_at: string
+}
+
+/** Row shape of the clusters_for_teacher view. */
+export type TeacherClusterRow = IssueCluster
+
+/** Row returned by the teacher_read_my_actions RPC. */
+export interface TeacherActionRow {
+  id: string
+  cluster_id: string
+  action_type: string
+  title: string
+  status: string
+  responsible_department: string | null
+  responsible_person: string | null
+  deadline: string | null
+  created_at: string
+  updated_at: string
+}
+
 // ---------------------------------------------------------------------------
 // Priority calculation types
 // ---------------------------------------------------------------------------
@@ -263,6 +318,9 @@ export interface Database {
     Views: {
       my_feedback: { Row: Feedback }
       published_action_updates: { Row: PublishedActionUpdate }
+      feedback_for_teacher: { Row: TeacherFeedbackRow }
+      extracted_issues_for_teacher: { Row: TeacherExtractedIssueRow }
+      clusters_for_teacher: { Row: TeacherClusterRow }
     }
     Functions: {
       submit_feedback: {
@@ -282,6 +340,59 @@ export interface Database {
           p_is_anonymous?: boolean
         }
         Returns: { id: string; reference_number: string }[]
+      }
+      teacher_acknowledge_cluster: {
+        Args: { p_cluster_id?: string }
+        Returns: IssueCluster[]
+      }
+      teacher_read_my_actions: {
+        Args: Record<string, never>
+        Returns: TeacherActionRow[]
+      }
+      teacher_create_action: {
+        Args: {
+          p_cluster_id?: string
+          p_title?: string
+          p_responsible_department?: string | null
+          p_responsible_person?: string | null
+          p_deadline?: string | null
+        }
+        Returns: TeacherActionRow[]
+      }
+      teacher_update_my_action: {
+        Args: {
+          p_action_id?: string
+          p_title?: string | null
+          p_status?: string | null
+          p_responsible_department?: string | null
+          p_responsible_person?: string | null
+          p_deadline?: string | null
+        }
+        Returns: TeacherActionRow[]
+      }
+      teacher_publish_update: {
+        Args: {
+          p_action_id?: string
+          p_student_facing_message?: string
+        }
+        Returns: string
+      }
+      teacher_read_my_updates: {
+        Args: Record<string, never>
+        Returns: ActionUpdate[]
+      }
+      admin_create_action: {
+        Args: {
+          p_cluster_id?: string
+          p_title?: string
+          p_status?: string | null
+          p_responsible_department?: string | null
+          p_responsible_person?: string | null
+          p_deadline?: string | null
+          p_internal_note?: string | null
+          p_student_facing_message?: string | null
+        }
+        Returns: string
       }
     }
     Enums: Record<string, never>

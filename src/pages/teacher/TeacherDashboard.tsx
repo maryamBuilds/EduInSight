@@ -1,16 +1,19 @@
-import { useState, useCallback, useRef, type FormEvent } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo, type FormEvent } from 'react'
 import {
   FileText,
   AlertTriangle,
   Flag,
   CheckCircle,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react'
-import type { PriorityLevel, TrendDirection, DetectedLanguage } from '@/lib/types'
+import type { TeacherClusterRow, TeacherFeedbackRow, TeacherActionRow } from '@/lib/types'
 import {
   PRIORITY_LABELS,
   TREND_LABELS,
   TREND_ARROWS,
   TREND_COLOURS,
+  ACTION_STATUS_LABELS,
 } from '@/lib/constants'
 import {
   MetricCard,
@@ -23,157 +26,13 @@ import {
   OverlayDialog,
   Toast,
 } from '@/components'
+import { supabase } from '@/lib/supabase'
+import { callRpc, callRpcNoArgs, friendlyError } from '@/lib/rpc'
+import { useAuth } from '@/context/AuthContext'
 
 // ---------------------------------------------------------------------------
-// Local demo types
+// Filter constants
 // ---------------------------------------------------------------------------
-
-interface DemoBottleneck {
-  id: string
-  topic: string
-  reportCount: number
-  sharePercent: number
-  trend: TrendDirection
-  priority: PriorityLevel
-  summary: string
-  evidence: { text: string; language: DetectedLanguage }[]
-  priorityReasons: string[]
-  aiSuggestion: string
-}
-
-interface DemoDistribution {
-  label: string
-  percent: number
-  count: number
-}
-
-interface DemoAction {
-  id: string
-  title: string
-  status: string
-  linkedIssue: string
-  progress: number
-}
-
-interface DemoBarPoint {
-  label: string
-  height: number
-}
-
-// ---------------------------------------------------------------------------
-// Synthetic demonstration data
-// ---------------------------------------------------------------------------
-
-const DEMO_BOTTLENECKS: DemoBottleneck[] = [
-  {
-    id: 'b1',
-    topic: 'Pointers with abstraction',
-    reportCount: 12,
-    sharePercent: 25,
-    trend: 'increasing',
-    priority: 'high',
-    summary:
-      'Students appear to understand pointers and abstraction separately, but several comments suggest difficulty connecting them during runtime polymorphism.',
-    evidence: [
-      { text: 'Pointers aur abstract classes ka relation samajh nahi aa raha.', language: 'roman_ur' },
-      { text: 'I understand pointers separately but cannot apply them in polymorphism.', language: 'en' },
-      { text: 'Base-class pointer derived object ko call kese karta hai?', language: 'roman_ur' },
-    ],
-    priorityReasons: [
-      '12 related submissions',
-      'Reports increased after the relevant lecture',
-      'The issue affects understanding of later polymorphism concepts',
-      'The same concern appears in two sections',
-    ],
-    aiSuggestion:
-      'Use a visual base-pointer/derived-object diagram, demonstrate one short virtual-function example and collect follow-up feedback after a focused clarification session. Teacher review is required.',
-  },
-  {
-    id: 'b2',
-    topic: 'Runtime polymorphism',
-    reportCount: 9,
-    sharePercent: 19,
-    trend: 'stable',
-    priority: 'medium',
-    summary:
-      'Students struggle with dynamic dispatch and virtual function tables. Confusion often overlaps with pointer-abstraction difficulties.',
-    evidence: [
-      { text: 'Virtual functions ka concept clear nahi hai.', language: 'roman_ur' },
-      { text: 'I cannot differentiate between compile-time and run-time polymorphism.', language: 'en' },
-    ],
-    priorityReasons: [
-      '9 related submissions',
-      'Stable trend indicates a persistent gap',
-      'Overlaps with the pointer-abstraction bottleneck',
-    ],
-    aiSuggestion:
-      'Add a step-by-step walkthrough of vtable resolution with live coding examples and a short practice quiz.',
-  },
-  {
-    id: 'b3',
-    topic: 'Exception handling',
-    reportCount: 7,
-    sharePercent: 15,
-    trend: 'increasing',
-    priority: 'medium',
-    summary:
-      'Several students find try-catch blocks confusing, especially when combining custom exceptions with resource management.',
-    evidence: [
-      { text: 'Try-catch samajh nahi aata kab use karna hai.', language: 'roman_ur' },
-      { text: 'Custom exceptions seem unnecessary compared to simple if-checks.', language: 'en' },
-    ],
-    priorityReasons: [
-      '7 related submissions',
-      'Reports increased after the exception-handling lab',
-      'Concept is foundational for later file-I/O topics',
-    ],
-    aiSuggestion:
-      'Introduce a real-world error-handling scenario (file parsing) and compare if-check vs exception approaches side by side.',
-  },
-  {
-    id: 'b4',
-    topic: 'File handling',
-    reportCount: 5,
-    sharePercent: 10,
-    trend: 'improving',
-    priority: 'low',
-    summary:
-      'A smaller group of students report difficulty with file streams and error recovery during read/write operations.',
-    evidence: [
-      { text: 'File streams ka syntax yaad nahi rehta.', language: 'roman_ur' },
-      { text: 'I forget to close files and get runtime errors.', language: 'en' },
-    ],
-    priorityReasons: [
-      '5 related submissions',
-      'Trend is improving after the practice session',
-      'Lower share of total feedback',
-    ],
-    aiSuggestion:
-      'Provide a short cheat-sheet of file-stream patterns and a sandbox exercise with deliberate errors to fix.',
-  },
-]
-
-const DEMO_DISTRIBUTIONS: DemoDistribution[] = [
-  { label: 'Academic learning difficulties', percent: 40, count: 48 },
-  { label: 'Teaching delivery', percent: 22, count: 26 },
-  { label: 'Assessment and assignments', percent: 18, count: 22 },
-  { label: 'Learning resources', percent: 12, count: 14 },
-]
-
-const DEMO_ACTIONS: DemoAction[] = [
-  { id: 'a1', title: 'Pointer–object visual recap', status: 'In progress', linkedIssue: 'Pointers with abstraction', progress: 60 },
-  { id: 'a2', title: 'Exception-flow practice session', status: 'Completed', linkedIssue: 'Exception handling', progress: 100 },
-]
-
-const DEMO_BARS: DemoBarPoint[] = [
-  { label: 'Mon', height: 35 },
-  { label: 'Tue', height: 48 },
-  { label: 'Wed', height: 70 },
-  { label: 'Thu', height: 54 },
-  { label: 'Fri', height: 44 },
-  { label: 'Sat', height: 61 },
-  { label: 'Sun', height: 82 },
-]
 
 type TeacherFilter = 'all' | 'high' | 'medium'
 
@@ -183,93 +42,351 @@ const FILTER_OPTIONS: { value: TeacherFilter; label: string }[] = [
   { value: 'medium', label: 'Medium' },
 ]
 
+const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+
 // ---------------------------------------------------------------------------
 // Teacher Dashboard
 // ---------------------------------------------------------------------------
 
 export default function TeacherDashboard() {
+  const { loading: authLoading, profile } = useAuth()
+
+  // ── Data state ──────────────────────────────────────────────────────────
+  const [clusters, setClusters] = useState<TeacherClusterRow[]>([])
+  const [feedbacks, setFeedbacks] = useState<TeacherFeedbackRow[]>([])
+  const [actions, setActions] = useState<TeacherActionRow[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // ── UI state ────────────────────────────────────────────────────────────
   const [priorityFilter, setPriorityFilter] = useState<TeacherFilter>('all')
   const [search, setSearch] = useState('')
-  const [selectedIssue, setSelectedIssue] = useState<DemoBottleneck | null>(null)
+  const [selectedCluster, setSelectedCluster] = useState<TeacherClusterRow | null>(null)
   const [acknowledged, setAcknowledged] = useState(false)
   const [actionFormOpen, setActionFormOpen] = useState(false)
-  const [actions, setActions] = useState<DemoAction[]>(DEMO_ACTIONS)
   const [toastOpen, setToastOpen] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
+  const [formTitle, setFormTitle] = useState('')
+  const [formStatus, setFormStatus] = useState('Planned')
+  const [formUpdate, setFormUpdate] = useState('')
+  const [submitting, setSubmitting] = useState(false)
   const actionPanelRef = useRef<HTMLElement>(null)
 
-  // Helpers
+  // ── Fetch data from Supabase (after auth ready + teacher role) ─────
+  useEffect(() => {
+    let cancelled = false
+
+    if (authLoading) return
+    if (!profile || profile.role !== 'teacher') return
+
+    async function load() {
+      setLoading(true)
+      setError(null)
+
+      const [clustersRes, feedbackRes, actionsRes] = await Promise.all([
+        supabase
+          .from('clusters_for_teacher')
+          .select('*')
+          .order('priority_score', { ascending: false }),
+        supabase
+          .from('feedback_for_teacher')
+          .select('*')
+          .order('submitted_at', { ascending: false }),
+        callRpcNoArgs('teacher_read_my_actions'),
+      ])
+
+      if (cancelled) return
+
+      if (clustersRes.error || feedbackRes.error || actionsRes.error) {
+        setError(
+          friendlyError(
+            clustersRes.error?.message ??
+              feedbackRes.error?.message ??
+              actionsRes.error?.message ??
+              'Failed to load dashboard data.',
+          ),
+        )
+        setLoading(false)
+        return
+      }
+
+      setClusters(clustersRes.data ?? [])
+      setFeedbacks(feedbackRes.data ?? [])
+      setActions(actionsRes.data ?? [])
+      setLoading(false)
+    }
+
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [authLoading, profile])
+
+  // ── Computed: metric counts ─────────────────────────────────────────────
+  const metrics = useMemo(() => {
+    const totalFeedback = feedbacks.length
+    let learningConcerns = 0
+    for (const f of feedbacks) {
+      if (f.feedback_types.includes('Learning difficulty')) learningConcerns++
+    }
+    let highPriority = 0
+    let resolved = 0
+    for (const c of clusters) {
+      if (c.priority_level === 'high') highPriority++
+      if (c.status === 'closed') resolved++
+    }
+    return { totalFeedback, learningConcerns, highPriority, resolved }
+  }, [feedbacks, clusters])
+
+  // ── Computed: trend bars (last 7 days) ──────────────────────────────────
+  const trendBars = useMemo(() => {
+    const counts = new Array<number>(7).fill(0)
+    const now = new Date()
+    for (const f of feedbacks) {
+      const diff = Math.floor(
+        (now.getTime() - new Date(f.submitted_at).getTime()) / 86_400_000,
+      )
+      if (diff >= 0 && diff < 7) {
+        counts[new Date(f.submitted_at).getDay()]++
+      }
+    }
+    const maxCount = Math.max(...counts, 1)
+    return counts.map((count, i) => ({
+      label: DAY_LABELS[i],
+      height: Math.round((count / maxCount) * 100),
+      count,
+    }))
+  }, [feedbacks])
+
+  // ── Computed: distribution by feedback area ─────────────────────────────
+  const distributions = useMemo(() => {
+    const areaCounts: Record<string, number> = {}
+    for (const f of feedbacks) {
+      const key = f.feedback_area || f.university_service || 'Other'
+      areaCounts[key] = (areaCounts[key] ?? 0) + 1
+    }
+    const total = feedbacks.length || 1
+    return Object.entries(areaCounts)
+      .map(([label, count]) => ({
+        label,
+        percent: Math.round((count / total) * 100),
+        count,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6)
+  }, [feedbacks])
+
+  // ── Filtered bottlenecks ────────────────────────────────────────────────
+  const filteredBottlenecks = useMemo(() => {
+    return clusters.filter((c) => {
+      const matchPriority =
+        priorityFilter === 'all' || c.priority_level === priorityFilter
+      const matchSearch = c.title.toLowerCase().includes(search.toLowerCase())
+      return matchPriority && matchSearch
+    })
+  }, [clusters, priorityFilter, search])
+
+  // ── Cluster evidence (feedback matching the selected cluster's topic) ──
+  const clusterEvidence = useMemo(() => {
+    if (!selectedCluster) return []
+    const tag = selectedCluster.canonical_tag
+    const topic = selectedCluster.feedback_area ?? ''
+    return feedbacks
+      .filter(
+        (f) =>
+          f.topic?.toLowerCase().includes(tag.toLowerCase()) ||
+          f.feedback_area === topic,
+      )
+      .slice(0, 4)
+  }, [selectedCluster, feedbacks])
+
+  // ── Priority reasons (built from cluster metadata) ─────────────────────
+  const priorityReasons = useMemo(() => {
+    if (!selectedCluster) return []
+    const reasons: string[] = []
+    reasons.push(`${selectedCluster.report_count} related submissions`)
+    if (selectedCluster.trend === 'increasing') {
+      reasons.push('Reports have been increasing recently')
+    } else if (selectedCluster.trend === 'stable') {
+      reasons.push('The issue has been persistent')
+    } else {
+      reasons.push('Reports are improving')
+    }
+    if (selectedCluster.feedback_share != null) {
+      reasons.push(
+        `Represents ${Math.round(selectedCluster.feedback_share * 100)}% of related feedback`,
+      )
+    }
+    if (selectedCluster.ai_suggested_department) {
+      reasons.push(
+        `Affects ${selectedCluster.ai_suggested_department}`,
+      )
+    }
+    return reasons
+  }, [selectedCluster])
+
+  // ── Handlers ────────────────────────────────────────────────────────────
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg)
     setToastOpen(true)
   }, [])
 
-  const filteredBottlenecks = DEMO_BOTTLENECKS.filter((b) => {
-    const matchPriority = priorityFilter === 'all' || b.priority === priorityFilter
-    const matchSearch = b.topic.toLowerCase().includes(search.toLowerCase())
-    return matchPriority && matchSearch
-  })
-
-  // Action form state
-  const [formTitle, setFormTitle] = useState('')
-  const [formStatus, setFormStatus] = useState('Planned')
-  const [formUpdate, setFormUpdate] = useState('')
-
-  const openDialog = useCallback((issue: DemoBottleneck) => {
-    setSelectedIssue(issue)
-    setAcknowledged(false)
+  const openDialog = useCallback((cluster: TeacherClusterRow) => {
+    setSelectedCluster(cluster)
+    setAcknowledged(cluster.status === 'acknowledged' || cluster.status === 'action_created')
     setActionFormOpen(false)
-    setFormTitle('Pointer–object visual recap')
+    setFormTitle('')
     setFormStatus('Planned')
-    setFormUpdate('An additional explanation and practice session will be conducted.')
-  }, [setFormTitle, setFormStatus, setFormUpdate])
+    setFormUpdate('')
+  }, [])
 
   const closeDialog = useCallback(() => {
-    setSelectedIssue(null)
+    setSelectedCluster(null)
     setActionFormOpen(false)
   }, [])
 
-  const handleAcknowledge = useCallback(() => {
+  const handleAcknowledge = useCallback(async () => {
+    if (!selectedCluster || submitting) return
+    setSubmitting(true)
+    const { error: err } = await callRpc('teacher_acknowledge_cluster', {
+      p_cluster_id: selectedCluster.id,
+    })
+    setSubmitting(false)
+    if (err) {
+      showToast(friendlyError(err.message))
+      return
+    }
     setAcknowledged(true)
+    setClusters((prev) =>
+      prev.map((c) =>
+        c.id === selectedCluster.id ? { ...c, status: 'acknowledged' } : c,
+      ),
+    )
     showToast('Issue acknowledged.')
-  }, [showToast])
+  }, [selectedCluster, submitting, showToast])
 
   const handleActionSubmit = useCallback(
-    (e: FormEvent) => {
+    async (e: FormEvent) => {
       e.preventDefault()
-      const progressMap: Record<string, number> = { Planned: 20, 'In progress': 60, Completed: 100 }
-      const newAction: DemoAction = {
-        id: `a${Date.now()}`,
-        title: formTitle,
-        status: formStatus,
-        linkedIssue: selectedIssue?.topic ?? '',
-        progress: progressMap[formStatus] ?? 20,
+      if (!selectedCluster || submitting) return
+      setSubmitting(true)
+
+      // 1. Create the teaching action
+      const { data: actionData, error: createErr } = await callRpc(
+        'teacher_create_action',
+        {
+          p_cluster_id: selectedCluster.id,
+          p_title: formTitle,
+        },
+      )
+      if (createErr || !actionData?.length) {
+        setSubmitting(false)
+        showToast(friendlyError(createErr?.message ?? 'Could not create action'))
+        return
       }
-      setActions((prev) => [newAction, ...prev])
+
+      const actionId = actionData[0].id
+
+      // 2. Update status if not default ('planned')
+      if (formStatus !== 'Planned') {
+        const statusMap: Record<string, string> = {
+          'In progress': 'in_progress',
+          Completed: 'completed',
+        }
+        await callRpc('teacher_update_my_action', {
+          p_action_id: actionId,
+          p_status: statusMap[formStatus] ?? null,
+        })
+      }
+
+      // 3. Publish student-facing update if provided
+      if (formUpdate.trim()) {
+        const { error: pubErr } = await callRpc('teacher_publish_update', {
+          p_action_id: actionId,
+          p_student_facing_message: formUpdate.trim(),
+        })
+        if (pubErr) {
+          setSubmitting(false)
+          showToast(`Action created but update failed: ${friendlyError(pubErr.message)}`)
+          return
+        }
+      }
+
+      // 4. Refresh actions list
+      const { data: refreshed } = await callRpcNoArgs('teacher_read_my_actions')
+      if (refreshed) setActions(refreshed)
+
+      setSubmitting(false)
       setActionFormOpen(false)
       showToast('Action saved successfully.')
       setTimeout(closeDialog, 700)
     },
-    [formTitle, formStatus, selectedIssue, showToast, closeDialog],
+    [selectedCluster, formTitle, formStatus, formUpdate, submitting, showToast, closeDialog],
   )
 
   const scrollToActions = useCallback(() => {
     actionPanelRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [])
 
+  // ── Auth / role guard (render-time, no setState) ───────────────────────
+  if (!authLoading && (!profile || profile.role !== 'teacher')) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="max-w-md rounded-xl border border-danger/20 bg-soft-red p-6 text-center">
+          <AlertCircle className="mx-auto mb-3 h-8 w-8 text-danger" aria-hidden="true" />
+          <h2 className="mb-2 text-lg font-bold text-navy">Teacher access required</h2>
+          <p className="text-sm text-muted">
+            You must be signed in with a teacher account to view this dashboard.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Loading state ───────────────────────────────────────────────────────
+  if (authLoading || loading) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-muted">
+          <Loader2 className="h-7 w-7 animate-spin" aria-hidden="true" />
+          <p className="text-sm">Loading teaching analytics…</p>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Error state ─────────────────────────────────────────────────────────
+  if (error) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="max-w-md rounded-xl border border-danger/20 bg-soft-red p-6 text-center">
+          <AlertCircle className="mx-auto mb-3 h-8 w-8 text-danger" aria-hidden="true" />
+          <h2 className="mb-2 text-lg font-bold text-navy">Unable to load dashboard</h2>
+          <p className="text-sm text-muted">{error}</p>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Populated dashboard ─────────────────────────────────────────────────
+  const topCluster = clusters[0] ?? null
+  const hasData = feedbacks.length > 0
+
   return (
     <>
-      {/* ── Demo banner ── */}
-      <div className="mb-4 rounded-lg border border-amber-300 bg-soft-amber px-4 py-2 text-center text-sm font-semibold text-warning">
-        Demonstration data — synthetic content for UI validation only
-      </div>
+      {/* ── Status banner ── */}
+      {!hasData && (
+        <div className="mb-4 rounded-lg border border-amber-300 bg-soft-amber px-4 py-2 text-center text-sm font-semibold text-warning">
+          No feedback data available for your assigned sections yet.
+        </div>
+      )}
 
       {/* ── Metric cards ── */}
       <section className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard icon={<FileText className="h-5 w-5" />} label="Total Feedback" value={120} iconBg="bg-soft-blue" iconColour="text-ocean" />
-        <MetricCard icon={<AlertTriangle className="h-5 w-5" />} label="Learning Concerns" value={48} iconBg="bg-soft-amber" iconColour="text-[#B66A00]" />
-        <MetricCard icon={<Flag className="h-5 w-5" />} label="High Priority" value={3} iconBg="bg-soft-red" iconColour="text-danger" />
-        <MetricCard icon={<CheckCircle className="h-5 w-5" />} label="Resolved" value={18} iconBg="bg-soft-teal" iconColour="text-teal-dark" />
+        <MetricCard icon={<FileText className="h-5 w-5" />} label="Total Feedback" value={metrics.totalFeedback} iconBg="bg-soft-blue" iconColour="text-ocean" />
+        <MetricCard icon={<AlertTriangle className="h-5 w-5" />} label="Learning Concerns" value={metrics.learningConcerns} iconBg="bg-soft-amber" iconColour="text-[#B66A00]" />
+        <MetricCard icon={<Flag className="h-5 w-5" />} label="High Priority" value={metrics.highPriority} iconBg="bg-soft-red" iconColour="text-danger" />
+        <MetricCard icon={<CheckCircle className="h-5 w-5" />} label="Resolved" value={metrics.resolved} iconBg="bg-soft-teal" iconColour="text-teal-dark" />
       </section>
 
       {/* ── Dashboard grid ── */}
@@ -291,27 +408,33 @@ export default function TeacherDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {filteredBottlenecks.map((b) => (
+                {filteredBottlenecks.map((c) => (
                   <tr
-                    key={b.id}
+                    key={c.id}
                     className="cursor-pointer transition-colors hover:bg-[#F7FAF9]"
-                    onClick={() => openDialog(b)}
+                    onClick={() => openDialog(c)}
                   >
-                    <td className="border-b border-[#E8E2D9] px-3 py-3.5 text-sm font-bold text-ocean">{b.topic}</td>
-                    <td className="border-b border-[#E8E2D9] px-3 py-3.5 text-sm">{b.reportCount}</td>
-                    <td className="border-b border-[#E8E2D9] px-3 py-3.5 text-sm">{b.sharePercent}%</td>
-                    <td className={`border-b border-[#E8E2D9] px-3 py-3.5 text-sm font-semibold ${TREND_COLOURS[b.trend]}`}>
-                      {TREND_ARROWS[b.trend]} {TREND_LABELS[b.trend]}
+                    <td className="border-b border-[#E8E2D9] px-3 py-3.5 text-sm font-bold text-ocean">{c.title}</td>
+                    <td className="border-b border-[#E8E2D9] px-3 py-3.5 text-sm">{c.report_count}</td>
+                    <td className="border-b border-[#E8E2D9] px-3 py-3.5 text-sm">
+                      {c.feedback_share != null ? `${Math.round(c.feedback_share * 100)}%` : '—'}
+                    </td>
+                    <td className={`border-b border-[#E8E2D9] px-3 py-3.5 text-sm font-semibold ${TREND_COLOURS[c.trend]}`}>
+                      {TREND_ARROWS[c.trend]} {TREND_LABELS[c.trend]}
                     </td>
                     <td className="border-b border-[#E8E2D9] px-3 py-3.5">
-                      <PriorityBadge level={b.priority} />
+                      <PriorityBadge level={c.priority_level} />
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
             {filteredBottlenecks.length === 0 && (
-              <p className="py-7 text-center text-muted">No matching learning problems.</p>
+              <p className="py-7 text-center text-muted">
+                {clusters.length === 0
+                  ? 'No learning bottlenecks identified yet.'
+                  : 'No matching learning problems.'}
+              </p>
             )}
           </div>
           {/* Search row below table */}
@@ -330,41 +453,47 @@ export default function TeacherDashboard() {
         <Panel title="Feedback Trend">
           {/* Bar chart */}
           <div className="flex items-end gap-3 border-b border-[#CCD6D9] pb-3" style={{ height: 185 }}>
-            {DEMO_BARS.map((bar) => (
+            {trendBars.map((bar) => (
               <div key={bar.label} className="flex flex-1 flex-col items-center text-[11px] text-muted">
                 <div
                   className="mb-1.5 w-full rounded-t-md bg-gradient-to-b from-aqua to-teal"
-                  style={{ height: `${bar.height}%`, minHeight: 8 }}
+                  style={{ height: `${bar.height}%`, minHeight: bar.count > 0 ? 8 : 0 }}
                 />
                 {bar.label}
               </div>
             ))}
           </div>
-          <p className="mt-3 text-xs text-muted">Feedback received by day · prototype data</p>
+          <p className="mt-3 text-xs text-muted">Feedback received by day · last 7 days</p>
 
           {/* AI Insight */}
-          <div className="mt-4 rounded-[10px] border border-[#A9DDD7] px-4 py-4" style={{ background: 'linear-gradient(135deg, #F3FBF9, #EAF5F7)' }}>
-            <strong className="text-teal-dark">✦ AI Insight</strong>
-            <p className="mt-2 leading-relaxed text-text">
-              Students understand pointers and abstraction separately but struggle to connect them in runtime polymorphism.
-            </p>
-            <button
-              type="button"
-              className="font-bold text-teal-dark hover:underline"
-              onClick={() => openDialog(DEMO_BOTTLENECKS[0])}
-            >
-              View evidence →
-            </button>
-          </div>
+          {topCluster && (
+            <div className="mt-4 rounded-[10px] border border-[#A9DDD7] px-4 py-4" style={{ background: 'linear-gradient(135deg, #F3FBF9, #EAF5F7)' }}>
+              <strong className="text-teal-dark">✦ AI Insight</strong>
+              <p className="mt-2 leading-relaxed text-text">
+                {topCluster.ai_suggested_response ?? topCluster.summary}
+              </p>
+              <button
+                type="button"
+                className="font-bold text-teal-dark hover:underline"
+                onClick={() => openDialog(topCluster)}
+              >
+                View evidence →
+              </button>
+            </div>
+          )}
         </Panel>
 
         {/* ── Feedback Distribution ── */}
         <Panel title="Feedback Distribution">
-          <div className="grid gap-3">
-            {DEMO_DISTRIBUTIONS.map((d) => (
-              <ProgressBar key={d.label} label={d.label} value={d.percent} valueText={`${d.percent}% (${d.count})`} />
-            ))}
-          </div>
+          {distributions.length > 0 ? (
+            <div className="grid gap-3">
+              {distributions.map((d) => (
+                <ProgressBar key={d.label} label={d.label} value={d.percent} valueText={`${d.percent}% (${d.count})`} />
+              ))}
+            </div>
+          ) : (
+            <p className="py-4 text-center text-sm text-muted">No feedback data yet.</p>
+          )}
         </Panel>
 
         {/* ── Action Progress ── */}
@@ -376,96 +505,134 @@ export default function TeacherDashboard() {
             </button>
           </div>
           <div className="grid gap-3 p-5">
-            {actions.map((a) => (
-              <div key={a.id} className="rounded-[9px] border border-border p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <strong className="text-sm">{a.title}</strong>
-                  <span
-                    className={`inline-block rounded-full px-2 py-1 text-[11px] font-bold ${
-                      a.status === 'Completed'
-                        ? 'bg-soft-teal text-success'
-                        : a.status === 'In progress'
-                          ? 'bg-soft-amber text-warning'
-                          : 'bg-soft-blue text-ocean'
-                    }`}
-                  >
-                    {a.status}
-                  </span>
-                </div>
-                <p className="mt-1.5 text-[13px] text-muted">Linked issue: {a.linkedIssue}</p>
-                <ProgressBar value={a.progress} />
-              </div>
-            ))}
+            {actions.length > 0 ? (
+              actions.map((a) => {
+                const linkedCluster = clusters.find((c) => c.id === a.cluster_id)
+                const actionStatusLabel =
+                  ACTION_STATUS_LABELS[a.status as keyof typeof ACTION_STATUS_LABELS] ?? a.status
+                return (
+                  <div key={a.id} className="rounded-[9px] border border-border p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <strong className="text-sm">{a.title}</strong>
+                      <span
+                        className={`inline-block rounded-full px-2 py-1 text-[11px] font-bold ${
+                          a.status === 'completed'
+                            ? 'bg-soft-teal text-success'
+                            : a.status === 'in_progress'
+                              ? 'bg-soft-amber text-warning'
+                              : 'bg-soft-blue text-ocean'
+                        }`}
+                      >
+                        {actionStatusLabel}
+                      </span>
+                    </div>
+                    <p className="mt-1.5 text-[13px] text-muted">
+                      Linked issue: {linkedCluster?.title ?? 'Unknown'}
+                    </p>
+                    <ProgressBar
+                      value={
+                        a.status === 'completed' ? 100 : a.status === 'in_progress' ? 60 : 20
+                      }
+                    />
+                  </div>
+                )
+              })
+            ) : (
+              <p className="py-4 text-center text-sm text-muted">
+                No teaching actions created yet.
+              </p>
+            )}
           </div>
         </section>
       </div>
 
       {/* ── Issue Detail Dialog ── */}
       <OverlayDialog
-        open={!!selectedIssue}
+        open={!!selectedCluster}
         onClose={closeDialog}
-        title={selectedIssue?.topic ?? ''}
+        title={selectedCluster?.title ?? ''}
         subtitle="Learning bottleneck"
         maxWidth="min(760px, 100%)"
         footer={
           <>
             <button
               type="button"
-              disabled={acknowledged}
+              disabled={acknowledged || submitting}
               onClick={handleAcknowledge}
               className="rounded-lg border border-border bg-white px-4 py-2.5 text-sm font-bold text-ocean transition-colors hover:bg-ivory disabled:opacity-60"
             >
-              {acknowledged ? '✓ Acknowledged' : 'Acknowledge'}
+              {submitting
+                ? 'Saving…'
+                : acknowledged
+                  ? '✓ Acknowledged'
+                  : 'Acknowledge'}
             </button>
             <button
               type="button"
+              disabled={submitting}
               onClick={() => setActionFormOpen((v) => !v)}
-              className="rounded-lg bg-teal px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-teal-dark"
+              className="rounded-lg bg-teal px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-teal-dark disabled:opacity-60"
             >
               {actionFormOpen ? 'Close Form' : 'Create Action'}
             </button>
           </>
         }
       >
-        {selectedIssue && (
+        {selectedCluster && (
           <div className="space-y-5">
             {/* Summary */}
-            <p className="leading-relaxed text-text">{selectedIssue.summary}</p>
+            <p className="leading-relaxed text-text">{selectedCluster.summary}</p>
 
             {/* Summary grid */}
             <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
               <div className="rounded-lg bg-soft-blue p-3">
                 <small className="text-muted">Related feedback</small>
-                <strong className="mt-1 block">{selectedIssue.reportCount} reports</strong>
+                <strong className="mt-1 block">{selectedCluster.report_count} reports</strong>
               </div>
               <div className="rounded-lg bg-soft-blue p-3">
                 <small className="text-muted">Feedback share</small>
-                <strong className="mt-1 block">{selectedIssue.sharePercent}% of learning feedback</strong>
+                <strong className="mt-1 block">
+                  {selectedCluster.feedback_share != null
+                    ? `${Math.round(selectedCluster.feedback_share * 100)}% of learning feedback`
+                    : '—'}
+                </strong>
               </div>
               <div className="rounded-lg bg-soft-blue p-3">
                 <small className="text-muted">Priority</small>
-                <strong className={`mt-1 block ${TREND_COLOURS[selectedIssue.priority === 'high' ? 'increasing' : selectedIssue.priority === 'medium' ? 'stable' : 'improving']}`}>
-                  {PRIORITY_LABELS[selectedIssue.priority]}
+                <strong className={`mt-1 block ${TREND_COLOURS[selectedCluster.priority_level === 'high' ? 'increasing' : selectedCluster.priority_level === 'medium' ? 'stable' : 'improving']}`}>
+                  {PRIORITY_LABELS[selectedCluster.priority_level]}
                 </strong>
               </div>
             </div>
 
             {/* Evidence */}
-            <h4 className="text-ocean">Supporting evidence</h4>
-            {selectedIssue.evidence.map((ev, i) => (
-              <EvidenceQuote key={i} text={ev.text} language={ev.language} />
-            ))}
+            {clusterEvidence.length > 0 && (
+              <>
+                <h4 className="text-ocean">Supporting evidence</h4>
+                {clusterEvidence.map((ev) => (
+                  <EvidenceQuote
+                    key={ev.id}
+                    text={ev.original_text}
+                    language={ev.language_detected ?? undefined}
+                  />
+                ))}
+              </>
+            )}
 
             {/* Priority reasons */}
-            <PriorityReasons reasons={selectedIssue.priorityReasons} />
+            {priorityReasons.length > 0 && (
+              <PriorityReasons reasons={priorityReasons} />
+            )}
 
             {/* AI suggestion */}
-            <div>
-              <h4 className="mb-2 text-ocean">AI-suggested response</h4>
-              <div className="rounded-[9px] bg-soft-teal p-3.5 leading-relaxed text-text">
-                {selectedIssue.aiSuggestion}
+            {selectedCluster.ai_suggested_response && (
+              <div>
+                <h4 className="mb-2 text-ocean">AI-suggested response</h4>
+                <div className="rounded-[9px] bg-soft-teal p-3.5 leading-relaxed text-text">
+                  {selectedCluster.ai_suggested_response}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Action form (toggle) */}
             {actionFormOpen && (
@@ -494,8 +661,12 @@ export default function TeacherDashboard() {
                   placeholder="Student-facing update…"
                   className="min-h-[80px] w-full resize-y rounded-lg border border-[#C9D2D5] p-2.5 text-sm outline-none focus:border-teal"
                 />
-                <button type="submit" className="rounded-lg bg-teal px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-teal-dark">
-                  Save Action
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="rounded-lg bg-teal px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-teal-dark disabled:opacity-60"
+                >
+                  {submitting ? 'Saving…' : 'Save Action'}
                 </button>
               </form>
             )}

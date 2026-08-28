@@ -1,17 +1,19 @@
-import { useState, useCallback, type FormEvent } from 'react'
+import { useState, useCallback, useEffect, useMemo, type FormEvent } from 'react'
 import {
   FileText,
   Flag,
   Clock,
   CheckCircle,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react'
-import type { PriorityLevel, TrendDirection, DetectedLanguage } from '@/lib/types'
+import type { IssueCluster, Feedback, Action } from '@/lib/types'
 import {
   PRIORITY_LABELS,
   TREND_LABELS,
   TREND_ARROWS,
   TREND_COLOURS,
-  ADMIN_DEPARTMENTS,
+  ACTION_STATUS_LABELS,
 } from '@/lib/constants'
 import {
   MetricCard,
@@ -23,198 +25,17 @@ import {
   OverlayDialog,
   Toast,
 } from '@/components'
+import { supabase } from '@/lib/supabase'
+import {
+  updateClusterStatus,
+  callRpc,
+  friendlyError,
+} from '@/lib/rpc'
+import { useAuth } from '@/context/AuthContext'
 
 // ---------------------------------------------------------------------------
-// Local demo types
+// Filter constants
 // ---------------------------------------------------------------------------
-
-interface DemoProblem {
-  id: string
-  title: string
-  area: string
-  reportCount: number
-  trend: TrendDirection
-  priority: PriorityLevel
-  owner: string
-  status: string
-  assignment: 'assigned' | 'unassigned'
-  summary: string
-  evidence: { text: string; language: DetectedLanguage }[]
-  priorityReasons: string[]
-  aiSuggestion: { unit: string; support: string; step: string }
-}
-
-interface DemoDistribution {
-  label: string
-  percent: number
-  count: number
-}
-
-interface DemoActivity {
-  id: string
-  title: string
-  status: string
-  meta: string
-}
-
-// ---------------------------------------------------------------------------
-// Synthetic demonstration data
-// ---------------------------------------------------------------------------
-
-const DEMO_PROBLEMS: DemoProblem[] = [
-  {
-    id: 'p1',
-    title: 'Unreliable Wi-Fi during online assessments',
-    area: 'IT, Wi-Fi and LMS',
-    reportCount: 34,
-    trend: 'increasing',
-    priority: 'high',
-    owner: 'IT Department',
-    status: 'In progress',
-    assignment: 'assigned',
-    summary:
-      'Students report repeated Wi-Fi disconnections during online quizzes and assessments. The problem appears across several departments and has increased during the current assessment period.',
-    evidence: [
-      { text: 'Wi-Fi disconnects repeatedly during online quizzes.', language: 'en' },
-      { text: 'Quiz ke waqt internet bar bar disconnect hota hai.', language: 'roman_ur' },
-      { text: 'آن لائن امتحان کے دوران وائی فائی بار بار بند ہو جاتا ہے۔', language: 'ur' },
-      { text: 'Online assessment mein Wi-Fi bilkul reliable nahi hai.', language: 'roman_ur' },
-    ],
-    priorityReasons: [
-      '34 related feedback submissions',
-      'Reports have increased during the assessment period',
-      'The problem affects time-sensitive assessments',
-      'Feedback appears across three departments',
-    ],
-    aiSuggestion: {
-      unit: 'IT Department',
-      support: 'Examination Office',
-      step: 'Review peak-hour network capacity and access-point performance during scheduled online assessments.',
-    },
-  },
-  {
-    id: 'p2',
-    title: 'Overlapping assignment deadlines',
-    area: 'Academic programmes',
-    reportCount: 28,
-    trend: 'increasing',
-    priority: 'high',
-    owner: 'Not assigned',
-    status: 'Unassigned',
-    assignment: 'unassigned',
-    summary:
-      'Students from multiple programmes report that assignment deadlines cluster in the same week, causing excessive workload and reduced quality of submissions.',
-    evidence: [
-      { text: 'Three assignments due in the same week — impossible to do well.', language: 'en' },
-      { text: 'Deadlines overlap karte hain, pressure bohot hota hai.', language: 'roman_ur' },
-    ],
-    priorityReasons: [
-      '28 related feedback submissions',
-      'Increasing trend during the current semester',
-      'Affects academic performance across programmes',
-    ],
-    aiSuggestion: {
-      unit: 'Academic Department',
-      support: 'Student Affairs',
-      step: 'Coordinate deadline calendars across courses and introduce a staggered submission policy.',
-    },
-  },
-  {
-    id: 'p3',
-    title: 'Insufficient laboratory equipment',
-    area: 'Laboratory facilities',
-    reportCount: 23,
-    trend: 'stable',
-    priority: 'high',
-    owner: 'Facilities Department',
-    status: 'Under review',
-    assignment: 'assigned',
-    summary:
-      'Students in engineering and science labs report that outdated or insufficient equipment hampers practical learning and experiment completion.',
-    evidence: [
-      { text: 'Lab equipment is outdated — we share one oscilloscope among ten students.', language: 'en' },
-      { text: 'Lab mein instruments kam hain, experiment poora nahi hota.', language: 'roman_ur' },
-    ],
-    priorityReasons: [
-      '23 related feedback submissions',
-      'Stable but persistent issue',
-      'Directly impacts hands-on learning quality',
-    ],
-    aiSuggestion: {
-      unit: 'Facilities Department',
-      support: 'Finance Department',
-      step: 'Audit current lab inventory and prioritise procurement for high-enrolment courses.',
-    },
-  },
-  {
-    id: 'p4',
-    title: 'Missing core-course library resources',
-    area: 'Library and learning resources',
-    reportCount: 18,
-    trend: 'improving',
-    priority: 'medium',
-    owner: 'Library Management',
-    status: 'In progress',
-    assignment: 'assigned',
-    summary:
-      'Students cannot access required textbooks or digital resources for several core courses. The library is working on acquiring them.',
-    evidence: [
-      { text: 'Required textbook is not available in the library or online portal.', language: 'en' },
-      { text: 'Kitaab mil nahi rahi library mein.', language: 'roman_ur' },
-    ],
-    priorityReasons: [
-      '18 related feedback submissions',
-      'Improving after recent procurement',
-      'Affects exam preparation for core courses',
-    ],
-    aiSuggestion: {
-      unit: 'Library Management',
-      support: 'Academic Department',
-      step: 'Fast-track acquisition of the top-5 requested titles and enable temporary digital access.',
-    },
-  },
-  {
-    id: 'p5',
-    title: 'Delays in student-record correction',
-    area: 'Student records',
-    reportCount: 14,
-    trend: 'stable',
-    priority: 'medium',
-    owner: 'Not assigned',
-    status: 'Unassigned',
-    assignment: 'unassigned',
-    summary:
-      'Students report long delays in correcting errors in their academic records, affecting transcript requests and scholarship applications.',
-    evidence: [
-      { text: 'I waited three weeks for a grade correction on my transcript.', language: 'en' },
-      { text: 'Record correction mein bohot time lagta hai.', language: 'roman_ur' },
-    ],
-    priorityReasons: [
-      '14 related feedback submissions',
-      'Stable recurring issue',
-      'Blocks scholarship and transcript processes',
-    ],
-    aiSuggestion: {
-      unit: 'Student Affairs',
-      support: 'University Administration',
-      step: 'Introduce a tracked online correction request system with a defined SLA.',
-    },
-  },
-]
-
-const DEMO_DISTRIBUTIONS: DemoDistribution[] = [
-  { label: 'Courses and Teaching', percent: 31, count: 212 },
-  { label: 'IT, Wi-Fi and LMS', percent: 21, count: 144 },
-  { label: 'Assessments and Examinations', percent: 18, count: 123 },
-  { label: 'Laboratories and Facilities', percent: 14, count: 96 },
-  { label: 'Library and Learning Resources', percent: 9, count: 62 },
-]
-
-const DEMO_ACTIVITIES: DemoActivity[] = [
-  { id: 'ac1', title: 'Review peak-hour access-point capacity', status: 'In progress', meta: 'IT Department · Due 29 August' },
-  { id: 'ac2', title: 'Purchase additional lab equipment', status: 'Under review', meta: 'Facilities Department · Due 5 September' },
-  { id: 'ac3', title: 'Add requested digital library resources', status: 'Completed', meta: 'Library Management · Completed 20 August' },
-]
 
 type AdminFilter = 'all' | 'high' | 'medium' | 'unassigned'
 
@@ -225,22 +46,32 @@ const FILTER_OPTIONS: { value: AdminFilter; label: string }[] = [
   { value: 'unassigned', label: 'Unassigned' },
 ]
 
-/** Status badge colour class for admin action statuses. */
+/** Status badge colour class for cluster and action statuses. */
 function statusBadgeClass(status: string): string {
-  switch (status.toLowerCase()) {
-    case 'in progress':
-      return 'bg-soft-teal text-success'
-    case 'under review':
-      return 'bg-soft-amber text-[#8A5A16]'
+  const normalized = status.toLowerCase().replace(/\s+/g, '_')
+  switch (normalized) {
+    case 'action_created':
+    case 'in_progress':
     case 'completed':
       return 'bg-soft-teal text-success'
-    case 'unassigned':
+    case 'acknowledged':
+      return 'bg-soft-amber text-[#8A5A16]'
+    case 'open':
       return 'bg-soft-red text-danger'
     case 'assigned':
+    case 'planned':
       return 'bg-soft-blue text-ocean'
     default:
       return 'bg-soft-blue text-ocean'
   }
+}
+
+/** Cluster status user-facing labels. */
+const CLUSTER_STATUS_LABELS: Record<string, string> = {
+  open: 'Open',
+  acknowledged: 'Acknowledged',
+  action_created: 'Action Created',
+  closed: 'Closed',
 }
 
 // ---------------------------------------------------------------------------
@@ -248,17 +79,26 @@ function statusBadgeClass(status: string): string {
 // ---------------------------------------------------------------------------
 
 export default function AdminDashboard() {
+  const { loading: authLoading, profile } = useAuth()
+
+  // ── Data state ──────────────────────────────────────────────────────────
+  const [clusters, setClusters] = useState<IssueCluster[]>([])
+  const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
+  const [actions, setActions] = useState<(Action & { issue_clusters: { title: string } })[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  // ── UI state ────────────────────────────────────────────────────────────
   const [priorityFilter, setPriorityFilter] = useState<AdminFilter>('all')
   const [search, setSearch] = useState('')
-  const [selectedIssue, setSelectedIssue] = useState<DemoProblem | null>(null)
-  const [underReview, setUnderReview] = useState(false)
+  const [selectedCluster, setSelectedCluster] = useState<IssueCluster | null>(null)
+  const [acknowledged, setAcknowledged] = useState(false)
   const [actionFormOpen, setActionFormOpen] = useState(false)
-  const [activities, setActivities] = useState<DemoActivity[]>(DEMO_ACTIVITIES)
   const [toastOpen, setToastOpen] = useState(false)
   const [toastMsg, setToastMsg] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
   // Admin action form state
-  const [formDept, setFormDept] = useState('')
   const [formStatus, setFormStatus] = useState('Assigned')
   const [formTitle, setFormTitle] = useState('')
   const [formPerson, setFormPerson] = useState('')
@@ -266,77 +106,301 @@ export default function AdminDashboard() {
   const [formNote, setFormNote] = useState('')
   const [formStudentUpdate, setFormStudentUpdate] = useState('')
 
+  // ── Fetch data from Supabase (after auth ready + admin role) ──────────
+  useEffect(() => {
+    let cancelled = false
+
+    if (authLoading) return
+    if (!profile || profile.role !== 'admin') return
+
+    async function load() {
+      setLoading(true)
+      setError(null)
+
+      const [clustersRes, feedbackRes, actionsRes] = await Promise.all([
+        supabase
+          .from('issue_clusters')
+          .select('*')
+          .order('priority_score', { ascending: false }),
+        supabase.from('feedback').select('*'),
+        supabase
+          .from('actions')
+          .select('*, issue_clusters(title)')
+          .order('created_at', { ascending: false }),
+      ])
+
+      if (cancelled) return
+
+      if (clustersRes.error || feedbackRes.error || actionsRes.error) {
+        setError(
+          friendlyError(
+            clustersRes.error?.message ??
+              feedbackRes.error?.message ??
+              actionsRes.error?.message ??
+              'Failed to load dashboard data.',
+          ),
+        )
+        setLoading(false)
+        return
+      }
+
+      setClusters(clustersRes.data ?? [])
+      setFeedbacks(feedbackRes.data ?? [])
+      setActions((actionsRes.data ?? []) as (Action & { issue_clusters: { title: string } })[])
+      setLoading(false)
+    }
+
+    load()
+    return () => {
+      cancelled = true
+    }
+  }, [authLoading, profile])
+
+  // ── Computed: metric counts ─────────────────────────────────────────────
+  const metrics = useMemo(() => {
+    const totalFeedback = feedbacks.length
+    let highPriority = 0
+    let underReviewCount = 0
+    let resolved = 0
+    for (const c of clusters) {
+      if (c.priority_level === 'high') highPriority++
+      if (c.status === 'open' || c.status === 'acknowledged') underReviewCount++
+      if (c.status === 'closed') resolved++
+    }
+    return { totalFeedback, highPriority, underReview: underReviewCount, resolved }
+  }, [feedbacks, clusters])
+
+  // ── Computed: distribution by university service ────────────────────────
+  const distributions = useMemo(() => {
+    const serviceCounts: Record<string, number> = {}
+    for (const f of feedbacks) {
+      const key = f.university_service || 'Other'
+      serviceCounts[key] = (serviceCounts[key] ?? 0) + 1
+    }
+    const total = feedbacks.length || 1
+    return Object.entries(serviceCounts)
+      .map(([label, count]) => ({
+        label,
+        percent: Math.round((count / total) * 100),
+        count,
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 6)
+  }, [feedbacks])
+
+  // ── Filtered problems ───────────────────────────────────────────────────
+  const filteredProblems = useMemo(() => {
+    return clusters.filter((c) => {
+      let matchFilter: boolean
+      if (priorityFilter === 'all') matchFilter = true
+      else if (priorityFilter === 'unassigned') {
+        matchFilter = c.status === 'open' && !c.ai_suggested_department
+      } else matchFilter = c.priority_level === priorityFilter
+
+      const haystack = `${c.title} ${c.feedback_area ?? ''} ${c.university_service ?? ''}`.toLowerCase()
+      const matchSearch = haystack.includes(search.toLowerCase())
+      return matchFilter && matchSearch
+    })
+  }, [clusters, priorityFilter, search])
+
+  // ── Cluster evidence (feedback matching the selected cluster) ──────────
+  const clusterEvidence = useMemo(() => {
+    if (!selectedCluster) return []
+    const tag = selectedCluster.canonical_tag
+    const topic = selectedCluster.feedback_area ?? ''
+    return feedbacks
+      .filter(
+        (f) =>
+          f.topic?.toLowerCase().includes(tag.toLowerCase()) ||
+          f.feedback_area === topic ||
+          f.university_service === selectedCluster.university_service,
+      )
+      .slice(0, 5)
+  }, [selectedCluster, feedbacks])
+
+  // ── Priority reasons (built from cluster metadata) ─────────────────────
+  const priorityReasons = useMemo(() => {
+    if (!selectedCluster) return []
+    const reasons: string[] = []
+    reasons.push(`${selectedCluster.report_count} related feedback submissions`)
+    if (selectedCluster.trend === 'increasing') {
+      reasons.push('Reports have been increasing recently')
+    } else if (selectedCluster.trend === 'stable') {
+      reasons.push('The issue has been persistent')
+    } else {
+      reasons.push('Reports are improving')
+    }
+    if (selectedCluster.feedback_share != null) {
+      reasons.push(
+        `Represents ${Math.round(selectedCluster.feedback_share * 100)}% of related feedback`,
+      )
+    }
+    if (selectedCluster.ai_suggested_department) {
+      reasons.push(`Affects ${selectedCluster.ai_suggested_department}`)
+    }
+    return reasons
+  }, [selectedCluster])
+
+  // ── Handlers ────────────────────────────────────────────────────────────
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg)
     setToastOpen(true)
   }, [])
 
-  const filteredProblems = DEMO_PROBLEMS.filter((p) => {
-    let matchFilter: boolean
-    if (priorityFilter === 'all') matchFilter = true
-    else if (priorityFilter === 'unassigned') matchFilter = p.assignment === 'unassigned'
-    else matchFilter = p.priority === priorityFilter
-
-    const haystack = `${p.title} ${p.area}`.toLowerCase()
-    const matchSearch = haystack.includes(search.toLowerCase())
-    return matchFilter && matchSearch
-  })
-
-  const openDialog = useCallback((issue: DemoProblem) => {
-    setSelectedIssue(issue)
-    setUnderReview(false)
+  const openDialog = useCallback((cluster: IssueCluster) => {
+    setSelectedCluster(cluster)
+    setAcknowledged(
+      cluster.status === 'acknowledged' || cluster.status === 'action_created',
+    )
     setActionFormOpen(false)
-    setFormDept('')
     setFormStatus('Assigned')
-    setFormTitle('Review peak-hour network capacity')
+    setFormTitle('')
     setFormPerson('')
     setFormDeadline('')
     setFormNote('')
-    setFormStudentUpdate(
-      'The university is reviewing this issue. It has been assigned to the relevant department.',
-    )
+    setFormStudentUpdate('')
   }, [])
 
   const closeDialog = useCallback(() => {
-    setSelectedIssue(null)
+    setSelectedCluster(null)
     setActionFormOpen(false)
   }, [])
 
-  const handleMarkReview = useCallback(() => {
-    setUnderReview(true)
-    showToast('Issue status changed to Under Review.')
-  }, [showToast])
+  const handleAcknowledge = useCallback(async () => {
+    if (!selectedCluster || submitting) return
+    setSubmitting(true)
+    const { error: err } = await updateClusterStatus(
+      selectedCluster.id,
+      'acknowledged',
+    )
+    setSubmitting(false)
+    if (err) {
+      showToast(friendlyError(err.message))
+      return
+    }
+    setAcknowledged(true)
+    setClusters((prev) =>
+      prev.map((c) =>
+        c.id === selectedCluster.id ? { ...c, status: 'acknowledged' } : c,
+      ),
+    )
+    showToast('Issue acknowledged.')
+  }, [selectedCluster, submitting, showToast])
 
   const handleActionSubmit = useCallback(
-    (e: FormEvent) => {
+    async (e: FormEvent) => {
       e.preventDefault()
-      const newActivity: DemoActivity = {
-        id: `ac${Date.now()}`,
-        title: formTitle,
-        status: formStatus,
-        meta: `${formDept} · Owner: ${formPerson} · Deadline: ${formDeadline}`,
+      if (!selectedCluster || submitting) return
+      setSubmitting(true)
+
+      const statusMap: Record<string, string> = {
+        Assigned: 'assigned',
+        'Under review': 'assigned',
+        'In progress': 'in_progress',
+        Completed: 'completed',
       }
-      setActivities((prev) => [newActivity, ...prev])
+
+      const { data: actionId, error: rpcErr } = await callRpc('admin_create_action', {
+        p_cluster_id: selectedCluster.id,
+        p_title: formTitle,
+        p_status: statusMap[formStatus] ?? 'assigned',
+        p_responsible_department: selectedCluster.ai_suggested_department ?? null,
+        p_responsible_person: formPerson || null,
+        p_deadline: formDeadline || null,
+        p_internal_note: formNote || null,
+        p_student_facing_message: formStudentUpdate.trim() || null,
+      })
+
+      if (rpcErr || !actionId) {
+        setSubmitting(false)
+        showToast(friendlyError(rpcErr?.message ?? 'Failed to create action.'))
+        return
+      }
+
+      // Refresh actions list
+      const { data: refreshed } = await supabase
+        .from('actions')
+        .select('*, issue_clusters(title)')
+        .order('created_at', { ascending: false })
+      if (refreshed) {
+        setActions(refreshed as (Action & { issue_clusters: { title: string } })[])
+      }
+
+      // Update local state
+      setAcknowledged(true)
+      setClusters((prev) =>
+        prev.map((c) =>
+          c.id === selectedCluster.id ? { ...c, status: 'action_created' } : c,
+        ),
+      )
+
+      setSubmitting(false)
       setActionFormOpen(false)
-      showToast('Action assigned successfully. The student-facing update is ready to publish.')
+      showToast('Action assigned and cluster updated.')
       setTimeout(closeDialog, 1000)
     },
-    [formTitle, formStatus, formDept, formPerson, formDeadline, showToast, closeDialog],
+    [selectedCluster, formTitle, formStatus, formPerson, formDeadline, formNote, formStudentUpdate, submitting, showToast, closeDialog],
   )
+
+  // ── Auth / role guard (render-time, no setState) ───────────────────────
+  if (!authLoading && (!profile || profile.role !== 'admin')) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="max-w-md rounded-xl border border-danger/20 bg-soft-red p-6 text-center">
+          <AlertCircle className="mx-auto mb-3 h-8 w-8 text-danger" aria-hidden="true" />
+          <h2 className="mb-2 text-lg font-bold text-navy">Admin access required</h2>
+          <p className="text-sm text-muted">
+            You must be signed in with an administrator account to view this dashboard.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Loading state ───────────────────────────────────────────────────────
+  if (authLoading || loading) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="flex flex-col items-center gap-3 text-muted">
+          <Loader2 className="h-7 w-7 animate-spin" aria-hidden="true" />
+          <p className="text-sm">Loading institutional analytics…</p>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Error state ─────────────────────────────────────────────────────────
+  if (error) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="max-w-md rounded-xl border border-danger/20 bg-soft-red p-6 text-center">
+          <AlertCircle className="mx-auto mb-3 h-8 w-8 text-danger" aria-hidden="true" />
+          <h2 className="mb-2 text-lg font-bold text-navy">Unable to load dashboard</h2>
+          <p className="text-sm text-muted">{error}</p>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Populated dashboard ──────────────────────────────────────────────────
+  const topCluster = clusters[0] ?? null
+  const hasData = feedbacks.length > 0
 
   return (
     <>
-      {/* ── Demo banner ── */}
-      <div className="mb-4 rounded-lg border border-amber-300 bg-soft-amber px-4 py-2 text-center text-sm font-semibold text-warning">
-        Demonstration data — synthetic content for UI validation only
-      </div>
+      {/* ── Status banner ── */}
+      {!hasData && (
+        <div className="mb-4 rounded-lg border border-amber-300 bg-soft-amber px-4 py-2 text-center text-sm font-semibold text-warning">
+          No feedback data available yet.
+        </div>
+      )}
 
       {/* ── Metric cards ── */}
       <section className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard icon={<FileText className="h-5 w-5" />} label="Total Feedback" value={684} iconBg="bg-soft-blue" iconColour="text-ocean" />
-        <MetricCard icon={<Flag className="h-5 w-5" />} label="High-Priority Issues" value={8} iconBg="bg-soft-red" iconColour="text-danger" />
-        <MetricCard icon={<Clock className="h-5 w-5" />} label="Under Review" value={17} iconBg="bg-soft-amber" iconColour="text-[#D98200]" />
-        <MetricCard icon={<CheckCircle className="h-5 w-5" />} label="Resolved" value={42} iconBg="bg-soft-teal" iconColour="text-teal-dark" />
+        <MetricCard icon={<FileText className="h-5 w-5" />} label="Total Feedback" value={metrics.totalFeedback} iconBg="bg-soft-blue" iconColour="text-ocean" />
+        <MetricCard icon={<Flag className="h-5 w-5" />} label="High-Priority Issues" value={metrics.highPriority} iconBg="bg-soft-red" iconColour="text-danger" />
+        <MetricCard icon={<Clock className="h-5 w-5" />} label="Under Review" value={metrics.underReview} iconBg="bg-soft-amber" iconColour="text-[#D98200]" />
+        <MetricCard icon={<CheckCircle className="h-5 w-5" />} label="Resolved" value={metrics.resolved} iconBg="bg-soft-teal" iconColour="text-teal-dark" />
       </section>
 
       {/* ── Dashboard grid ── */}
@@ -358,35 +422,49 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {filteredProblems.map((p) => (
-                  <tr
-                    key={p.id}
-                    className="cursor-pointer transition-colors hover:bg-[#F7FAF9]"
-                    onClick={() => openDialog(p)}
-                  >
-                    <td className="border-b border-[#E8E2D9] px-3 py-3.5">
-                      <span className="font-bold text-ocean">{p.title}</span>
-                      <span className="mt-1 block text-[11px] text-muted">{p.area}</span>
-                    </td>
-                    <td className="border-b border-[#E8E2D9] px-3 py-3.5 text-[13px]">{p.reportCount}</td>
-                    <td className={`border-b border-[#E8E2D9] px-3 py-3.5 text-[13px] font-semibold ${TREND_COLOURS[p.trend]}`}>
-                      {TREND_ARROWS[p.trend]} {TREND_LABELS[p.trend]}
-                    </td>
-                    <td className="border-b border-[#E8E2D9] px-3 py-3.5">
-                      <PriorityBadge level={p.priority} />
-                    </td>
-                    <td className="border-b border-[#E8E2D9] px-3 py-3.5 text-[13px]">{p.owner}</td>
-                    <td className="border-b border-[#E8E2D9] px-3 py-3.5">
-                      <span className={`inline-block rounded-full px-2 py-1 text-[11px] font-bold ${statusBadgeClass(p.status)}`}>
-                        {p.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {filteredProblems.map((c) => {
+                  const statusLabel =
+                    CLUSTER_STATUS_LABELS[c.status] ??
+                    ACTION_STATUS_LABELS[c.status as keyof typeof ACTION_STATUS_LABELS] ??
+                    c.status
+                  return (
+                    <tr
+                      key={c.id}
+                      className="cursor-pointer transition-colors hover:bg-[#F7FAF9]"
+                      onClick={() => openDialog(c)}
+                    >
+                      <td className="border-b border-[#E8E2D9] px-3 py-3.5">
+                        <span className="font-bold text-ocean">{c.title}</span>
+                        <span className="mt-1 block text-[11px] text-muted">
+                          {c.feedback_area ?? c.university_service ?? '—'}
+                        </span>
+                      </td>
+                      <td className="border-b border-[#E8E2D9] px-3 py-3.5 text-[13px]">{c.report_count}</td>
+                      <td className={`border-b border-[#E8E2D9] px-3 py-3.5 text-[13px] font-semibold ${TREND_COLOURS[c.trend]}`}>
+                        {TREND_ARROWS[c.trend]} {TREND_LABELS[c.trend]}
+                      </td>
+                      <td className="border-b border-[#E8E2D9] px-3 py-3.5">
+                        <PriorityBadge level={c.priority_level} />
+                      </td>
+                      <td className="border-b border-[#E8E2D9] px-3 py-3.5 text-[13px]">
+                        {c.ai_suggested_department ?? 'Not assigned'}
+                      </td>
+                      <td className="border-b border-[#E8E2D9] px-3 py-3.5">
+                        <span className={`inline-block rounded-full px-2 py-1 text-[11px] font-bold ${statusBadgeClass(c.status)}`}>
+                          {statusLabel}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
             {filteredProblems.length === 0 && (
-              <p className="py-7 text-center text-muted">No matching institutional problems.</p>
+              <p className="py-7 text-center text-muted">
+                {clusters.length === 0
+                  ? 'No institutional problems identified yet.'
+                  : 'No matching institutional problems.'}
+              </p>
             )}
           </div>
           {/* Search row */}
@@ -408,9 +486,13 @@ export default function AdminDashboard() {
               <h3 className="m-0 text-[19px] text-navy">Feedback by Responsible Area</h3>
             </div>
             <div className="grid gap-4 p-5">
-              {DEMO_DISTRIBUTIONS.map((d) => (
-                <ProgressBar key={d.label} label={d.label} value={d.percent} valueText={`${d.percent}% · ${d.count}`} />
-              ))}
+              {distributions.length > 0 ? (
+                distributions.map((d) => (
+                  <ProgressBar key={d.label} label={d.label} value={d.percent} valueText={`${d.percent}% · ${d.count}`} />
+                ))
+              ) : (
+                <p className="py-4 text-center text-sm text-muted">No feedback data yet.</p>
+              )}
             </div>
           </section>
 
@@ -420,20 +502,25 @@ export default function AdminDashboard() {
               <h3 className="m-0 text-[19px] text-navy">Institutional AI Summary</h3>
             </div>
             <div className="p-5">
-              <div className="rounded-[10px] border border-[#A9DDD7] px-4 py-4" style={{ background: 'linear-gradient(135deg, #F3FBF9, #EAF5F7)' }}>
-                <strong className="text-teal-dark">✦ Current institutional insight</strong>
-                <p className="mt-2 leading-relaxed text-text">
-                  Wi-Fi disruption during time-sensitive online assessments is the fastest-growing operational problem.
-                  Reports appear across three academic departments and require coordinated review by IT and examination services.
+              {topCluster ? (
+                <div className="rounded-[10px] border border-[#A9DDD7] px-4 py-4" style={{ background: 'linear-gradient(135deg, #F3FBF9, #EAF5F7)' }}>
+                  <strong className="text-teal-dark">✦ Current institutional insight</strong>
+                  <p className="mt-2 leading-relaxed text-text">
+                    {topCluster.ai_suggested_response ?? topCluster.summary}
+                  </p>
+                  <button
+                    type="button"
+                    className="font-bold text-teal-dark hover:underline"
+                    onClick={() => openDialog(topCluster)}
+                  >
+                    Review evidence →
+                  </button>
+                </div>
+              ) : (
+                <p className="py-4 text-center text-sm text-muted">
+                  No institutional insights available yet.
                 </p>
-                <button
-                  type="button"
-                  className="font-bold text-teal-dark hover:underline"
-                  onClick={() => openDialog(DEMO_PROBLEMS[0])}
-                >
-                  Review evidence →
-                </button>
-              </div>
+              )}
             </div>
           </section>
         </div>
@@ -451,99 +538,137 @@ export default function AdminDashboard() {
             </button>
           </div>
           <div id="admin-actions-section" className="grid gap-3 p-5">
-            {activities.map((a) => (
-              <div key={a.id} className="rounded-[9px] border border-border p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <strong className="text-sm">{a.title}</strong>
-                  <span className={`inline-block rounded-full px-2 py-1 text-[11px] font-bold ${statusBadgeClass(a.status)}`}>
-                    {a.status}
-                  </span>
-                </div>
-                <p className="mt-1.5 text-xs leading-relaxed text-muted">{a.meta}</p>
-              </div>
-            ))}
+            {actions.length > 0 ? (
+              actions.map((a) => {
+                const statusLabel =
+                  ACTION_STATUS_LABELS[a.status as keyof typeof ACTION_STATUS_LABELS] ?? a.status
+                return (
+                  <div key={a.id} className="rounded-[9px] border border-border p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <strong className="text-sm">{a.title}</strong>
+                      <span className={`inline-block rounded-full px-2 py-1 text-[11px] font-bold ${statusBadgeClass(a.status)}`}>
+                        {statusLabel}
+                      </span>
+                    </div>
+                    <p className="mt-1.5 text-xs leading-relaxed text-muted">
+                      {a.responsible_department ?? 'Unassigned'}
+                      {a.responsible_person && ` · ${a.responsible_person}`}
+                      {a.deadline && ` · Due ${new Date(a.deadline).toLocaleDateString()}`}
+                      {a.issue_clusters && ` · ${a.issue_clusters.title}`}
+                    </p>
+                  </div>
+                )
+              })
+            ) : (
+              <p className="py-4 text-center text-sm text-muted">
+                No institutional actions created yet.
+              </p>
+            )}
           </div>
         </section>
       </div>
 
       {/* ── Issue Detail Dialog ── */}
       <OverlayDialog
-        open={!!selectedIssue}
+        open={!!selectedCluster}
         onClose={closeDialog}
-        title={selectedIssue?.title ?? ''}
+        title={selectedCluster?.title ?? ''}
         subtitle="Institutional problem cluster"
         maxWidth="min(820px, 100%)"
         footer={
           <>
             <button
               type="button"
-              disabled={underReview}
-              onClick={handleMarkReview}
+              disabled={acknowledged || submitting}
+              onClick={handleAcknowledge}
               className="rounded-lg border border-border bg-white px-4 py-2.5 text-sm font-bold text-ocean transition-colors hover:bg-ivory disabled:opacity-60"
             >
-              {underReview ? '✓ Under Review' : 'Mark Under Review'}
+              {submitting
+                ? 'Saving…'
+                : acknowledged
+                  ? '✓ Acknowledged'
+                  : 'Acknowledge Issue'}
             </button>
             <button
               type="button"
+              disabled={submitting}
               onClick={() => setActionFormOpen((v) => !v)}
-              className="rounded-lg bg-teal px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-teal-dark"
+              className="rounded-lg bg-teal px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-teal-dark disabled:opacity-60"
             >
               {actionFormOpen ? 'Close Form' : 'Assign Action'}
             </button>
           </>
         }
       >
-        {selectedIssue && (
+        {selectedCluster && (
           <div className="space-y-5">
             {/* Summary */}
-            <p className="leading-relaxed text-text">{selectedIssue.summary}</p>
+            <p className="leading-relaxed text-text">{selectedCluster.summary}</p>
 
             {/* Summary grid — 4 columns */}
             <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
               <div className="rounded-lg bg-soft-blue p-3">
                 <small className="text-muted">Related feedback</small>
-                <strong className="mt-1 block">{selectedIssue.reportCount} reports</strong>
-              </div>
-              <div className="rounded-lg bg-soft-blue p-3">
-                <small className="text-muted">Affected areas</small>
-                <strong className="mt-1 block">3 departments</strong>
+                <strong className="mt-1 block">{selectedCluster.report_count} reports</strong>
               </div>
               <div className="rounded-lg bg-soft-blue p-3">
                 <small className="text-muted">Trend</small>
-                <strong className={`mt-1 block ${TREND_COLOURS[selectedIssue.trend]}`}>{TREND_LABELS[selectedIssue.trend]}</strong>
+                <strong className={`mt-1 block ${TREND_COLOURS[selectedCluster.trend]}`}>
+                  {TREND_LABELS[selectedCluster.trend]}
+                </strong>
               </div>
               <div className="rounded-lg bg-soft-blue p-3">
                 <small className="text-muted">Priority</small>
-                <strong className={`mt-1 block ${selectedIssue.priority === 'high' ? 'text-danger' : selectedIssue.priority === 'medium' ? 'text-warning' : 'text-success'}`}>
-                  {PRIORITY_LABELS[selectedIssue.priority]}
+                <strong className={`mt-1 block ${selectedCluster.priority_level === 'high' ? 'text-danger' : selectedCluster.priority_level === 'medium' ? 'text-warning' : 'text-success'}`}>
+                  {PRIORITY_LABELS[selectedCluster.priority_level]}
+                </strong>
+              </div>
+              <div className="rounded-lg bg-soft-blue p-3">
+                <small className="text-muted">Suggested dept</small>
+                <strong className="mt-1 block">
+                  {selectedCluster.ai_suggested_department ?? '—'}
                 </strong>
               </div>
             </div>
 
             {/* Evidence */}
-            <h4 className="text-ocean">Supporting multilingual evidence</h4>
-            {selectedIssue.evidence.map((ev, i) => (
-              <EvidenceQuote key={i} text={ev.text} language={ev.language} />
-            ))}
+            {clusterEvidence.length > 0 && (
+              <>
+                <h4 className="text-ocean">Supporting multilingual evidence</h4>
+                {clusterEvidence.map((ev) => (
+                  <EvidenceQuote
+                    key={ev.id}
+                    text={ev.original_text}
+                    language={ev.language_detected ?? undefined}
+                  />
+                ))}
+              </>
+            )}
 
             {/* Priority reasons */}
-            <PriorityReasons reasons={selectedIssue.priorityReasons} />
+            {priorityReasons.length > 0 && (
+              <PriorityReasons reasons={priorityReasons} />
+            )}
 
             {/* AI suggestion */}
-            <div>
-              <h4 className="mb-2 text-ocean">AI-suggested routing and response</h4>
-              <div className="rounded-[9px] bg-soft-teal p-3.5 leading-relaxed text-text">
-                <strong>Suggested responsible unit:</strong> {selectedIssue.aiSuggestion.unit}
-                <br /><br />
-                <strong>Suggested supporting unit:</strong> {selectedIssue.aiSuggestion.support}
-                <br /><br />
-                <strong>Suggested next step:</strong> {selectedIssue.aiSuggestion.step}
-                <br /><br />
-                <span className="text-muted">
-                  These are AI-generated suggestions. Final assignment and action decisions must be made by authorised staff.
-                </span>
+            {selectedCluster.ai_suggested_response && (
+              <div>
+                <h4 className="mb-2 text-ocean">AI-suggested routing and response</h4>
+                <div className="rounded-[9px] bg-soft-teal p-3.5 leading-relaxed text-text">
+                  <strong>Suggested responsible unit:</strong>{' '}
+                  {selectedCluster.ai_suggested_department ?? '—'}
+                  <br />
+                  <br />
+                  <strong>Suggested next step:</strong> {selectedCluster.ai_suggested_response}
+                  <br />
+                  <br />
+                  <span className="text-muted">
+                    These are AI-generated suggestions. Final assignment and action decisions must
+                    be made by authorised staff.
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Action form (toggle) */}
             {actionFormOpen && (
@@ -551,22 +676,6 @@ export default function AdminDashboard() {
                 <strong className="text-navy">Assign institutional action</strong>
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {/* Responsible department */}
-                  <label className="grid gap-1.5 text-[13px] font-bold">
-                    Responsible department
-                    <select
-                      required
-                      value={formDept}
-                      onChange={(e) => setFormDept(e.target.value)}
-                      className="w-full rounded-lg border border-[#C9D2D5] p-2.5 text-sm font-normal outline-none focus:border-teal"
-                    >
-                      <option value="">Select responsible department</option>
-                      {ADMIN_DEPARTMENTS.map((d) => (
-                        <option key={d}>{d}</option>
-                      ))}
-                    </select>
-                  </label>
-
                   {/* Action status */}
                   <label className="grid gap-1.5 text-[13px] font-bold">
                     Action status
@@ -631,20 +740,25 @@ export default function AdminDashboard() {
                     />
                   </label>
 
-                  {/* Student-facing update (full width) */}
+                  {/* Student-facing update (full width, optional) */}
                   <label className="grid gap-1.5 text-[13px] font-bold sm:col-span-2">
-                    Student-facing update
+                    Student-facing update{' '}
+                    <span className="font-normal text-muted">(optional)</span>
                     <textarea
                       value={formStudentUpdate}
                       onChange={(e) => setFormStudentUpdate(e.target.value)}
-                      placeholder="Write the update students will be allowed to see…"
-                      className="min-h-[90px] w-full resize-y rounded-lg border border-[#C9D2D5] p-2.5 text-sm font-normal outline-none focus:border-teal"
+                      placeholder="Message visible to affected students…"
+                      className="min-h-[70px] w-full resize-y rounded-lg border border-[#C9D2D5] p-2.5 text-sm font-normal outline-none focus:border-teal"
                     />
                   </label>
                 </div>
 
-                <button type="submit" className="rounded-lg bg-teal px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-teal-dark">
-                  Save and Assign Action
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="rounded-lg bg-teal px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-teal-dark disabled:opacity-60"
+                >
+                  {submitting ? 'Saving…' : 'Save and Assign Action'}
                 </button>
               </form>
             )}
