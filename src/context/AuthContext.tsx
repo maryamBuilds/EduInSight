@@ -274,6 +274,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           needsEmailConfirmation: false,
         }
       }
+      if (error.message.includes('Database error saving new user')) {
+        return {
+          error:
+            'Your student profile could not be created. Please ask the project administrator to apply the latest signup migration, then try again.',
+          needsEmailConfirmation: false,
+        }
+      }
       return { error: error.message, needsEmailConfirmation: false }
     }
 
