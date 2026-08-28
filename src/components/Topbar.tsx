@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Bell, Menu } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { getInitials } from '@/lib/utils'
 
 interface TopbarProps {
@@ -9,8 +10,12 @@ interface TopbarProps {
   subtitle?: string
   /** User's full name for the avatar in the top-right corner. */
   avatarName?: string
+  /** Optional profile destination for the avatar. */
+  avatarHref?: string
   /** Notification count badge. 0 or undefined hides the badge. */
   notificationCount?: number
+  /** Optional destination for the notification bell. */
+  notificationHref?: string
   /** Additional action elements (e.g. SearchInput, PeriodSelector). */
   actions?: ReactNode
   /** Called when the mobile hamburger button is tapped. */
@@ -29,7 +34,9 @@ export function Topbar({
   greeting,
   subtitle,
   avatarName,
+  avatarHref,
   notificationCount,
+  notificationHref,
   actions,
   onMenuClick,
   menuExpanded,
@@ -63,27 +70,52 @@ export function Topbar({
       <div className="flex items-center gap-3">
         {actions}
 
-        {notificationCount != null && notificationCount > 0 && (
-          <button
-            type="button"
-            className="relative grid h-[42px] w-[42px] place-items-center rounded-full border border-[#CAD3D6] bg-white"
-            aria-label={`${notificationCount} notifications`}
-          >
+        {notificationCount != null && (
+          notificationHref ? (
+            <Link
+              to={notificationHref}
+              className="relative grid h-[42px] w-[42px] place-items-center rounded-full border border-[#CAD3D6] bg-white hover:bg-gray-50"
+              aria-label={notificationCount > 0 ? `${notificationCount} unread notifications` : 'Open notifications'}
+            >
+              <Bell className="h-[18px] w-[18px] text-muted" aria-hidden="true" />
+              {notificationCount > 0 && (
+                <span className="absolute -right-[3px] -top-[4px] grid h-[18px] min-w-[18px] place-items-center rounded-full bg-[#E76F51] px-1 text-[11px] font-bold text-white">
+                  {notificationCount > 99 ? '99+' : notificationCount}
+                </span>
+              )}
+            </Link>
+          ) : (
+            <button
+              type="button"
+              className="relative grid h-[42px] w-[42px] place-items-center rounded-full border border-[#CAD3D6] bg-white"
+              aria-label={`${notificationCount} notifications`}
+            >
             <Bell className="h-[18px] w-[18px] text-muted" aria-hidden="true" />
-            <span className="absolute -right-[3px] -top-[4px] grid h-[18px] w-[18px] place-items-center rounded-full bg-[#E76F51] text-[11px] font-bold text-white">
-              {notificationCount}
-            </span>
-          </button>
+            {notificationCount > 0 && (
+              <span className="absolute -right-[3px] -top-[4px] grid h-[18px] min-w-[18px] place-items-center rounded-full bg-[#E76F51] px-1 text-[11px] font-bold text-white">
+                {notificationCount > 99 ? '99+' : notificationCount}
+              </span>
+            )}
+            </button>
+          )
         )}
 
-        {initials && (
+        {initials && (avatarHref ? (
+          <Link
+            to={avatarHref}
+            className="grid h-[45px] w-[45px] place-items-center rounded-full bg-aqua font-bold text-navy transition hover:ring-2 hover:ring-teal hover:ring-offset-2"
+            aria-label="Open my profile"
+          >
+            {initials}
+          </Link>
+        ) : (
           <span
             className="grid h-[45px] w-[45px] place-items-center rounded-full bg-aqua font-bold text-navy"
             aria-hidden="true"
           >
             {initials}
           </span>
-        )}
+        ))}
       </div>
     </header>
   )

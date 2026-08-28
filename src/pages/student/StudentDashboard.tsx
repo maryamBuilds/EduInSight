@@ -67,7 +67,11 @@ export default function StudentDashboard() {
       setError('Your dashboard could not be loaded. Please try again.')
     } else {
       setFeedback((feedbackResult.data ?? []) as Feedback[])
-      setUpdates((updatesResult.data ?? []) as PublishedActionUpdate[])
+      const uniqueUpdates = new Map<string, PublishedActionUpdate>()
+      ;((updatesResult.data ?? []) as PublishedActionUpdate[]).forEach((update) => {
+        if (!uniqueUpdates.has(update.id)) uniqueUpdates.set(update.id, update)
+      })
+      setUpdates([...uniqueUpdates.values()])
     }
     setLoading(false)
   }, [])

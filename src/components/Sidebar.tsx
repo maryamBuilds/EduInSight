@@ -6,6 +6,7 @@ import {
   LayoutList,
   CircleDot,
   Bell,
+  UserRound,
   LayoutDashboard,
   BookOpen,
   FileText,
@@ -41,6 +42,7 @@ const STUDENT_NAV: NavItem[] = [
   { label: 'My Feedback', to: '/student/feedback', icon: LayoutList },
   { label: 'University Updates', to: '/student/updates', icon: CircleDot },
   { label: 'Notifications', to: '/student/notifications', icon: Bell },
+  { label: 'My Profile', to: '/student/profile', icon: UserRound },
 ]
 
 const TEACHER_NAV: NavItem[] = [
@@ -184,7 +186,13 @@ export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose }: 
         {extra}
 
         {/* User profile */}
-        <div className="mt-auto flex items-center gap-[11px] border-t border-white/20 pt-[18px]">
+        {role === 'student' ? (
+        <NavLink
+          to="/student/profile"
+          onClick={onNavigate}
+          className="mt-auto flex items-center gap-[11px] rounded-lg border-t border-white/20 pt-[18px] transition hover:bg-white/[0.06]"
+          aria-label="Open my profile"
+        >
           <span
             className="grid h-[45px] w-[45px] shrink-0 place-items-center rounded-full bg-aqua font-bold text-navy"
             aria-hidden="true"
@@ -195,7 +203,16 @@ export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose }: 
             <strong className="text-sm">{fullName}</strong>
             <small className="text-[#BDD1D9]">{ROLE_LABELS[role]}</small>
           </div>
-        </div>
+        </NavLink>
+        ) : (
+          <div className="mt-auto flex items-center gap-[11px] border-t border-white/20 pt-[18px]">
+            <span className="grid h-[45px] w-[45px] shrink-0 place-items-center rounded-full bg-aqua font-bold text-navy" aria-hidden="true">{initials}</span>
+            <div className="grid gap-[3px]">
+              <strong className="text-sm">{fullName}</strong>
+              <small className="text-[#BDD1D9]">{ROLE_LABELS[role]}</small>
+            </div>
+          </div>
+        )}
       </aside>
     )
   }
@@ -253,7 +270,12 @@ export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose }: 
       {extra}
 
       {/* User profile */}
-      <div className="mt-auto flex items-center gap-[11px] border-t border-white/20 pt-[18px]">
+      {role === 'student' ? (
+      <NavLink
+        to="/student/profile"
+        className="mt-auto flex items-center gap-[11px] rounded-lg border-t border-white/20 pt-[18px] transition hover:bg-white/[0.06]"
+        aria-label="Open my profile"
+      >
         <span
           className="grid h-[45px] w-[45px] shrink-0 place-items-center rounded-full bg-aqua font-bold text-navy"
           aria-hidden="true"
@@ -264,7 +286,16 @@ export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose }: 
           <strong className="text-sm">{fullName}</strong>
           <small className="text-[#BDD1D9]">{ROLE_LABELS[role]}</small>
         </div>
-      </div>
+      </NavLink>
+      ) : (
+        <div className="mt-auto flex items-center gap-[11px] border-t border-white/20 pt-[18px]">
+          <span className="grid h-[45px] w-[45px] shrink-0 place-items-center rounded-full bg-aqua font-bold text-navy" aria-hidden="true">{initials}</span>
+          <div className="grid gap-[3px] max-lg:hidden">
+            <strong className="text-sm">{fullName}</strong>
+            <small className="text-[#BDD1D9]">{ROLE_LABELS[role]}</small>
+          </div>
+        </div>
+      )}
     </aside>
   )
 }

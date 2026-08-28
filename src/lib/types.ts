@@ -60,6 +60,7 @@ export interface Profile {
   full_name: string
   email: string
   role: UserRole
+  institution_id: string
   department_id: string | null
   programme: string | null
   study_structure: StudyStructure | null
@@ -70,10 +71,19 @@ export interface Profile {
   updated_at: string
 }
 
+export interface Institution {
+  id: string
+  name: string
+  email_domains: string[]
+  is_active: boolean
+  created_at: string
+}
+
 export interface Department {
   id: string
   name: string
   type: DepartmentType
+  institution_id: string
   created_at: string
 }
 
@@ -105,6 +115,7 @@ export interface TeacherAssignment {
 export interface Feedback {
   id: string
   student_id: string
+  institution_id: string
   department_id: string
   programme: string
   study_structure: StudyStructure
@@ -302,6 +313,7 @@ export interface PriorityResult {
 export interface Database {
   public: {
     Tables: {
+      institutions: { Row: Institution; Insert: Omit<Institution, 'id' | 'created_at'>; Update: Partial<Institution> }
       profiles: { Row: Profile; Insert: Omit<Profile, 'created_at' | 'updated_at'>; Update: Partial<Profile> }
       departments: { Row: Department; Insert: Omit<Department, 'id' | 'created_at'>; Update: Partial<Department> }
       courses: { Row: Course; Insert: Omit<Course, 'id' | 'created_at'>; Update: Partial<Course> }

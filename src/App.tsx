@@ -17,6 +17,9 @@ import SubmitFeedback from '@/pages/SubmitFeedback'
 import StudentDashboard from '@/pages/student/StudentDashboard'
 import MyFeedback from '@/pages/student/MyFeedback'
 import FeedbackDetail from '@/pages/student/FeedbackDetail'
+import UniversityUpdates from '@/pages/student/UniversityUpdates'
+import StudentNotifications from '@/pages/student/StudentNotifications'
+import StudentProfile from '@/pages/student/StudentProfile'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -215,8 +218,9 @@ export default function App() {
             <Route path="/student/submit" element={<SubmitFeedback />} />
             <Route path="/student/feedback" element={<MyFeedback />} />
             <Route path="/student/feedback/:id" element={<FeedbackDetail />} />
-            <Route path="/student/updates" element={<Placeholder label="University Updates — Stage 6" />} />
-            <Route path="/student/notifications" element={<Placeholder label="Notifications — Stage 6" />} />
+            <Route path="/student/updates" element={<UniversityUpdates />} />
+            <Route path="/student/notifications" element={<StudentNotifications />} />
+            <Route path="/student/profile" element={<StudentProfile />} />
           </Route>
         </Route>
       </Route>
