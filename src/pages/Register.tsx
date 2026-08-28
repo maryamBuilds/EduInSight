@@ -18,10 +18,7 @@ export default function Register() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [programme, setProgramme] = useState('')
-  const [studyStructure, setStudyStructure] = useState<'semester' | 'year'>(
-    'semester',
-  )
-  const [studyStage, setStudyStage] = useState('')
+  const [customProgramme, setCustomProgramme] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [autoConfirmed, setAutoConfirmed] = useState(false)
@@ -49,20 +46,17 @@ export default function Register() {
       setError('Please select your programme.')
       return
     }
-    if (!studyStage) {
-      setError('Please enter your current study stage.')
+    if (programme === 'Other programme' && !customProgramme.trim()) {
+      setError('Please enter your degree programme.')
       return
     }
-
     setLoading(true)
 
     const result = await register({
       fullName: fullName.trim(),
       email: email.trim(),
       password,
-      programme,
-      studyStructure,
-      studyStage: studyStage.trim(),
+      programme: programme === 'Other programme' ? customProgramme.trim() : programme,
     })
 
     setLoading(false)
@@ -218,38 +212,22 @@ export default function Register() {
           </select>
         </div>
 
-        <div className="mb-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
-          <div className="grid gap-2">
-            <label htmlFor="studyStructure" className="font-bold text-text">
-              Study structure
-            </label>
-            <select
-              id="studyStructure"
-              value={studyStructure}
-              onChange={(e) =>
-                setStudyStructure(e.target.value as 'semester' | 'year')
-              }
-              className="w-full rounded-[9px] border border-[#C9D2D5] bg-[#FCFCFA] px-4 py-3.5 text-text transition-colors focus:border-teal focus:shadow-[0_0_0_4px_rgba(42,157,143,0.12)] focus:outline-none"
-            >
-              <option value="semester">Semester</option>
-              <option value="year">Year</option>
-            </select>
-          </div>
-          <div className="grid gap-2">
-            <label htmlFor="studyStage" className="font-bold text-text">
-              Current {studyStructure}
+        {programme === 'Other programme' && (
+          <div className="mb-5 grid gap-2">
+            <label htmlFor="customProgramme" className="font-bold text-text">
+              Degree programme
             </label>
             <input
-              id="studyStage"
+              id="customProgramme"
               type="text"
-              value={studyStage}
-              onChange={(e) => setStudyStage(e.target.value)}
-              placeholder={`e.g. ${studyStructure === 'semester' ? 'Semester 3' : 'Year 2'}`}
+              value={customProgramme}
+              onChange={(e) => setCustomProgramme(e.target.value)}
+              placeholder="Enter your degree programme"
               required
               className="w-full rounded-[9px] border border-[#C9D2D5] bg-[#FCFCFA] px-4 py-3.5 text-text transition-colors focus:border-teal focus:shadow-[0_0_0_4px_rgba(42,157,143,0.12)] focus:outline-none"
             />
           </div>
-        </div>
+        )}
 
         <button
           type="submit"
