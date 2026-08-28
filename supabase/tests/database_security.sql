@@ -371,6 +371,16 @@ END $$;
 -- M. Role-based access patterns (require live test data) -----------------
 -- Uncomment and adapt with real UUIDs to run per-role tests.
 --
+-- -- Authenticated user with NULL or unavailable role
+-- -- (e.g. authenticated via Supabase but no row in public.profiles)
+-- -- get_user_role() returns NULL; IS DISTINCT FROM 'admin' is true;
+-- -- function raises SQLSTATE 42501.
+-- SET LOCAL ROLE authenticated;
+-- SET request.jwt.claim.sub = '<user-without-profile-uuid>';
+-- SELECT public.admin_create_action(
+--   '<cluster-uuid>', 'Test title'
+-- );  -- EXPECTED: EXCEPTION 42501 'Admin access required'
+--
 -- -- Student role
 -- SET LOCAL ROLE authenticated;
 -- SET request.jwt.claim.sub = '<student-uuid>';

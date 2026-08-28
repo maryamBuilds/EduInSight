@@ -19,7 +19,7 @@
 -- ============================================================================
 -- Steps performed inside the RPC:
 --   1. Verify auth.uid() is present (authenticated caller).
---   2. Verify private.get_user_role() = 'admin'.
+--   2. Verify private.get_user_role() IS DISTINCT FROM 'admin'.
 --   3. Validate the target cluster exists.
 --   4. Validate a non-empty action title.
 --   5. Accept only valid action statuses: planned, assigned, in_progress,
@@ -56,8 +56,8 @@ BEGIN
       USING ERRCODE = '42501';
   END IF;
 
-  -- 2. Verify caller is an admin
-  IF private.get_user_role() <> 'admin' THEN
+  -- 2. Verify caller is an admin (IS DISTINCT FROM rejects NULL roles)
+  IF private.get_user_role() IS DISTINCT FROM 'admin' THEN
     RAISE EXCEPTION 'Admin access required'
       USING ERRCODE = '42501';
   END IF;
@@ -69,8 +69,8 @@ BEGIN
     RAISE EXCEPTION 'Cluster not found';
   END IF;
 
-  -- 4. Validate non-empty action title
-  IF pg_catalog.btrim(p_title) = '' THEN
+  -- 4. Validate non-empty action title (NULL guard + whitespace trim)
+  IF p_title IS NULL OR pg_catalog.btrim(p_title) = '' THEN
     RAISE EXCEPTION 'Action title must not be empty';
   END IF;
 
