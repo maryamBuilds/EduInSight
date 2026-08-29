@@ -47,6 +47,8 @@ const FILTER_OPTIONS: { value: AdminFilter; label: string }[] = [
   { value: 'unassigned', label: 'Unassigned' },
 ]
 
+const DASHBOARD_OPENED_AT = new Date().getTime()
+
 /** Status badge colour class for cluster and action statuses. */
 function statusBadgeClass(status: string): string {
   const normalized = status.toLowerCase().replace(/\s+/g, '_')
@@ -175,8 +177,10 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
       if (c.status === 'open' || c.status === 'acknowledged') underReviewCount++
       if (c.status === 'closed') resolved++
     }
-    return { totalFeedback, highPriority, underReview: underReviewCount, resolved }
-  }, [feedbacks, clusters])
+    const actionsInProgress = actions.filter((action) => action.status === 'in_progress' || action.status === 'assigned').length
+    const overdue = actions.filter((action) => action.deadline && action.status !== 'completed' && new Date(action.deadline).getTime() < DASHBOARD_OPENED_AT).length
+    return { totalFeedback, highPriority, underReview: underReviewCount, actionsInProgress, overdue, resolved }
+  }, [feedbacks, clusters, actions])
 
   // ── Computed: distribution by university service ────────────────────────
   const distributions = useMemo(() => {
@@ -194,6 +198,22 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
       }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 6)
+  }, [feedbacks])
+
+  const weeklyFeedback = useMemo(() => {
+    const now = new Date()
+    const weeks = Array.from({ length: 6 }, (_, index) => ({
+      label: `Week ${index + 1}`,
+      count: 0,
+    }))
+    for (const feedback of feedbacks) {
+      const ageDays = Math.floor((now.getTime() - new Date(feedback.submitted_at).getTime()) / 86_400_000)
+      if (ageDays < 0 || ageDays >= 42) continue
+      const bucket = 5 - Math.floor(ageDays / 7)
+      weeks[bucket].count++
+    }
+    const max = Math.max(...weeks.map((week) => week.count), 1)
+    return weeks.map((week) => ({ ...week, height: Math.max((week.count / max) * 100, week.count ? 8 : 0) }))
   }, [feedbacks])
 
   // ── Filtered problems ───────────────────────────────────────────────────
@@ -419,10 +439,11 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
       )}
 
       {/* ── Metric cards ── */}
-      {view === 'overview' && <section id="admin-overview" className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {view === 'overview' && <section id="admin-overview" className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <MetricCard icon={<FileText className="h-5 w-5" />} label="Total Feedback" value={metrics.totalFeedback} iconBg="bg-soft-blue" iconColour="text-ocean" />
         <MetricCard icon={<Flag className="h-5 w-5" />} label="High-Priority Issues" value={metrics.highPriority} iconBg="bg-soft-red" iconColour="text-danger" />
-        <MetricCard icon={<Clock className="h-5 w-5" />} label="Under Review" value={metrics.underReview} iconBg="bg-soft-amber" iconColour="text-[#D98200]" />
+        <MetricCard icon={<Clock className="h-5 w-5" />} label="Actions In Progress" value={metrics.actionsInProgress} iconBg="bg-soft-teal" iconColour="text-teal-dark" />
+        <MetricCard icon={<Clock className="h-5 w-5" />} label="Overdue" value={metrics.overdue} iconBg="bg-soft-red" iconColour="text-danger" />
         <MetricCard icon={<CheckCircle className="h-5 w-5" />} label="Resolved" value={metrics.resolved} iconBg="bg-soft-teal" iconColour="text-teal-dark" />
       </section>}
 
@@ -520,7 +541,7 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
           </section>
 
           {/* ── Institutional AI Summary ── */}
-          <section className="overflow-hidden rounded-xl border border-border bg-white">
+          {view === 'departments' && <section className="overflow-hidden rounded-xl border border-border bg-white">
             <div className="border-b border-border px-5 py-[18px]">
               <h3 className="m-0 text-[19px] text-navy">Institutional AI Summary</h3>
             </div>
@@ -545,14 +566,13 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
                 </p>
               )}
             </div>
-          </section>
+          </section>}
         </div>}
 
         {/* ── Recent Action Activity (full-width row) ── */}
-        {(view === 'overview' || view === 'actions') && <section id="admin-actions" className={`overflow-hidden rounded-xl border border-border bg-white ${view === 'overview' ? 'xl:col-span-2' : ''}`}>
+        {view === 'actions' && <section id="admin-actions" className="overflow-hidden rounded-xl border border-border bg-white">
           <div className="flex items-center justify-between border-b border-border px-5 py-[18px]">
             <h3 className="m-0 text-[19px] text-navy">Recent Action Activity</h3>
-            {view === 'overview' && <span className="text-sm font-semibold text-teal-dark">Latest activity</span>}
           </div>
           <div id="admin-actions-section" className="grid gap-3 p-5">
             {actions.length > 0 ? (
@@ -584,6 +604,57 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
           </div>
         </section>}
       </div>}
+
+      {view === 'overview' && (
+        <section className="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-[0.72fr_1.25fr_1fr]">
+          <div className="overflow-hidden rounded-xl border border-border bg-white">
+            <div className="border-b border-border px-5 py-[18px]"><h3 className="text-[19px] text-navy">Action Accountability</h3></div>
+            <div className="grid gap-3 p-5 text-sm">
+              {[
+                ['Unassigned', actions.filter((action) => !action.responsible_person).length, 'text-ocean'],
+                ['Due This Week', actions.filter((action) => action.deadline && new Date(action.deadline).getTime() >= DASHBOARD_OPENED_AT && new Date(action.deadline).getTime() <= DASHBOARD_OPENED_AT + 604_800_000 && action.status !== 'completed').length, 'text-teal-dark'],
+                ['Overdue', metrics.overdue, 'text-danger'],
+                ['Completed', actions.filter((action) => action.status === 'completed').length, 'text-success'],
+              ].map(([label, count, colour]) => (
+                <div key={String(label)} className="flex items-center justify-between border-b border-border pb-3 last:border-0 last:pb-0">
+                  <span className="text-muted">{label}</span><strong className={`text-xl ${colour}`}>{count}</strong>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-xl border border-border bg-white">
+            <div className="border-b border-border px-5 py-[18px]"><h3 className="text-[19px] text-navy">Institutional Trend</h3></div>
+            <div className="p-5">
+              <div className="flex h-[190px] items-end gap-4 border-b border-[#CCD6D9] pb-3">
+                {weeklyFeedback.map((week) => (
+                  <div key={week.label} className="flex h-full flex-1 flex-col items-center justify-end gap-2 text-[11px] text-muted">
+                    <span className="font-bold text-ocean">{week.count}</span>
+                    <span className="w-full rounded-t-md bg-gradient-to-t from-teal to-aqua" style={{ height: `${week.height}%` }} />
+                    <span>{week.label}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-muted">Feedback received over the last six weeks</p>
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-xl border border-teal/40 bg-gradient-to-br from-white to-[#EAF8F6]">
+            <div className="border-b border-teal/20 px-5 py-[18px]"><h3 className="text-[19px] text-navy">✦ AI Executive Insight</h3></div>
+            <div className="p-5">
+              {topCluster ? (
+                <>
+                  <p className="text-lg leading-7 text-navy">{topCluster.ai_suggested_response ?? topCluster.summary}</p>
+                  <p className="mt-4 text-xs font-semibold text-muted">AI-generated · Human review required</p>
+                  <button type="button" className="mt-5 w-full rounded-lg bg-teal px-4 py-3 font-bold text-white hover:bg-teal-dark" onClick={() => openDialog(topCluster)}>View Evidence →</button>
+                </>
+              ) : (
+                <p className="py-8 text-center text-sm text-muted">No executive insight is available until feedback has been analysed.</p>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
 
       {view === 'updates' && (
         <section className="overflow-hidden rounded-xl border border-border bg-white">

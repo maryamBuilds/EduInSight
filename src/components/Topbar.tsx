@@ -101,12 +101,11 @@ export function Topbar({
         )}
 
         {initials && (avatarHref ? (
-          <Link
-            to={avatarHref}
-            className="grid h-[45px] w-[45px] place-items-center rounded-full bg-aqua font-bold text-navy transition hover:ring-2 hover:ring-teal hover:ring-offset-2"
-            aria-label="Open my profile"
-          >
-            {initials}
+          <Link to={avatarHref} className="flex items-center gap-2.5 rounded-full pr-1 transition hover:bg-soft-blue" aria-label="Open my profile">
+            <span className="grid h-[45px] w-[45px] place-items-center rounded-full bg-aqua font-bold text-navy">
+              {initials}
+            </span>
+            <strong className="max-w-28 truncate text-sm text-navy max-lg:hidden">{avatarName?.split(/\s+/)[0]}</strong>
           </Link>
         ) : (
           <span
