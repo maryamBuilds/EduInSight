@@ -2,8 +2,7 @@ import { useState, useCallback, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from '../Sidebar'
 import { Topbar } from '../Topbar'
-import { SearchInput } from '../SearchInput'
-import { PeriodSelector } from '../PeriodSelector'
+import { useAuth } from '@/context/AuthContext'
 import { getTimeGreeting } from '@/lib/utils'
 
 /**
@@ -14,14 +13,14 @@ import { getTimeGreeting } from '@/lib/utils'
  * - Tablet (≥768px): 78px icon-only sidebar + content.
  * - Desktop (≥1024px): 255px sidebar with labels + content.
  *
- * Placeholder user data will be replaced by real auth context in Stage 4.
  */
 export function TeacherLayout() {
-  const fullName = 'Dr. Fatima Sahar'
-  const subtitle = 'Data Structures & Algorithms · BSCS 3A'
+  const { profile } = useAuth()
+  const fullName = profile?.full_name ?? 'Teacher'
+  const subtitle = profile?.programme
+    ? `${profile.programme} · Teacher feedback workspace`
+    : 'Teacher feedback workspace'
 
-  const [search, setSearch] = useState('')
-  const [period, setPeriod] = useState('Last 7 days')
   const [drawerOpen, setDrawerOpen] = useState(false)
   const openDrawer = useCallback(() => setDrawerOpen(true), [])
   const closeDrawer = useCallback(() => setDrawerOpen(false), [])
@@ -71,26 +70,12 @@ export function TeacherLayout() {
 
       <section className="min-w-0">
         <Topbar
-          greeting={`${getTimeGreeting()}, Dr. Fatima Sahar`}
+          greeting={`${getTimeGreeting()}, ${fullName}`}
           subtitle={subtitle}
           avatarName={fullName}
           onMenuClick={openDrawer}
           menuExpanded={drawerOpen}
           menuControlsId="mobile-nav-teacher"
-          actions={
-            <div className="flex items-center gap-2.5">
-              <SearchInput
-                value={search}
-                onChange={setSearch}
-                placeholder="Search learning issue..."
-                className="w-[220px] max-md:hidden"
-              />
-              <PeriodSelector
-                value={period}
-                onChange={setPeriod}
-              />
-            </div>
-          }
         />
         <div className="mx-auto max-w-[1500px] px-8 py-6 max-md:p-4">
           <Outlet />

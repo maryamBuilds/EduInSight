@@ -35,6 +35,26 @@ import { useAuth } from '@/context/AuthContext'
 // ---------------------------------------------------------------------------
 
 type TeacherFilter = 'all' | 'high' | 'medium'
+export type TeacherDashboardView = 'overview' | 'insights' | 'feedback' | 'actions'
+
+const VIEW_COPY: Record<TeacherDashboardView, { title: string; description: string }> = {
+  overview: {
+    title: 'Teaching Overview',
+    description: 'A summary of feedback, learning concerns, and action progress.',
+  },
+  insights: {
+    title: 'Learning Insights',
+    description: 'Explore recurring learning bottlenecks, priorities, and recent trends.',
+  },
+  feedback: {
+    title: 'Student Feedback',
+    description: 'Review anonymised feedback from the course sections assigned to you.',
+  },
+  actions: {
+    title: 'Teaching Actions',
+    description: 'Track the improvements created in response to student feedback.',
+  },
+}
 
 const FILTER_OPTIONS: { value: TeacherFilter; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -48,7 +68,11 @@ const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 // Teacher Dashboard
 // ---------------------------------------------------------------------------
 
-export default function TeacherDashboard() {
+export default function TeacherDashboard({
+  view = 'overview',
+}: {
+  view?: TeacherDashboardView
+}) {
   const { loading: authLoading, profile } = useAuth()
 
   // ── Data state ──────────────────────────────────────────────────────────
@@ -374,6 +398,11 @@ export default function TeacherDashboard() {
 
   return (
     <>
+      <div className="mb-5">
+        <h2 className="text-2xl font-bold text-navy">{VIEW_COPY[view].title}</h2>
+        <p className="mt-1 text-sm text-muted">{VIEW_COPY[view].description}</p>
+      </div>
+
       {/* ── Status banner ── */}
       {!hasData && (
         <div className="mb-4 rounded-lg border border-amber-300 bg-soft-amber px-4 py-2 text-center text-sm font-semibold text-warning">
@@ -382,18 +411,21 @@ export default function TeacherDashboard() {
       )}
 
       {/* ── Metric cards ── */}
-      <section className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard icon={<FileText className="h-5 w-5" />} label="Total Feedback" value={metrics.totalFeedback} iconBg="bg-soft-blue" iconColour="text-ocean" />
-        <MetricCard icon={<AlertTriangle className="h-5 w-5" />} label="Learning Concerns" value={metrics.learningConcerns} iconBg="bg-soft-amber" iconColour="text-[#B66A00]" />
-        <MetricCard icon={<Flag className="h-5 w-5" />} label="High Priority" value={metrics.highPriority} iconBg="bg-soft-red" iconColour="text-danger" />
-        <MetricCard icon={<CheckCircle className="h-5 w-5" />} label="Resolved" value={metrics.resolved} iconBg="bg-soft-teal" iconColour="text-teal-dark" />
-      </section>
+      {view === 'overview' && (
+        <section id="teacher-overview" className="mb-5 scroll-mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <MetricCard icon={<FileText className="h-5 w-5" />} label="Total Feedback" value={metrics.totalFeedback} iconBg="bg-soft-blue" iconColour="text-ocean" />
+          <MetricCard icon={<AlertTriangle className="h-5 w-5" />} label="Learning Concerns" value={metrics.learningConcerns} iconBg="bg-soft-amber" iconColour="text-[#B66A00]" />
+          <MetricCard icon={<Flag className="h-5 w-5" />} label="High Priority" value={metrics.highPriority} iconBg="bg-soft-red" iconColour="text-danger" />
+          <MetricCard icon={<CheckCircle className="h-5 w-5" />} label="Resolved" value={metrics.resolved} iconBg="bg-soft-teal" iconColour="text-teal-dark" />
+        </section>
+      )}
 
       {/* ── Dashboard grid ── */}
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.25fr_0.75fr]">
+      <div className={`grid grid-cols-1 gap-5 ${view === 'overview' || view === 'insights' || view === 'feedback' ? 'xl:grid-cols-[1.25fr_0.75fr]' : ''}`}>
 
         {/* ── Top Learning Bottlenecks ── */}
-        <section className="overflow-hidden rounded-xl border border-border bg-white">
+        {(view === 'overview' || view === 'insights') && (
+        <section id="teacher-insights" className="scroll-mt-4 overflow-hidden rounded-xl border border-border bg-white">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-[18px]">
             <h3 className="m-0 text-[19px] text-navy">Top Learning Bottlenecks</h3>
             <FilterButtons options={FILTER_OPTIONS} active={priorityFilter} onChange={setPriorityFilter} />
@@ -448,8 +480,10 @@ export default function TeacherDashboard() {
             />
           </div>
         </section>
+        )}
 
         {/* ── Feedback Trend ── */}
+        {(view === 'overview' || view === 'insights' || view === 'feedback') && (
         <Panel title="Feedback Trend">
           {/* Bar chart */}
           <div className="flex items-end gap-3 border-b border-[#CCD6D9] pb-3" style={{ height: 185 }}>
@@ -482,8 +516,10 @@ export default function TeacherDashboard() {
             </div>
           )}
         </Panel>
+        )}
 
         {/* ── Feedback Distribution ── */}
+        {(view === 'overview' || view === 'feedback') && (
         <Panel title="Feedback Distribution">
           {distributions.length > 0 ? (
             <div className="grid gap-3">
@@ -495,14 +531,65 @@ export default function TeacherDashboard() {
             <p className="py-4 text-center text-sm text-muted">No feedback data yet.</p>
           )}
         </Panel>
+        )}
+
+        {view === 'feedback' && (
+          <section className="overflow-hidden rounded-xl border border-border bg-white xl:col-span-2">
+            <div className="flex items-center justify-between border-b border-border px-5 py-[18px]">
+              <h3 className="m-0 text-[19px] text-navy">Recent Feedback</h3>
+              <span className="text-sm font-semibold text-muted">
+                {feedbacks.length} {feedbacks.length === 1 ? 'submission' : 'submissions'}
+              </span>
+            </div>
+            <div className="divide-y divide-border">
+              {feedbacks.length > 0 ? (
+                feedbacks.map((feedback) => (
+                  <article key={feedback.id} className="p-5">
+                    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <strong className="text-ocean">
+                          {feedback.feedback_area || feedback.university_service || 'General feedback'}
+                        </strong>
+                        {feedback.language_detected && (
+                          <span className="rounded-full bg-soft-blue px-2 py-1 text-xs font-semibold text-ocean">
+                            {feedback.language_detected}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-xs text-muted">
+                        {new Date(feedback.submitted_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="leading-relaxed text-text">{feedback.original_text}</p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {feedback.feedback_types.map((type) => (
+                        <span key={type} className="rounded-full bg-soft-teal px-2.5 py-1 text-xs font-semibold text-teal-dark">
+                          {type}
+                        </span>
+                      ))}
+                    </div>
+                    <p className="mt-3 text-xs text-muted">Reference: {feedback.reference_number}</p>
+                  </article>
+                ))
+              ) : (
+                <p className="p-8 text-center text-sm text-muted">
+                  No feedback is available for your assigned sections yet.
+                </p>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* ── Action Progress ── */}
-        <section ref={actionPanelRef} className="overflow-hidden rounded-xl border border-border bg-white">
+        {(view === 'overview' || view === 'actions') && (
+        <section id="teacher-actions" ref={actionPanelRef} className="scroll-mt-4 overflow-hidden rounded-xl border border-border bg-white">
           <div className="flex items-center justify-between border-b border-border px-5 py-[18px]">
             <h3 className="m-0 text-[19px] text-navy">Action Progress</h3>
-            <button type="button" className="font-bold text-teal-dark hover:underline" onClick={scrollToActions}>
-              View all →
-            </button>
+            {view === 'overview' && (
+              <button type="button" className="font-bold text-teal-dark hover:underline" onClick={scrollToActions}>
+                View all →
+              </button>
+            )}
           </div>
           <div className="grid gap-3 p-5">
             {actions.length > 0 ? (
@@ -544,6 +631,7 @@ export default function TeacherDashboard() {
             )}
           </div>
         </section>
+        )}
       </div>
 
       {/* ── Issue Detail Dialog ── */}

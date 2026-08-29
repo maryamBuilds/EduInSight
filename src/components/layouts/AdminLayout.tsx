@@ -2,8 +2,8 @@ import { useState, useCallback, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from '../Sidebar'
 import { Topbar } from '../Topbar'
-import { SearchInput } from '../SearchInput'
-import { PeriodSelector } from '../PeriodSelector'
+import { useAuth } from '@/context/AuthContext'
+import { getTimeGreeting } from '@/lib/utils'
 
 /**
  * Dashboard layout for admin routes.
@@ -13,14 +13,12 @@ import { PeriodSelector } from '../PeriodSelector'
  * - Tablet (≥768px): 78px icon-only sidebar + content.
  * - Desktop (≥1024px): 260px sidebar with labels + content.
  *
- * Placeholder user data will be replaced by real auth context in Stage 4.
  */
 export function AdminLayout() {
-  const fullName = 'Admin User'
-  const subtitle = 'Demo University · Institutional feedback intelligence'
+  const { profile } = useAuth()
+  const fullName = profile?.full_name ?? 'Administrator'
+  const subtitle = 'Institutional feedback intelligence'
 
-  const [search, setSearch] = useState('')
-  const [period, setPeriod] = useState('Last 30 days')
   const [drawerOpen, setDrawerOpen] = useState(false)
   const openDrawer = useCallback(() => setDrawerOpen(true), [])
   const closeDrawer = useCallback(() => setDrawerOpen(false), [])
@@ -70,27 +68,12 @@ export function AdminLayout() {
 
       <section className="min-w-0">
         <Topbar
-          greeting="Administration Overview"
+          greeting={`${getTimeGreeting()}, ${fullName}`}
           subtitle={subtitle}
           avatarName={fullName}
           onMenuClick={openDrawer}
           menuExpanded={drawerOpen}
           menuControlsId="mobile-nav-admin"
-          actions={
-            <div className="flex items-center gap-2.5">
-              <SearchInput
-                value={search}
-                onChange={setSearch}
-                placeholder="Search problem or area..."
-                className="w-[230px] max-md:hidden"
-              />
-              <PeriodSelector
-                value={period}
-                onChange={setPeriod}
-                options={['Last 7 days', 'Last 30 days', 'This semester']}
-              />
-            </div>
-          }
         />
         <div className="mx-auto max-w-[1500px] px-8 py-6 max-md:p-4">
           <Outlet />

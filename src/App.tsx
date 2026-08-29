@@ -20,6 +20,8 @@ import FeedbackDetail from '@/pages/student/FeedbackDetail'
 import UniversityUpdates from '@/pages/student/UniversityUpdates'
 import StudentNotifications from '@/pages/student/StudentNotifications'
 import StudentProfile from '@/pages/student/StudentProfile'
+import TeacherDashboard from '@/pages/teacher/TeacherDashboard'
+import AdminDashboard from '@/pages/admin/AdminDashboard'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -229,11 +231,11 @@ export default function App() {
       <Route element={<ProtectedLayout />}>
         <Route element={<RoleGuard allowedRole="teacher" />}>
           <Route element={<TeacherLayout />}>
-            <Route path="/teacher" element={<Placeholder label="Teacher Dashboard — Stage 8" />} />
-            <Route path="/teacher/insights" element={<Placeholder label="Learning Insights — Stage 8" />} />
-            <Route path="/teacher/feedback" element={<Placeholder label="Teacher Feedback — Stage 8" />} />
-            <Route path="/teacher/actions" element={<Placeholder label="Teacher Actions — Stage 8" />} />
-            <Route path="/teacher/reports" element={<Placeholder label="Teacher Reports — Stage 8" />} />
+            <Route path="/teacher" element={<TeacherDashboard view="overview" />} />
+            <Route path="/teacher/insights" element={<TeacherDashboard view="insights" />} />
+            <Route path="/teacher/feedback" element={<TeacherDashboard view="feedback" />} />
+            <Route path="/teacher/actions" element={<TeacherDashboard view="actions" />} />
+            <Route path="/teacher/reports" element={<Navigate to="/teacher" replace />} />
           </Route>
         </Route>
       </Route>
@@ -242,12 +244,12 @@ export default function App() {
       <Route element={<ProtectedLayout />}>
         <Route element={<RoleGuard allowedRole="admin" />}>
           <Route element={<AdminLayout />}>
-            <Route path="/admin" element={<Placeholder label="Admin Dashboard — Stage 9" />} />
-            <Route path="/admin/issues" element={<Placeholder label="Priority Issues — Stage 9" />} />
-            <Route path="/admin/departments" element={<Placeholder label="Departments — Stage 9" />} />
-            <Route path="/admin/actions" element={<Placeholder label="Action Tracking — Stage 9" />} />
-            <Route path="/admin/updates" element={<Placeholder label="Student Updates — Stage 9" />} />
-            <Route path="/admin/reports" element={<Placeholder label="Admin Reports — Stage 9" />} />
+            <Route path="/admin" element={<AdminDashboard view="overview" />} />
+            <Route path="/admin/issues" element={<AdminDashboard view="issues" />} />
+            <Route path="/admin/departments" element={<AdminDashboard view="departments" />} />
+            <Route path="/admin/actions" element={<AdminDashboard view="actions" />} />
+            <Route path="/admin/updates" element={<AdminDashboard view="updates" />} />
+            <Route path="/admin/reports" element={<Navigate to="/admin" replace />} />
           </Route>
         </Route>
       </Route>
