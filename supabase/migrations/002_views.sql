@@ -50,7 +50,12 @@ FROM public.feedback f
 WHERE private.get_user_role() = 'teacher'
   AND f.is_sensitive = false
   AND f.course_section_id IS NOT NULL
-  AND private.is_teacher_assigned_to_section(auth.uid(), f.course_section_id);
+  AND EXISTS (
+    SELECT 1
+    FROM public.teacher_assignments ta
+    WHERE ta.teacher_id = auth.uid()
+      AND ta.course_section_id = f.course_section_id
+  );
 
 COMMENT ON VIEW public.feedback_for_teacher IS
   'Teacher-safe feedback view. Excludes student_id and sensitive feedback. Restricted to assigned sections. Non-teachers get zero rows.';

@@ -282,10 +282,10 @@ export default function App() {
       <Route element={<ProtectedLayout />}>
         <Route element={<RoleGuard allowedRole="teacher" />}>
           <Route element={<TeacherLayout />}>
-            <Route path="/teacher" element={<DashboardSectionRoute><TeacherDashboard /></DashboardSectionRoute>} />
-            <Route path="/teacher/insights" element={<DashboardSectionRoute sectionId="teacher-insights"><TeacherDashboard /></DashboardSectionRoute>} />
-            <Route path="/teacher/feedback" element={<DashboardSectionRoute sectionId="teacher-insights"><TeacherDashboard /></DashboardSectionRoute>} />
-            <Route path="/teacher/actions" element={<DashboardSectionRoute sectionId="teacher-actions"><TeacherDashboard /></DashboardSectionRoute>} />
+            <Route path="/teacher" element={<TeacherDashboard view="overview" />} />
+            <Route path="/teacher/insights" element={<TeacherDashboard view="insights" />} />
+            <Route path="/teacher/feedback" element={<TeacherDashboard view="feedback" />} />
+            <Route path="/teacher/actions" element={<TeacherDashboard view="actions" />} />
             <Route path="/teacher/reports" element={<Navigate to="/teacher" replace />} />
           </Route>
         </Route>
