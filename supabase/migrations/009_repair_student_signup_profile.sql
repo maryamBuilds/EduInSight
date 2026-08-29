@@ -1,5 +1,5 @@
 -- Repair student profile creation during Supabase Auth signup.
--- This forward migration is safe to apply after 006 and 007.
+-- This forward migration is safe to apply after 007 and 008.
 
 CREATE OR REPLACE FUNCTION private.handle_new_user()
 RETURNS trigger
@@ -102,4 +102,3 @@ CREATE TRIGGER on_auth_user_created
 REVOKE ALL ON FUNCTION private.handle_new_user() FROM PUBLIC;
 REVOKE ALL ON FUNCTION private.handle_new_user() FROM anon;
 REVOKE ALL ON FUNCTION private.handle_new_user() FROM authenticated;
-
