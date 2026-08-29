@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   AuthLayout,
   MinimalLayout,
@@ -20,6 +21,8 @@ import FeedbackDetail from '@/pages/student/FeedbackDetail'
 import UniversityUpdates from '@/pages/student/UniversityUpdates'
 import StudentNotifications from '@/pages/student/StudentNotifications'
 import StudentProfile from '@/pages/student/StudentProfile'
+import TeacherDashboard from '@/pages/teacher/TeacherDashboard'
+import AdminDashboard from '@/pages/admin/AdminDashboard'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -181,6 +184,56 @@ function Placeholder({ label }: { label: string }) {
 }
 
 // ---------------------------------------------------------------------------
+// DashboardSectionRoute — renders a complete dashboard at a focused section
+// ---------------------------------------------------------------------------
+
+function DashboardSectionRoute({
+  children,
+  sectionId,
+}: {
+  children: React.ReactNode
+  sectionId?: string
+}) {
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    if (!sectionId) {
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      return
+    }
+
+    const scrollToSection = () => {
+      const section = document.getElementById(sectionId)
+      if (!section) return false
+
+      section.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      })
+      return true
+    }
+
+    if (scrollToSection()) return
+
+    // Dashboards fetch live data before their sections render. Observe the
+    // document briefly so direct section routes still focus the right panel.
+    const observer = new MutationObserver(() => {
+      if (scrollToSection()) observer.disconnect()
+    })
+    observer.observe(document.body, { childList: true, subtree: true })
+
+    const timeout = window.setTimeout(() => observer.disconnect(), 5000)
+
+    return () => {
+      observer.disconnect()
+      window.clearTimeout(timeout)
+    }
+  }, [pathname, sectionId])
+
+  return <>{children}</>
+}
+
+// ---------------------------------------------------------------------------
 // App — route tree
 // ---------------------------------------------------------------------------
 
@@ -229,11 +282,11 @@ export default function App() {
       <Route element={<ProtectedLayout />}>
         <Route element={<RoleGuard allowedRole="teacher" />}>
           <Route element={<TeacherLayout />}>
-            <Route path="/teacher" element={<Placeholder label="Teacher Dashboard — Stage 8" />} />
-            <Route path="/teacher/insights" element={<Placeholder label="Learning Insights — Stage 8" />} />
-            <Route path="/teacher/feedback" element={<Placeholder label="Teacher Feedback — Stage 8" />} />
-            <Route path="/teacher/actions" element={<Placeholder label="Teacher Actions — Stage 8" />} />
-            <Route path="/teacher/reports" element={<Placeholder label="Teacher Reports — Stage 8" />} />
+            <Route path="/teacher" element={<DashboardSectionRoute><TeacherDashboard /></DashboardSectionRoute>} />
+            <Route path="/teacher/insights" element={<DashboardSectionRoute sectionId="teacher-insights"><TeacherDashboard /></DashboardSectionRoute>} />
+            <Route path="/teacher/feedback" element={<DashboardSectionRoute sectionId="teacher-insights"><TeacherDashboard /></DashboardSectionRoute>} />
+            <Route path="/teacher/actions" element={<DashboardSectionRoute sectionId="teacher-actions"><TeacherDashboard /></DashboardSectionRoute>} />
+            <Route path="/teacher/reports" element={<Navigate to="/teacher" replace />} />
           </Route>
         </Route>
       </Route>
@@ -242,12 +295,12 @@ export default function App() {
       <Route element={<ProtectedLayout />}>
         <Route element={<RoleGuard allowedRole="admin" />}>
           <Route element={<AdminLayout />}>
-            <Route path="/admin" element={<Placeholder label="Admin Dashboard — Stage 9" />} />
-            <Route path="/admin/issues" element={<Placeholder label="Priority Issues — Stage 9" />} />
-            <Route path="/admin/departments" element={<Placeholder label="Departments — Stage 9" />} />
-            <Route path="/admin/actions" element={<Placeholder label="Action Tracking — Stage 9" />} />
-            <Route path="/admin/updates" element={<Placeholder label="Student Updates — Stage 9" />} />
-            <Route path="/admin/reports" element={<Placeholder label="Admin Reports — Stage 9" />} />
+            <Route path="/admin" element={<DashboardSectionRoute><AdminDashboard /></DashboardSectionRoute>} />
+            <Route path="/admin/issues" element={<DashboardSectionRoute sectionId="admin-issues"><AdminDashboard /></DashboardSectionRoute>} />
+            <Route path="/admin/departments" element={<DashboardSectionRoute sectionId="admin-departments"><AdminDashboard /></DashboardSectionRoute>} />
+            <Route path="/admin/actions" element={<DashboardSectionRoute sectionId="admin-actions"><AdminDashboard /></DashboardSectionRoute>} />
+            <Route path="/admin/updates" element={<DashboardSectionRoute sectionId="admin-actions"><AdminDashboard /></DashboardSectionRoute>} />
+            <Route path="/admin/reports" element={<Navigate to="/admin" replace />} />
           </Route>
         </Route>
       </Route>

@@ -11,7 +11,6 @@ import {
   BookOpen,
   FileText,
   Target,
-  BarChart3,
   Flag,
   Building2,
   ClipboardCheck,
@@ -50,7 +49,6 @@ const TEACHER_NAV: NavItem[] = [
   { label: 'Learning Insights', to: '/teacher/insights', icon: BookOpen },
   { label: 'Feedback', to: '/teacher/feedback', icon: FileText },
   { label: 'Actions', to: '/teacher/actions', icon: Target },
-  { label: 'Reports', to: '/teacher/reports', icon: BarChart3 },
 ]
 
 const ADMIN_NAV: NavItem[] = [
@@ -59,7 +57,6 @@ const ADMIN_NAV: NavItem[] = [
   { label: 'Departments', to: '/admin/departments', icon: Building2 },
   { label: 'Action Tracking', to: '/admin/actions', icon: ClipboardCheck },
   { label: 'Student Updates', to: '/admin/updates', icon: CircleDot },
-  { label: 'Reports', to: '/admin/reports', icon: BarChart3 },
 ]
 
 const NAV_MAP: Record<UserRole, NavItem[]> = {

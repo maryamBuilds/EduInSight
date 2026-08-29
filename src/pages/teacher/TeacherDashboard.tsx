@@ -382,7 +382,7 @@ export default function TeacherDashboard() {
       )}
 
       {/* ── Metric cards ── */}
-      <section className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section id="teacher-overview" className="mb-5 scroll-mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard icon={<FileText className="h-5 w-5" />} label="Total Feedback" value={metrics.totalFeedback} iconBg="bg-soft-blue" iconColour="text-ocean" />
         <MetricCard icon={<AlertTriangle className="h-5 w-5" />} label="Learning Concerns" value={metrics.learningConcerns} iconBg="bg-soft-amber" iconColour="text-[#B66A00]" />
         <MetricCard icon={<Flag className="h-5 w-5" />} label="High Priority" value={metrics.highPriority} iconBg="bg-soft-red" iconColour="text-danger" />
@@ -393,7 +393,7 @@ export default function TeacherDashboard() {
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.25fr_0.75fr]">
 
         {/* ── Top Learning Bottlenecks ── */}
-        <section className="overflow-hidden rounded-xl border border-border bg-white">
+        <section id="teacher-insights" className="scroll-mt-4 overflow-hidden rounded-xl border border-border bg-white">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-[18px]">
             <h3 className="m-0 text-[19px] text-navy">Top Learning Bottlenecks</h3>
             <FilterButtons options={FILTER_OPTIONS} active={priorityFilter} onChange={setPriorityFilter} />
@@ -497,7 +497,7 @@ export default function TeacherDashboard() {
         </Panel>
 
         {/* ── Action Progress ── */}
-        <section ref={actionPanelRef} className="overflow-hidden rounded-xl border border-border bg-white">
+        <section id="teacher-actions" ref={actionPanelRef} className="scroll-mt-4 overflow-hidden rounded-xl border border-border bg-white">
           <div className="flex items-center justify-between border-b border-border px-5 py-[18px]">
             <h3 className="m-0 text-[19px] text-navy">Action Progress</h3>
             <button type="button" className="font-bold text-teal-dark hover:underline" onClick={scrollToActions}>

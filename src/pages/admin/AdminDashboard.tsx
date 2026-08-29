@@ -396,7 +396,7 @@ export default function AdminDashboard() {
       )}
 
       {/* ── Metric cards ── */}
-      <section className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <section id="admin-overview" className="mb-5 scroll-mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard icon={<FileText className="h-5 w-5" />} label="Total Feedback" value={metrics.totalFeedback} iconBg="bg-soft-blue" iconColour="text-ocean" />
         <MetricCard icon={<Flag className="h-5 w-5" />} label="High-Priority Issues" value={metrics.highPriority} iconBg="bg-soft-red" iconColour="text-danger" />
         <MetricCard icon={<Clock className="h-5 w-5" />} label="Under Review" value={metrics.underReview} iconBg="bg-soft-amber" iconColour="text-[#D98200]" />
@@ -407,7 +407,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.35fr_0.65fr]">
 
         {/* ── Priority Institutional Problems ── */}
-        <section className="overflow-hidden rounded-xl border border-border bg-white">
+        <section id="admin-issues" className="scroll-mt-4 overflow-hidden rounded-xl border border-border bg-white">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-[18px]">
             <h3 className="m-0 text-[19px] text-navy">Priority Institutional Problems</h3>
             <FilterButtons options={FILTER_OPTIONS} active={priorityFilter} onChange={setPriorityFilter} />
@@ -481,7 +481,7 @@ export default function AdminDashboard() {
 
         {/* ── Feedback by Responsible Area ── */}
         <div className="flex flex-col gap-5">
-          <section className="overflow-hidden rounded-xl border border-border bg-white">
+          <section id="admin-departments" className="scroll-mt-4 overflow-hidden rounded-xl border border-border bg-white">
             <div className="border-b border-border px-5 py-[18px]">
               <h3 className="m-0 text-[19px] text-navy">Feedback by Responsible Area</h3>
             </div>
@@ -526,7 +526,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* ── Recent Action Activity (full-width row) ── */}
-        <section className="overflow-hidden rounded-xl border border-border bg-white xl:col-span-2">
+        <section id="admin-actions" className="scroll-mt-4 overflow-hidden rounded-xl border border-border bg-white xl:col-span-2">
           <div className="flex items-center justify-between border-b border-border px-5 py-[18px]">
             <h3 className="m-0 text-[19px] text-navy">Recent Action Activity</h3>
             <button
