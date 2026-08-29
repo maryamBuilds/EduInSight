@@ -32,6 +32,8 @@ interface AuthState {
     error: string | null
     needsEmailConfirmation: boolean
   }>
+  /** Resend the pending student's signup confirmation email. */
+  resendSignupConfirmation: (email: string) => Promise<{ error: string | null }>
   /** End the current session. */
   logout: () => Promise<void>
   /** Send a password-reset email. */
@@ -48,6 +50,7 @@ export interface RegisterData {
   fullName: string
   email: string
   password: string
+  institutionId: string
   programme: string
 }
 
@@ -249,8 +252,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: data.email,
       password: data.password,
       options: {
+        emailRedirectTo: `${window.location.origin}/login?confirmed=1`,
         data: {
           full_name: data.fullName,
+          institution_id: data.institutionId,
           programme: data.programme,
           avatar_initials: data.fullName
             .split(/\s+/)
@@ -269,17 +274,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           needsEmailConfirmation: false,
         }
       }
+      if (error.message.includes('Database error saving new user')) {
+        return {
+          error:
+            'Your student profile could not be created. Please ask the project administrator to apply the latest signup migration, then try again.',
+          needsEmailConfirmation: false,
+        }
+      }
       return { error: error.message, needsEmailConfirmation: false }
     }
 
-    if (signUpData.session?.user) {
-      setUser(signUpData.session.user)
+    if (signUpData.session) {
+      await supabase.auth.signOut()
+      setUser(null)
+      setProfile(null)
+      return {
+        error: 'Email confirmation is not enabled in Supabase. Enable Confirm email before registering students.',
+        needsEmailConfirmation: false,
+      }
     }
 
     return {
       error: null,
       needsEmailConfirmation: !signUpData.session,
     }
+  }
+
+  const resendSignupConfirmation = async (email: string) => {
+    const { error } = await supabase.auth.resend({
+      type: 'signup',
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/login?confirmed=1`,
+      },
+    })
+    return { error: error?.message ?? null }
   }
 
   /* ── Logout ── */
@@ -319,6 +348,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         clearAuthError: () => setAuthError(null),
         login,
         register,
+        resendSignupConfirmation,
         logout,
         resetPasswordRequest,
         resetPasswordUpdate,

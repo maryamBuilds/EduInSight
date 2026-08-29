@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { PROGRAMMES } from '@/lib/constants'
 import { Loader2, AlertCircle, CheckCircle } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import type { Institution } from '@/lib/types'
 
 /**
  * Student self-registration page.
@@ -10,7 +12,7 @@ import { Loader2, AlertCircle, CheckCircle } from 'lucide-react'
  * Matches the AuthLayout visual design.
  */
 export default function Register() {
-  const { register, profile } = useAuth()
+  const { register, resendSignupConfirmation, profile } = useAuth()
   const navigate = useNavigate()
 
   const [fullName, setFullName] = useState('')
@@ -18,17 +20,41 @@ export default function Register() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [programme, setProgramme] = useState('')
+  const [institutionId, setInstitutionId] = useState('')
+  const [institutions, setInstitutions] = useState<Institution[]>([])
+  const [institutionsLoading, setInstitutionsLoading] = useState(true)
   const [customProgramme, setCustomProgramme] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [autoConfirmed, setAutoConfirmed] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [resending, setResending] = useState(false)
+  const [resendMessage, setResendMessage] = useState('')
 
   useEffect(() => {
     if (autoConfirmed && profile) {
       navigate('/student', { replace: true })
     }
   }, [autoConfirmed, navigate, profile])
+
+  useEffect(() => {
+    let cancelled = false
+    const loadInstitutions = async () => {
+      const result = await supabase
+        .from('institutions')
+        .select('*')
+        .eq('is_active', true)
+        .order('name')
+
+      if (!cancelled) {
+        if (result.error) setError('Educational institutions could not be loaded. Please refresh and try again.')
+        else setInstitutions((result.data ?? []) as Institution[])
+        setInstitutionsLoading(false)
+      }
+    }
+    void loadInstitutions()
+    return () => { cancelled = true }
+  }, [])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -40,6 +66,10 @@ export default function Register() {
     }
     if (password !== confirmPassword) {
       setError('Passwords do not match.')
+      return
+    }
+    if (!institutionId) {
+      setError('Please select your educational institution.')
       return
     }
     if (!programme) {
@@ -56,6 +86,7 @@ export default function Register() {
       fullName: fullName.trim(),
       email: email.trim(),
       password,
+      institutionId,
       programme: programme === 'Other programme' ? customProgramme.trim() : programme,
     })
 
@@ -81,6 +112,14 @@ export default function Register() {
   }
 
   if (success) {
+    const resend = async () => {
+      setResending(true)
+      setResendMessage('')
+      const result = await resendSignupConfirmation(email.trim())
+      setResending(false)
+      setResendMessage(result.error ?? 'Confirmation email sent again. Check your inbox and spam folder.')
+    }
+
     return (
       <div className="rounded-[18px] border border-border bg-white p-10 shadow-[0_20px_55px_rgba(11,31,51,0.12)] max-md:p-7">
         <div className="text-center">
@@ -89,18 +128,27 @@ export default function Register() {
             aria-hidden="true"
           />
           <h2 className="mb-2 text-[26px] font-bold text-navy">
-            Account Created
+            Confirm your email
           </h2>
           <p className="mb-6 text-muted">
-            Your student account has been created. Please check your email to
-            confirm your address, then sign in.
+            We sent a confirmation link to <strong className="text-navy">{email}</strong>.
+            Open that link before signing in. Your student access remains locked
+            until the email is confirmed.
           </p>
-          <Link
-            to="/login"
-            className="inline-block rounded-[9px] bg-teal px-8 py-3 font-bold text-white shadow-[0_8px_20px_rgba(42,157,143,0.22)] transition-all hover:-translate-y-px hover:bg-teal-dark"
+          <button
+            type="button"
+            onClick={() => void resend()}
+            disabled={resending}
+            className="inline-flex items-center justify-center gap-2 rounded-[9px] bg-teal px-8 py-3 font-bold text-white shadow-[0_8px_20px_rgba(42,157,143,0.22)] transition-all hover:-translate-y-px hover:bg-teal-dark disabled:cursor-not-allowed disabled:opacity-60"
           >
-            Go to Sign In
-          </Link>
+            {resending && <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />}
+            {resending ? 'Sending…' : 'Resend confirmation email'}
+          </button>
+          {resendMessage && <p className="mt-4 text-sm text-muted" role="status">{resendMessage}</p>}
+          <p className="mt-5 text-sm text-muted">
+            Already confirmed?{' '}
+            <Link to="/login" className="font-bold text-teal-dark hover:underline">Sign in</Link>
+          </p>
         </div>
       </div>
     )
@@ -143,15 +191,35 @@ export default function Register() {
         </div>
 
         <div className="mb-5 grid gap-2">
+          <label htmlFor="institution" className="font-bold text-text">
+            Educational institution
+          </label>
+          <select
+            id="institution"
+            value={institutionId}
+            onChange={(e) => setInstitutionId(e.target.value)}
+            required
+            disabled={institutionsLoading}
+            className="w-full rounded-[9px] border border-[#C9D2D5] bg-[#FCFCFA] px-4 py-3.5 text-text transition-colors focus:border-teal focus:shadow-[0_0_0_4px_rgba(42,157,143,0.12)] focus:outline-none disabled:cursor-wait disabled:bg-gray-100"
+          >
+            <option value="">{institutionsLoading ? 'Loading institutions…' : 'Select your institution'}</option>
+            {institutions.map((institution) => (
+              <option key={institution.id} value={institution.id}>{institution.name}</option>
+            ))}
+          </select>
+          <small className="text-xs text-muted">Your institution will be saved with your student profile.</small>
+        </div>
+
+        <div className="mb-5 grid gap-2">
           <label htmlFor="email" className="font-bold text-text">
-            University email
+            Email address
           </label>
           <input
             id="email"
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@university.edu.pk"
+            placeholder="you@example.com"
             required
             autoComplete="email"
             className="w-full rounded-[9px] border border-[#C9D2D5] bg-[#FCFCFA] px-4 py-3.5 text-text transition-colors focus:border-teal focus:shadow-[0_0_0_4px_rgba(42,157,143,0.12)] focus:outline-none"

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
-import type { Course, CourseSection, Database, Department } from '@/lib/types'
+import type { Course, CourseSection, Database, Department, Institution } from '@/lib/types'
 import {
   FEEDBACK_AREAS_BY_SERVICE,
   FEEDBACK_MAX_LENGTH,
@@ -81,6 +81,7 @@ export default function SubmitFeedback() {
   const [step, setStep] = useState<Step>('write')
   const [form, setForm] = useState<FormState>(EMPTY_FORM)
   const [departments, setDepartments] = useState<Department[]>([])
+  const [institution, setInstitution] = useState<Institution | null>(null)
   const [courses, setCourses] = useState<Course[]>([])
   const [sections, setSections] = useState<CourseSection[]>([])
   const [catalogLoading, setCatalogLoading] = useState(true)
@@ -98,15 +99,22 @@ export default function SubmitFeedback() {
     const timeout = window.setTimeout(() => controller.abort(), 8000)
 
     const loadCatalog = async () => {
-      const [departmentResult, courseResult, sectionResult] = await Promise.all([
-        supabase.from('departments').select('*').order('name').abortSignal(controller.signal),
+      if (!profile?.institution_id) {
+        setError('Your student profile is missing educational institution information.')
+        setCatalogLoading(false)
+        return
+      }
+
+      const [institutionResult, departmentResult, courseResult, sectionResult] = await Promise.all([
+        supabase.from('institutions').select('*').eq('id', profile.institution_id).abortSignal(controller.signal).maybeSingle(),
+        supabase.from('departments').select('*').eq('institution_id', profile.institution_id).order('name').abortSignal(controller.signal),
         supabase.from('courses').select('*').eq('is_active', true).order('name').abortSignal(controller.signal),
         supabase.from('course_sections').select('*').order('section_name').abortSignal(controller.signal),
       ])
 
       if (cancelled) return
       window.clearTimeout(timeout)
-      const firstError = departmentResult.error || courseResult.error || sectionResult.error
+      const firstError = institutionResult.error || departmentResult.error || courseResult.error || sectionResult.error
       if (firstError) {
         setError(
           controller.signal.aborted
@@ -114,6 +122,7 @@ export default function SubmitFeedback() {
             : 'The university catalogue could not be loaded. Please refresh and try again.',
         )
       } else {
+        setInstitution(institutionResult.data as Institution | null)
         setDepartments((departmentResult.data ?? []) as Department[])
         setCourses((courseResult.data ?? []) as Course[])
         setSections((sectionResult.data ?? []) as CourseSection[])
@@ -130,7 +139,7 @@ export default function SubmitFeedback() {
       window.clearTimeout(timeout)
       controller.abort()
     }
-  }, [])
+  }, [profile?.institution_id])
 
   const filteredCourses = useMemo(
     () => courses.filter(
@@ -311,7 +320,7 @@ export default function SubmitFeedback() {
             </p>
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="University">
-                <input value="Demo University" readOnly className={`${inputClass} bg-[#EEF3F2] text-muted`} />
+                <input value={institution?.name ?? 'Institution unavailable'} readOnly className={`${inputClass} bg-[#EEF3F2] text-muted`} />
               </Field>
               <Field label="Department" required>
                 <select
