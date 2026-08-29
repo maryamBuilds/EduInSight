@@ -6,7 +6,6 @@ import {
   LayoutList,
   CircleDot,
   Bell,
-  UserRound,
   LayoutDashboard,
   BookOpen,
   FileText,
@@ -41,7 +40,6 @@ const STUDENT_NAV: NavItem[] = [
   { label: 'My Feedback', to: '/student/feedback', icon: LayoutList },
   { label: 'University Updates', to: '/student/updates', icon: CircleDot },
   { label: 'Notifications', to: '/student/notifications', icon: Bell },
-  { label: 'My Profile', to: '/student/profile', icon: UserRound },
 ]
 
 const TEACHER_NAV: NavItem[] = [

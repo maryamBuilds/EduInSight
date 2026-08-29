@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom'
+import { BarChart3, CircleCheckBig, MessageSquareText, TrendingUp } from 'lucide-react'
 import { Logo } from '../Logo'
 
 /**
@@ -27,8 +28,8 @@ export function AuthLayout() {
 
         <div className="mx-auto my-auto max-w-[520px] text-center">
           <h1 className="mb-[18px] text-[40px] leading-[1.2] text-white max-md:text-[30px]">
-            Student voice. Clear insight. Visible action.
-            <span className="mx-auto mt-[22px] block h-1 w-[75px] rounded-full bg-teal" />
+            Student voice. Clear insight.
+            <span className="block text-[#18D0C2]">Visible action.</span>
           </h1>
           <p className="text-[18px] leading-[1.6] text-[#D6E3E8]">
             EduInSight converts multilingual student feedback into
@@ -36,13 +37,21 @@ export function AuthLayout() {
           </p>
 
           {/* Process flow */}
-          <div className="mt-[45px] flex items-center justify-center gap-3">
-            {['Feedback', 'Insight', 'Action', 'Update'].map((step, i) => (
-              <span key={step} className="flex items-center gap-3">
-                <span className="min-w-[85px] rounded-lg border border-aqua/[0.55] bg-white/[0.07] px-2 py-3 text-sm font-bold text-white">
+          <div className="mt-[45px] flex items-start justify-center gap-3 max-sm:gap-1">
+            {([
+              ['Feedback', MessageSquareText],
+              ['Insight', BarChart3],
+              ['Action', CircleCheckBig],
+              ['Progress', TrendingUp],
+            ] as const).map(([step, Icon], i) => (
+              <span key={step} className="flex items-center gap-3 max-sm:gap-1">
+                <span className="grid min-w-[82px] justify-items-center gap-3 text-sm font-semibold text-white max-sm:min-w-[65px]">
+                  <span className="grid h-16 w-16 place-items-center rounded-full border border-aqua/50 bg-white/[0.04] text-[#18D0C2] max-sm:h-12 max-sm:w-12">
+                    <Icon className="h-7 w-7" aria-hidden="true" />
+                  </span>
                   {step}
                 </span>
-                {i < 3 && <span className="text-aqua">→</span>}
+                {i < 3 && <span className="mt-6 text-aqua/60">→</span>}
               </span>
             ))}
           </div>

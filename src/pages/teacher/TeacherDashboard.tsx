@@ -395,13 +395,18 @@ export default function TeacherDashboard({
   // ── Populated dashboard ─────────────────────────────────────────────────
   const topCluster = clusters[0] ?? null
   const hasData = feedbacks.length > 0
+  const actionCounts = {
+    planned: actions.filter((action) => action.status === 'planned' || action.status === 'assigned').length,
+    inProgress: actions.filter((action) => action.status === 'in_progress').length,
+    completed: actions.filter((action) => action.status === 'completed').length,
+  }
 
   return (
     <>
-      <div className="mb-5">
+      {view !== 'overview' && <div className="mb-5">
         <h2 className="text-2xl font-bold text-navy">{VIEW_COPY[view].title}</h2>
         <p className="mt-1 text-sm text-muted">{VIEW_COPY[view].description}</p>
-      </div>
+      </div>}
 
       {/* ── Status banner ── */}
       {!hasData && (
@@ -421,7 +426,7 @@ export default function TeacherDashboard({
       )}
 
       {/* ── Dashboard grid ── */}
-      <div className={`grid grid-cols-1 gap-5 ${view === 'overview' || view === 'insights' || view === 'feedback' ? 'xl:grid-cols-[1.25fr_0.75fr]' : ''}`}>
+      <div className={`grid grid-cols-1 gap-5 ${view === 'overview' || view === 'insights' || view === 'feedback' ? 'xl:grid-cols-[1.3fr_0.9fr]' : ''}`}>
 
         {/* ── Top Learning Bottlenecks ── */}
         {(view === 'overview' || view === 'insights') && (
@@ -499,27 +504,11 @@ export default function TeacherDashboard({
           </div>
           <p className="mt-3 text-xs text-muted">Feedback received by day · last 7 days</p>
 
-          {/* AI Insight */}
-          {topCluster && (
-            <div className="mt-4 rounded-[10px] border border-[#A9DDD7] px-4 py-4" style={{ background: 'linear-gradient(135deg, #F3FBF9, #EAF5F7)' }}>
-              <strong className="text-teal-dark">✦ AI Insight</strong>
-              <p className="mt-2 leading-relaxed text-text">
-                {topCluster.ai_suggested_response ?? topCluster.summary}
-              </p>
-              <button
-                type="button"
-                className="font-bold text-teal-dark hover:underline"
-                onClick={() => openDialog(topCluster)}
-              >
-                View evidence →
-              </button>
-            </div>
-          )}
         </Panel>
         )}
 
         {/* ── Feedback Distribution ── */}
-        {(view === 'overview' || view === 'feedback') && (
+        {view === 'feedback' && (
         <Panel title="Feedback Distribution">
           {distributions.length > 0 ? (
             <div className="grid gap-3">
@@ -531,6 +520,28 @@ export default function TeacherDashboard({
             <p className="py-4 text-center text-sm text-muted">No feedback data yet.</p>
           )}
         </Panel>
+        )}
+
+        {view === 'overview' && (
+          <Panel className="border-teal/40 bg-gradient-to-br from-white to-[#EFF8F6]">
+            <div className="flex items-center gap-3 text-teal-dark">
+              <span className="grid h-10 w-10 place-items-center rounded-lg bg-teal text-xl text-white">✦</span>
+              <h3 className="text-[19px]">AI Insight</h3>
+            </div>
+            {topCluster ? (
+              <>
+                <p className="mt-4 text-lg leading-7 text-navy">
+                  {topCluster.ai_suggested_response ?? topCluster.summary}
+                </p>
+                <p className="mt-3 text-xs font-semibold text-muted">AI-generated · Human review required</p>
+                <button type="button" className="mt-5 inline-flex items-center rounded-lg bg-teal px-5 py-3 font-bold text-white hover:bg-teal-dark" onClick={() => openDialog(topCluster)}>
+                  View Evidence →
+                </button>
+              </>
+            ) : (
+              <p className="py-7 text-center text-sm text-muted">No AI insight is available until feedback has been analysed.</p>
+            )}
+          </Panel>
         )}
 
         {view === 'feedback' && (
@@ -592,7 +603,20 @@ export default function TeacherDashboard({
             )}
           </div>
           <div className="grid gap-3 p-5">
-            {actions.length > 0 ? (
+            {view === 'overview' ? (
+              <div className="grid grid-cols-3 divide-x divide-border text-center">
+                {[
+                  ['Planned', actionCounts.planned, 'text-ocean'],
+                  ['In Progress', actionCounts.inProgress, 'text-warning'],
+                  ['Resolved', actionCounts.completed, 'text-teal-dark'],
+                ].map(([label, count, colour]) => (
+                  <div key={String(label)} className="px-2 py-5">
+                    <strong className={`block text-3xl ${colour}`}>{count}</strong>
+                    <span className="mt-2 block text-sm text-muted">{label}</span>
+                  </div>
+                ))}
+              </div>
+            ) : actions.length > 0 ? (
               actions.map((a) => {
                 const linkedCluster = clusters.find((c) => c.id === a.cluster_id)
                 const actionStatusLabel =
