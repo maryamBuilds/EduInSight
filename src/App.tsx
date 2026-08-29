@@ -1,5 +1,4 @@
-import { useEffect } from 'react'
-import { Routes, Route, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom'
 import {
   AuthLayout,
   MinimalLayout,
@@ -184,56 +183,6 @@ function Placeholder({ label }: { label: string }) {
 }
 
 // ---------------------------------------------------------------------------
-// DashboardSectionRoute — renders a complete dashboard at a focused section
-// ---------------------------------------------------------------------------
-
-function DashboardSectionRoute({
-  children,
-  sectionId,
-}: {
-  children: React.ReactNode
-  sectionId?: string
-}) {
-  const { pathname } = useLocation()
-
-  useEffect(() => {
-    if (!sectionId) {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-      return
-    }
-
-    const scrollToSection = () => {
-      const section = document.getElementById(sectionId)
-      if (!section) return false
-
-      section.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-      })
-      return true
-    }
-
-    if (scrollToSection()) return
-
-    // Dashboards fetch live data before their sections render. Observe the
-    // document briefly so direct section routes still focus the right panel.
-    const observer = new MutationObserver(() => {
-      if (scrollToSection()) observer.disconnect()
-    })
-    observer.observe(document.body, { childList: true, subtree: true })
-
-    const timeout = window.setTimeout(() => observer.disconnect(), 5000)
-
-    return () => {
-      observer.disconnect()
-      window.clearTimeout(timeout)
-    }
-  }, [pathname, sectionId])
-
-  return <>{children}</>
-}
-
-// ---------------------------------------------------------------------------
 // App — route tree
 // ---------------------------------------------------------------------------
 
@@ -295,11 +244,11 @@ export default function App() {
       <Route element={<ProtectedLayout />}>
         <Route element={<RoleGuard allowedRole="admin" />}>
           <Route element={<AdminLayout />}>
-            <Route path="/admin" element={<DashboardSectionRoute><AdminDashboard /></DashboardSectionRoute>} />
-            <Route path="/admin/issues" element={<DashboardSectionRoute sectionId="admin-issues"><AdminDashboard /></DashboardSectionRoute>} />
-            <Route path="/admin/departments" element={<DashboardSectionRoute sectionId="admin-departments"><AdminDashboard /></DashboardSectionRoute>} />
-            <Route path="/admin/actions" element={<DashboardSectionRoute sectionId="admin-actions"><AdminDashboard /></DashboardSectionRoute>} />
-            <Route path="/admin/updates" element={<DashboardSectionRoute sectionId="admin-actions"><AdminDashboard /></DashboardSectionRoute>} />
+            <Route path="/admin" element={<AdminDashboard view="overview" />} />
+            <Route path="/admin/issues" element={<AdminDashboard view="issues" />} />
+            <Route path="/admin/departments" element={<AdminDashboard view="departments" />} />
+            <Route path="/admin/actions" element={<AdminDashboard view="actions" />} />
+            <Route path="/admin/updates" element={<AdminDashboard view="updates" />} />
             <Route path="/admin/reports" element={<Navigate to="/admin" replace />} />
           </Route>
         </Route>

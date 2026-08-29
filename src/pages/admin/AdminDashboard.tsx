@@ -7,7 +7,7 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react'
-import type { IssueCluster, Feedback, Action } from '@/lib/types'
+import type { IssueCluster, Feedback, Action, ActionUpdate } from '@/lib/types'
 import {
   PRIORITY_LABELS,
   TREND_LABELS,
@@ -38,6 +38,7 @@ import { useAuth } from '@/context/AuthContext'
 // ---------------------------------------------------------------------------
 
 type AdminFilter = 'all' | 'high' | 'medium' | 'unassigned'
+export type AdminDashboardView = 'overview' | 'issues' | 'departments' | 'actions' | 'updates'
 
 const FILTER_OPTIONS: { value: AdminFilter; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -78,13 +79,14 @@ const CLUSTER_STATUS_LABELS: Record<string, string> = {
 // Admin Dashboard
 // ---------------------------------------------------------------------------
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ view = 'overview' }: { view?: AdminDashboardView }) {
   const { loading: authLoading, profile } = useAuth()
 
   // ── Data state ──────────────────────────────────────────────────────────
   const [clusters, setClusters] = useState<IssueCluster[]>([])
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
   const [actions, setActions] = useState<(Action & { issue_clusters: { title: string } })[]>([])
+  const [updates, setUpdates] = useState<ActionUpdate[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -117,7 +119,7 @@ export default function AdminDashboard() {
       setLoading(true)
       setError(null)
 
-      const [clustersRes, feedbackRes, actionsRes] = await Promise.all([
+      const [clustersRes, feedbackRes, actionsRes, updatesRes] = await Promise.all([
         supabase
           .from('issue_clusters')
           .select('*')
@@ -127,16 +129,21 @@ export default function AdminDashboard() {
           .from('actions')
           .select('*, issue_clusters(title)')
           .order('created_at', { ascending: false }),
+        supabase
+          .from('action_updates')
+          .select('*')
+          .order('created_at', { ascending: false }),
       ])
 
       if (cancelled) return
 
-      if (clustersRes.error || feedbackRes.error || actionsRes.error) {
+      if (clustersRes.error || feedbackRes.error || actionsRes.error || updatesRes.error) {
         setError(
           friendlyError(
             clustersRes.error?.message ??
               feedbackRes.error?.message ??
               actionsRes.error?.message ??
+              updatesRes.error?.message ??
               'Failed to load dashboard data.',
           ),
         )
@@ -147,6 +154,7 @@ export default function AdminDashboard() {
       setClusters(clustersRes.data ?? [])
       setFeedbacks(feedbackRes.data ?? [])
       setActions((actionsRes.data ?? []) as (Action & { issue_clusters: { title: string } })[])
+      setUpdates((updatesRes.data ?? []) as ActionUpdate[])
       setLoading(false)
     }
 
@@ -385,6 +393,14 @@ export default function AdminDashboard() {
   // ── Populated dashboard ──────────────────────────────────────────────────
   const topCluster = clusters[0] ?? null
   const hasData = feedbacks.length > 0
+  const actionTitles = new Map(actions.map((action) => [action.id, action.title]))
+  const viewCopy: Record<AdminDashboardView, { title: string; description: string }> = {
+    overview: { title: 'Administration Overview', description: 'Institution-wide feedback and action summary' },
+    issues: { title: 'Priority Issues', description: 'Review evidence and assign institutional responses' },
+    departments: { title: 'Departments', description: 'Understand where feedback needs attention' },
+    actions: { title: 'Action Tracking', description: 'Monitor assigned institutional actions' },
+    updates: { title: 'Student Updates', description: 'Review messages prepared for affected students' },
+  }
 
   return (
     <>
@@ -395,19 +411,26 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {view !== 'overview' && (
+        <header className="mb-5">
+          <h2 className="text-2xl font-semibold text-navy">{viewCopy[view].title}</h2>
+          <p className="mt-1 text-sm text-muted">{viewCopy[view].description}</p>
+        </header>
+      )}
+
       {/* ── Metric cards ── */}
-      <section id="admin-overview" className="mb-5 scroll-mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {view === 'overview' && <section id="admin-overview" className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard icon={<FileText className="h-5 w-5" />} label="Total Feedback" value={metrics.totalFeedback} iconBg="bg-soft-blue" iconColour="text-ocean" />
         <MetricCard icon={<Flag className="h-5 w-5" />} label="High-Priority Issues" value={metrics.highPriority} iconBg="bg-soft-red" iconColour="text-danger" />
         <MetricCard icon={<Clock className="h-5 w-5" />} label="Under Review" value={metrics.underReview} iconBg="bg-soft-amber" iconColour="text-[#D98200]" />
         <MetricCard icon={<CheckCircle className="h-5 w-5" />} label="Resolved" value={metrics.resolved} iconBg="bg-soft-teal" iconColour="text-teal-dark" />
-      </section>
+      </section>}
 
       {/* ── Dashboard grid ── */}
-      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.35fr_0.65fr]">
+      {view !== 'updates' && <div className={`grid grid-cols-1 gap-5 ${view === 'overview' ? 'xl:grid-cols-[1.35fr_0.65fr]' : ''}`}>
 
         {/* ── Priority Institutional Problems ── */}
-        <section id="admin-issues" className="scroll-mt-4 overflow-hidden rounded-xl border border-border bg-white">
+        {(view === 'overview' || view === 'issues') && <section id="admin-issues" className="overflow-hidden rounded-xl border border-border bg-white">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-[18px]">
             <h3 className="m-0 text-[19px] text-navy">Priority Institutional Problems</h3>
             <FilterButtons options={FILTER_OPTIONS} active={priorityFilter} onChange={setPriorityFilter} />
@@ -477,11 +500,11 @@ export default function AdminDashboard() {
               className="h-9 w-full rounded-lg border border-[#CAD3D6] bg-white px-3 text-sm text-text outline-none transition-colors focus:border-teal focus:shadow-[0_0_0_4px_rgba(42,157,143,0.12)]"
             />
           </div>
-        </section>
+        </section>}
 
         {/* ── Feedback by Responsible Area ── */}
-        <div className="flex flex-col gap-5">
-          <section id="admin-departments" className="scroll-mt-4 overflow-hidden rounded-xl border border-border bg-white">
+        {(view === 'overview' || view === 'departments') && <div className="flex flex-col gap-5">
+          <section id="admin-departments" className="overflow-hidden rounded-xl border border-border bg-white">
             <div className="border-b border-border px-5 py-[18px]">
               <h3 className="m-0 text-[19px] text-navy">Feedback by Responsible Area</h3>
             </div>
@@ -523,19 +546,13 @@ export default function AdminDashboard() {
               )}
             </div>
           </section>
-        </div>
+        </div>}
 
         {/* ── Recent Action Activity (full-width row) ── */}
-        <section id="admin-actions" className="scroll-mt-4 overflow-hidden rounded-xl border border-border bg-white xl:col-span-2">
+        {(view === 'overview' || view === 'actions') && <section id="admin-actions" className={`overflow-hidden rounded-xl border border-border bg-white ${view === 'overview' ? 'xl:col-span-2' : ''}`}>
           <div className="flex items-center justify-between border-b border-border px-5 py-[18px]">
             <h3 className="m-0 text-[19px] text-navy">Recent Action Activity</h3>
-            <button
-              type="button"
-              className="font-bold text-teal-dark hover:underline"
-              onClick={() => document.getElementById('admin-actions-section')?.scrollIntoView({ behavior: 'smooth' })}
-            >
-              View all →
-            </button>
+            {view === 'overview' && <span className="text-sm font-semibold text-teal-dark">Latest activity</span>}
           </div>
           <div id="admin-actions-section" className="grid gap-3 p-5">
             {actions.length > 0 ? (
@@ -565,8 +582,42 @@ export default function AdminDashboard() {
               </p>
             )}
           </div>
+        </section>}
+      </div>}
+
+      {view === 'updates' && (
+        <section className="overflow-hidden rounded-xl border border-border bg-white">
+          <div className="border-b border-border px-5 py-[18px]">
+            <h3 className="m-0 text-[19px] text-navy">Student-facing updates</h3>
+          </div>
+          <div className="grid gap-3 p-5">
+            {updates.length > 0 ? (
+              updates.map((update) => (
+                <article key={update.id} className="rounded-[9px] border border-border p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <strong className="text-sm text-navy">
+                      {actionTitles.get(update.action_id) ?? 'Institutional action'}
+                    </strong>
+                    <span className={`rounded-full px-2 py-1 text-[11px] font-bold ${update.is_published ? 'bg-soft-teal text-success' : 'bg-soft-amber text-[#8A5A16]'}`}>
+                      {update.is_published ? 'Published' : 'Draft'}
+                    </span>
+                  </div>
+                  <p className="mt-2 leading-relaxed text-text">{update.student_facing_message}</p>
+                  <p className="mt-2 text-xs text-muted">
+                    {update.published_at
+                      ? `Published ${new Date(update.published_at).toLocaleDateString()}`
+                      : `Created ${new Date(update.created_at).toLocaleDateString()}`}
+                  </p>
+                </article>
+              ))
+            ) : (
+              <p className="py-8 text-center text-sm text-muted">
+                No student-facing updates have been created yet.
+              </p>
+            )}
+          </div>
         </section>
-      </div>
+      )}
 
       {/* ── Issue Detail Dialog ── */}
       <OverlayDialog
