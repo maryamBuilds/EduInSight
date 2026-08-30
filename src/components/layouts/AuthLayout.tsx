@@ -44,14 +44,14 @@ export function AuthLayout() {
               ['Action', CircleCheckBig],
               ['Progress', TrendingUp],
             ] as const).map(([step, Icon], i) => (
-              <span key={step} className="flex items-center gap-3 max-sm:gap-1">
+              <span key={step} className="flex items-start gap-3 max-sm:gap-1">
                 <span className="grid min-w-[82px] justify-items-center gap-3 text-sm font-semibold text-white max-sm:min-w-[65px]">
                   <span className="grid h-16 w-16 place-items-center rounded-full border border-aqua/50 bg-white/[0.04] text-[#18D0C2] max-sm:h-12 max-sm:w-12">
                     <Icon className="h-7 w-7" aria-hidden="true" />
                   </span>
                   {step}
                 </span>
-                {i < 3 && <span className="mt-6 text-aqua/60">→</span>}
+                {i < 3 && <span className="mt-[25px] text-aqua/60">→</span>}
               </span>
             ))}
           </div>
