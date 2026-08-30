@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { useAuth } from '@/context/AuthContext'
 import { supabase } from '@/lib/supabase'
+import { requestFeedbackAnalysis, studentAnalysisLabel } from '@/lib/aiAnalysis'
 import type { Course, CourseSection, Database, Department, Institution } from '@/lib/types'
 import {
   FEEDBACK_AREAS_BY_SERVICE,
@@ -88,6 +89,7 @@ export default function SubmitFeedback() {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [reference, setReference] = useState('')
+  const [analysisNote, setAnalysisNote] = useState('')
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' })
@@ -270,6 +272,22 @@ export default function SubmitFeedback() {
       setReference(data[0].reference_number)
       setStep('submitted')
       window.scrollTo({ top: 0, behavior: 'smooth' })
+
+      // Request the secure server-side analysis using the ID returned by
+      // submit_feedback.  This never blocks the success screen and never
+      // affects the saved submission: analysis failures are retried later.
+      setAnalysisNote('Analysing your feedback…')
+      void requestFeedbackAnalysis(data[0].id)
+        .then((result) => {
+          setAnalysisNote(
+            result
+              ? result.requiresHumanReview
+                ? 'Human review required'
+                : studentAnalysisLabel(result.status, result.errorCode)
+              : 'Analysis pending',
+          )
+        })
+        .catch(() => setAnalysisNote('Analysis pending'))
     } catch (caughtError) {
       const errorMessage = caughtError instanceof Error ? caughtError.message : ''
       setError(
@@ -566,6 +584,11 @@ export default function SubmitFeedback() {
           <h2 className="mt-4 text-3xl font-bold text-navy">Feedback submitted successfully</h2>
           <p className="mx-auto mt-3 max-w-2xl leading-relaxed text-muted">Your feedback has been received and will be analysed before being routed to the appropriate authorised user.</p>
           <div className="mx-auto mt-6 w-fit rounded-full bg-soft-teal px-5 py-2 font-mono font-bold text-teal-dark">Reference: {reference}</div>
+          {analysisNote && (
+            <div className="mx-auto mt-3 w-fit rounded-full bg-soft-blue px-4 py-1.5 text-sm font-semibold text-ocean">
+              {analysisNote}
+            </div>
+          )}
           <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Link to="/student/feedback" className="rounded-lg bg-teal px-5 py-3 font-bold text-white shadow-md hover:bg-teal-dark">View Status</Link>
             <Link to="/student" className="rounded-lg border border-border bg-white px-5 py-3 font-bold text-ocean hover:bg-gray-50">Return to Dashboard</Link>

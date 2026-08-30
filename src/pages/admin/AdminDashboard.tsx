@@ -14,7 +14,16 @@ import {
   TREND_ARROWS,
   TREND_COLOURS,
   ACTION_STATUS_LABELS,
+  SENTIMENT_LABELS,
 } from '@/lib/constants'
+import {
+  LANGUAGE_LABELS,
+  MAX_ANALYSIS_ATTEMPTS,
+  analysisStatusLabel,
+  loadAdminAnalyses,
+  requestFeedbackAnalysis,
+  type AdminAnalysisRow,
+} from '@/lib/aiAnalysis'
 import {
   MetricCard,
   PriorityBadge,
@@ -89,6 +98,8 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
   const [actions, setActions] = useState<(Action & { issue_clusters: { title: string } })[]>([])
   const [updates, setUpdates] = useState<ActionUpdate[]>([])
+  const [analyses, setAnalyses] = useState<AdminAnalysisRow[]>([])
+  const [retryingId, setRetryingId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -157,6 +168,9 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
       setFeedbacks(feedbackRes.data ?? [])
       setActions((actionsRes.data ?? []) as (Action & { issue_clusters: { title: string } })[])
       setUpdates((updatesRes.data ?? []) as ActionUpdate[])
+      // Analysis rows are supplementary: any failure here returns an empty
+      // list and leaves the rest of the dashboard fully usable.
+      setAnalyses(await loadAdminAnalyses())
       setLoading(false)
     }
 
@@ -293,6 +307,33 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
     setSelectedCluster(null)
     setActionFormOpen(false)
   }, [])
+
+  const refreshAnalyses = useCallback(async () => {
+    setAnalyses(await loadAdminAnalyses())
+  }, [])
+
+  // Retries are permitted only for pending/failed outcomes that have not
+  // exhausted the attempt limit; the Edge Function itself re-checks
+  // authorisation, concurrency, and the limit server-side.
+  const handleRetryAnalysis = useCallback(
+    async (feedbackId: string) => {
+      if (retryingId) return
+      setRetryingId(feedbackId)
+      const result = await requestFeedbackAnalysis(feedbackId)
+      setRetryingId(null)
+      if (result?.status === 'completed') {
+        showToast('Analysis completed.')
+      } else if (result?.requiresHumanReview) {
+        showToast('Analysis attempt limit reached. Human review required.')
+      } else if (result?.errorCode === 'sensitive_requires_human_review') {
+        showToast('Human review required for this feedback.')
+      } else {
+        showToast('Analysis could not be completed.')
+      }
+      await refreshAnalyses()
+    },
+    [retryingId, showToast, refreshAnalyses],
+  )
 
   const handleAcknowledge = useCallback(async () => {
     if (!selectedCluster || submitting) return
@@ -520,6 +561,112 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
               placeholder="Filter by problem or area…"
               className="h-9 w-full rounded-lg border border-[#CAD3D6] bg-white px-3 text-sm text-text outline-none transition-colors focus:border-teal focus:shadow-[0_0_0_4px_rgba(42,157,143,0.12)]"
             />
+          </div>
+        </section>}
+
+        {/* ── Recent AI Feedback Analysis ── */}
+        {view === 'issues' && <section id="admin-analysis" className="scroll-mt-4 overflow-hidden rounded-xl border border-border bg-white">
+          <div className="flex items-center justify-between border-b border-border px-5 py-[18px]">
+            <h3 className="m-0 text-[19px] text-navy">Recent AI Feedback Analysis</h3>
+            <span className="text-sm font-semibold text-muted">
+              {analyses.length} {analyses.length === 1 ? 'record' : 'records'}
+            </span>
+          </div>
+          <div className="grid gap-3 p-5">
+            {analyses.length > 0 ? (
+              analyses.map((analysis) => {
+                const retryable =
+                  (analysis.status === 'pending' || analysis.status === 'failed') &&
+                  analysis.error_code !== 'sensitive_requires_human_review' &&
+                  analysis.attempts < MAX_ANALYSIS_ATTEMPTS
+                return (
+                  <article key={analysis.feedback_id} className="rounded-[9px] border border-border p-4">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <strong className="text-sm text-navy">
+                          {analysis.feedback?.reference_number ?? 'Feedback'}
+                        </strong>
+                        <span className="text-xs text-muted">
+                          {analysis.feedback?.feedback_area ?? analysis.feedback?.university_service ?? ''}
+                        </span>
+                      </div>
+                      <span className={`inline-block rounded-full px-2 py-1 text-[11px] font-bold ${analysis.status === 'completed' ? 'bg-soft-teal text-success' : 'bg-soft-amber text-[#8A5A16]'}`}>
+                        {analysisStatusLabel(analysis)}
+                      </span>
+                    </div>
+                    {analysis.status === 'completed' ? (
+                      <>
+                        <p className="mt-2 text-sm leading-relaxed text-text">{analysis.english_summary}</p>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          {analysis.detected_language && (
+                            <span className="rounded-full bg-soft-blue px-2 py-1 text-xs font-semibold text-ocean">
+                              {LANGUAGE_LABELS[analysis.detected_language]}
+                            </span>
+                          )}
+                          {analysis.sentiment && (
+                            <span className="rounded-full bg-soft-teal px-2 py-1 text-xs font-semibold text-teal-dark">
+                              {SENTIMENT_LABELS[analysis.sentiment]}
+                            </span>
+                          )}
+                          {analysis.priority && <PriorityBadge level={analysis.priority} />}
+                          {analysis.confidence != null && (
+                            <span className="text-xs text-muted">
+                              Confidence {Math.round(analysis.confidence * 100)}%
+                            </span>
+                          )}
+                          {analysis.requires_human_review && (
+                            <span className="rounded-full bg-soft-amber px-2 py-1 text-xs font-semibold text-warning">
+                              Human review required
+                            </span>
+                          )}
+                        </div>
+                        {analysis.key_topics && analysis.key_topics.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {analysis.key_topics.map((topic) => (
+                              <span key={topic} className="rounded-full bg-soft-teal px-2 py-0.5 text-[11px] font-semibold text-teal-dark">
+                                {topic}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <p className="mt-2 text-sm text-muted">
+                        {analysis.status === 'processing'
+                          ? 'Analysis is in progress.'
+                          : analysis.attempts >= MAX_ANALYSIS_ATTEMPTS
+                            ? 'Analysis attempt limit reached. Human review required.'
+                            : 'No validated analysis is stored for this submission yet.'}
+                      </p>
+                    )}
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                      <span className="text-xs text-muted">
+                        {analysis.feedback?.submitted_at
+                          ? `Submitted ${new Date(analysis.feedback.submitted_at).toLocaleDateString()}`
+                          : ''}
+                        {analysis.attempts > 0
+                          ? ` · ${analysis.attempts} attempt${analysis.attempts === 1 ? '' : 's'}`
+                          : ''}
+                      </span>
+                      {retryable && (
+                        <button
+                          type="button"
+                          disabled={retryingId === analysis.feedback_id}
+                          onClick={() => void handleRetryAnalysis(analysis.feedback_id)}
+                          className="ml-auto rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-bold text-ocean transition-colors hover:bg-gray-50 disabled:opacity-60"
+                        >
+                          {retryingId === analysis.feedback_id ? 'Retrying…' : 'Retry Analysis'}
+                        </button>
+                      )}
+                    </div>
+                  </article>
+                )
+              })
+            ) : (
+              <p className="py-4 text-center text-sm text-muted">
+                No AI analysis records exist yet.
+              </p>
+            )}
           </div>
         </section>}
 

@@ -7,14 +7,20 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react'
-import type { TeacherClusterRow, TeacherFeedbackRow, TeacherActionRow } from '@/lib/types'
+import type { TeacherClusterRow, TeacherFeedbackRow, TeacherActionRow, TeacherAnalysisRow } from '@/lib/types'
 import {
   PRIORITY_LABELS,
   TREND_LABELS,
   TREND_ARROWS,
   TREND_COLOURS,
   ACTION_STATUS_LABELS,
+  SENTIMENT_LABELS,
 } from '@/lib/constants'
+import {
+  LANGUAGE_LABELS,
+  analysisStatusLabel,
+  loadTeacherAnalyses,
+} from '@/lib/aiAnalysis'
 import {
   MetricCard,
   Panel,
@@ -79,6 +85,7 @@ export default function TeacherDashboard({
   const [clusters, setClusters] = useState<TeacherClusterRow[]>([])
   const [feedbacks, setFeedbacks] = useState<TeacherFeedbackRow[]>([])
   const [actions, setActions] = useState<TeacherActionRow[]>([])
+  const [analyses, setAnalyses] = useState<TeacherAnalysisRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -137,6 +144,9 @@ export default function TeacherDashboard({
       setClusters(clustersRes.data ?? [])
       setFeedbacks(feedbackRes.data ?? [])
       setActions(actionsRes.data ?? [])
+      // Analysis rows are supplementary: any failure here returns an empty
+      // list and leaves the rest of the dashboard fully usable.
+      setAnalyses(await loadTeacherAnalyses())
       setLoading(false)
     }
 
@@ -209,6 +219,11 @@ export default function TeacherDashboard({
       return matchPriority && matchSearch
     })
   }, [clusters, priorityFilter, search])
+
+  // ── Analysis lookup by feedback ID (teacher-visible rows only) ─────────
+  const analysisById = useMemo(() => {
+    return new Map(analyses.map((item) => [item.feedback_id, item]))
+  }, [analyses])
 
   // ── Cluster evidence (feedback matching the selected cluster's topic) ──
   const clusterEvidence = useMemo(() => {
@@ -554,7 +569,9 @@ export default function TeacherDashboard({
             </div>
             <div className="divide-y divide-border">
               {feedbacks.length > 0 ? (
-                feedbacks.map((feedback) => (
+                feedbacks.map((feedback) => {
+                  const analysis = analysisById.get(feedback.id)
+                  return (
                   <article key={feedback.id} className="p-5">
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-2">
@@ -563,7 +580,7 @@ export default function TeacherDashboard({
                         </strong>
                         {feedback.language_detected && (
                           <span className="rounded-full bg-soft-blue px-2 py-1 text-xs font-semibold text-ocean">
-                            {feedback.language_detected}
+                            {LANGUAGE_LABELS[feedback.language_detected]}
                           </span>
                         )}
                       </div>
@@ -579,9 +596,55 @@ export default function TeacherDashboard({
                         </span>
                       ))}
                     </div>
+                    {analysis && (
+                      <div className="mt-3 rounded-lg border border-border bg-[#F7FAF9] p-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-xs font-bold uppercase tracking-wide text-muted">AI analysis</span>
+                          {analysis.status === 'completed' ? (
+                            <>
+                              {analysis.detected_language && (
+                                <span className="rounded-full bg-soft-blue px-2 py-1 text-xs font-semibold text-ocean">
+                                  {LANGUAGE_LABELS[analysis.detected_language]}
+                                </span>
+                              )}
+                              {analysis.sentiment && (
+                                <span className="rounded-full bg-soft-teal px-2 py-1 text-xs font-semibold text-teal-dark">
+                                  {SENTIMENT_LABELS[analysis.sentiment]}
+                                </span>
+                              )}
+                              {analysis.priority && <PriorityBadge level={analysis.priority} />}
+                            </>
+                          ) : (
+                            <span className="rounded-full bg-soft-amber px-2 py-1 text-xs font-semibold text-warning">
+                              {analysisStatusLabel(analysis)}
+                            </span>
+                          )}
+                        </div>
+                        {analysis.english_summary && (
+                          <p className="mt-2 text-sm leading-relaxed text-text">{analysis.english_summary}</p>
+                        )}
+                        {analysis.key_topics && analysis.key_topics.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {analysis.key_topics.map((topic) => (
+                              <span key={topic} className="rounded-full bg-soft-teal px-2 py-0.5 text-[11px] font-semibold text-teal-dark">
+                                {topic}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                        {analysis.status === 'completed' && (
+                          <p className="mt-2 text-xs text-muted">
+                            {analysis.requires_human_review
+                              ? 'AI-generated · human review required'
+                              : 'AI-generated'}
+                          </p>
+                        )}
+                      </div>
+                    )}
                     <p className="mt-3 text-xs text-muted">Reference: {feedback.reference_number}</p>
                   </article>
-                ))
+                  )
+                })
               ) : (
                 <p className="p-8 text-center text-sm text-muted">
                   No feedback is available for your assigned sections yet.
