@@ -45,6 +45,16 @@ export type DetectedLanguage = 'en' | 'ur' | 'roman_ur' | 'mixed'
 
 export type ReviewStatus = 'pending' | 'reviewed' | 'rejected'
 
+export type AnalysisStatus = 'pending' | 'processing' | 'completed' | 'failed'
+
+export type AnalysisErrorCode =
+  | 'ai_not_configured'
+  | 'ai_timeout'
+  | 'ai_provider_error'
+  | 'ai_invalid_response'
+  | 'analysis_storage_error'
+  | 'sensitive_requires_human_review'
+
 export type DepartmentType = 'academic' | 'administrative' | 'service'
 
 export type StudyStructure = 'semester' | 'year'
@@ -282,6 +292,33 @@ export interface TeacherActionRow {
   updated_at: string
 }
 
+/**
+ * Structured AI analysis of a single feedback submission.
+ * Written only by the analyze-feedback Edge Function; never stores the
+ * original feedback text or any student identity.
+ */
+export interface FeedbackAnalysis {
+  feedback_id: string
+  status: AnalysisStatus
+  detected_language: DetectedLanguage | null
+  english_summary: string | null
+  category: string | null
+  sentiment: Sentiment | null
+  priority: PriorityLevel | null
+  responsible_area: string | null
+  key_topics: string[] | null
+  requires_human_review: boolean
+  confidence: number | null
+  error_code: AnalysisErrorCode | null
+  attempts: number
+  created_at: string
+  updated_at: string
+  completed_at: string | null
+}
+
+/** Row shape of the feedback_analysis_for_teacher security_barrier view. */
+export type TeacherAnalysisRow = FeedbackAnalysis
+
 // ---------------------------------------------------------------------------
 // Priority calculation types
 // ---------------------------------------------------------------------------
@@ -320,6 +357,7 @@ export interface Database {
       course_sections: { Row: CourseSection; Insert: Omit<CourseSection, 'id' | 'created_at'>; Update: Partial<CourseSection> }
       teacher_assignments: { Row: TeacherAssignment; Insert: Omit<TeacherAssignment, 'id' | 'created_at'>; Update: Partial<TeacherAssignment> }
       feedback: { Row: Feedback; Insert: Omit<Feedback, 'id' | 'submitted_at' | 'analysed_at'>; Update: Partial<Feedback> }
+      feedback_analysis: { Row: FeedbackAnalysis; Insert: Omit<FeedbackAnalysis, 'created_at' | 'updated_at' | 'completed_at'>; Update: Partial<FeedbackAnalysis> }
       extracted_issues: { Row: ExtractedIssue; Insert: Omit<ExtractedIssue, 'id' | 'created_at'>; Update: Partial<ExtractedIssue> }
       issue_clusters: { Row: IssueCluster; Insert: Omit<IssueCluster, 'id' | 'created_at' | 'updated_at'>; Update: Partial<IssueCluster> }
       cluster_feedback: { Row: ClusterFeedback; Insert: ClusterFeedback; Update: never }
@@ -333,6 +371,7 @@ export interface Database {
       feedback_for_teacher: { Row: TeacherFeedbackRow }
       extracted_issues_for_teacher: { Row: TeacherExtractedIssueRow }
       clusters_for_teacher: { Row: TeacherClusterRow }
+      feedback_analysis_for_teacher: { Row: TeacherAnalysisRow }
     }
     Functions: {
       submit_feedback: {
