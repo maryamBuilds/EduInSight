@@ -57,6 +57,17 @@ export default function StudentProfile() {
 
   if (!profile) return null
 
+  const roleLabel = profile.role === 'student'
+    ? 'Student'
+    : profile.role === 'teacher'
+      ? 'Teacher'
+      : 'Administrator'
+  const roleDescription = profile.role === 'student'
+    ? 'Your verified educational details used across EduInSight.'
+    : profile.role === 'teacher'
+      ? 'Your verified teaching account used to review authorised course feedback.'
+      : 'Your verified administrative account used for institutional feedback oversight.'
+
   const details = [
     { label: 'Email address', value: profile.email, icon: Mail },
     {
@@ -64,9 +75,12 @@ export default function StudentProfile() {
       value: institutionLoading ? 'Loading institution…' : institutionName || 'Unavailable',
       icon: Building2,
     },
-    { label: 'Degree programme', value: profile.programme || 'Not provided', icon: GraduationCap },
-    { label: 'Study structure', value: displayStudyStructure(profile.study_structure), icon: BookOpen },
-    { label: 'Current semester or year', value: profile.study_stage || 'Not provided', icon: UserRound },
+    { label: 'Account role', value: roleLabel, icon: UserRound },
+    ...(profile.role === 'student' ? [
+      { label: 'Degree programme', value: profile.programme || 'Not provided', icon: GraduationCap },
+      { label: 'Study structure', value: displayStudyStructure(profile.study_structure), icon: BookOpen },
+      { label: 'Current semester or year', value: profile.study_stage || 'Not provided', icon: UserRound },
+    ] : []),
   ]
 
   return (
@@ -78,10 +92,10 @@ export default function StudentProfile() {
               {getInitials(profile.full_name)}
             </span>
             <div>
-              <p className="text-sm font-semibold text-aqua">Student account</p>
+              <p className="text-sm font-semibold text-aqua">{roleLabel} account</p>
               <h2 className="mt-1 text-2xl font-bold sm:text-3xl">{profile.full_name}</h2>
               <p className="mt-2 text-sm text-[#D8E6EC]">
-                Your verified educational details used across EduInSight.
+                {roleDescription}
               </p>
             </div>
           </div>
@@ -91,9 +105,9 @@ export default function StudentProfile() {
           <div className="mb-6 flex items-start gap-3 rounded-lg border border-teal/20 bg-soft-teal p-4">
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-teal-dark" aria-hidden="true" />
             <div>
-              <h3 className="font-bold text-navy">Active student profile</h3>
+              <h3 className="font-bold text-navy">Active {roleLabel.toLowerCase()} profile</h3>
               <p className="mt-1 text-sm leading-6 text-muted">
-                These details identify your account and help route feedback to the correct university team.
+                These verified details identify your account and determine which EduInSight information you can access.
               </p>
             </div>
           </div>
@@ -136,7 +150,7 @@ export default function StudentProfile() {
           </div>
 
           <p className="mt-6 border-t border-border pt-5 text-sm leading-6 text-muted">
-            Profile identity and academic details are read-only. Contact your university administrator if an official detail needs correction.
+            Profile identity and institutional details are read-only. Contact your university administrator if an official detail needs correction.
           </p>
         </div>
       </section>

@@ -47,7 +47,7 @@ import { useAuth } from '@/context/AuthContext'
 // ---------------------------------------------------------------------------
 
 type AdminFilter = 'all' | 'high' | 'medium' | 'unassigned'
-export type AdminDashboardView = 'overview' | 'issues' | 'departments' | 'actions' | 'updates'
+export type AdminDashboardView = 'overview' | 'issues' | 'departments' | 'actions' | 'updates' | 'reports'
 
 const FILTER_OPTIONS: { value: AdminFilter; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -461,6 +461,7 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
     departments: { title: 'Departments', description: 'Understand where feedback needs attention' },
     actions: { title: 'Action Tracking', description: 'Monitor assigned institutional actions' },
     updates: { title: 'Student Updates', description: 'Review messages prepared for affected students' },
+    reports: { title: 'Institutional Reports', description: 'Review feedback coverage, AI analysis, and action delivery across the institution' },
   }
 
   return (
@@ -835,6 +836,67 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
             )}
           </div>
         </section>
+      )}
+
+      {view === 'reports' && (
+        <div className="grid gap-5">
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Institutional report summary">
+            <MetricCard icon={<FileText className="h-5 w-5" />} label="Total Feedback" value={feedbacks.length} iconBg="bg-soft-blue" iconColour="text-ocean" />
+            <MetricCard icon={<CheckCircle className="h-5 w-5" />} label="AI Analysed" value={analyses.filter((analysis) => analysis.status === 'completed').length} iconBg="bg-soft-teal" iconColour="text-teal-dark" />
+            <MetricCard icon={<Clock className="h-5 w-5" />} label="Active Actions" value={metrics.actionsInProgress} iconBg="bg-soft-amber" iconColour="text-warning" />
+            <MetricCard icon={<Flag className="h-5 w-5" />} label="Published Updates" value={updates.filter((update) => update.is_published).length} iconBg="bg-soft-red" iconColour="text-danger" />
+          </section>
+
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+            <section className="overflow-hidden rounded-xl border border-border bg-white">
+              <div className="border-b border-border px-5 py-[18px]"><h3 className="m-0 text-[19px] text-navy">Feedback by Responsible Area</h3></div>
+              <div className="grid gap-4 p-5">
+                {distributions.length > 0 ? distributions.map((distribution) => (
+                  <ProgressBar key={distribution.label} label={distribution.label} value={distribution.percent} valueText={`${distribution.percent}% · ${distribution.count}`} />
+                )) : <p className="py-8 text-center text-sm text-muted">No feedback data is available for reporting yet.</p>}
+              </div>
+            </section>
+
+            <section className="overflow-hidden rounded-xl border border-border bg-white">
+              <div className="border-b border-border px-5 py-[18px]"><h3 className="m-0 text-[19px] text-navy">Action Delivery</h3></div>
+              <div className="grid gap-4 p-5">
+                <ProgressBar label="Assigned or planned" value={actions.length ? Math.round((actions.filter((action) => action.status === 'assigned' || action.status === 'planned').length / actions.length) * 100) : 0} valueText={`${actions.filter((action) => action.status === 'assigned' || action.status === 'planned').length} actions`} />
+                <ProgressBar label="In progress" value={actions.length ? Math.round((actions.filter((action) => action.status === 'in_progress').length / actions.length) * 100) : 0} valueText={`${actions.filter((action) => action.status === 'in_progress').length} actions`} />
+                <ProgressBar label="Completed" value={actions.length ? Math.round((actions.filter((action) => action.status === 'completed').length / actions.length) * 100) : 0} valueText={`${actions.filter((action) => action.status === 'completed').length} actions`} />
+                <ProgressBar label="Overdue" value={actions.length ? Math.round((metrics.overdue / actions.length) * 100) : 0} valueText={`${metrics.overdue} actions`} />
+              </div>
+            </section>
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.2fr_0.8fr]">
+            <section className="overflow-hidden rounded-xl border border-border bg-white">
+              <div className="border-b border-border px-5 py-[18px]"><h3 className="m-0 text-[19px] text-navy">Six-Week Feedback Volume</h3></div>
+              <div className="p-5">
+                <div className="flex h-[220px] items-end gap-3 border-b border-[#CCD6D9] pb-3">
+                  {weeklyFeedback.map((week) => (
+                    <div key={week.label} className="flex h-full flex-1 flex-col items-center justify-end gap-2 text-[11px] text-muted">
+                      <span className="font-bold text-ocean">{week.count}</span>
+                      <span className="w-full max-w-16 rounded-t-md bg-gradient-to-t from-teal to-aqua" style={{ height: `${week.height}%` }} />
+                      <span>{week.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-3 text-xs text-muted">Only feedback visible to this administrator is included.</p>
+              </div>
+            </section>
+
+            <section className="overflow-hidden rounded-xl border border-border bg-white">
+              <div className="border-b border-border px-5 py-[18px]"><h3 className="m-0 text-[19px] text-navy">AI Analysis Coverage</h3></div>
+              <div className="grid gap-4 p-5">
+                {(['completed', 'processing', 'pending', 'failed'] as const).map((status) => {
+                  const count = analyses.filter((analysis) => analysis.status === status).length
+                  return <ProgressBar key={status} label={status.charAt(0).toUpperCase() + status.slice(1)} value={feedbacks.length ? Math.round((count / feedbacks.length) * 100) : 0} valueText={`${count} records`} />
+                })}
+                <p className="text-xs leading-relaxed text-muted">AI recommendations are suggestions and remain subject to authorised human review.</p>
+              </div>
+            </section>
+          </div>
+        </div>
       )}
 
       {/* ── Issue Detail Dialog ── */}

@@ -45,7 +45,7 @@ export function Topbar({
   const initials = avatarName ? getInitials(avatarName) : undefined
 
   return (
-    <header className="flex min-h-[88px] flex-wrap items-center justify-between gap-3 border-b border-border bg-white px-8 py-[18px] max-md:px-[18px]">
+    <header className="relative z-10 flex min-h-[88px] flex-wrap items-center justify-between gap-3 border-b border-border bg-gradient-to-r from-white via-white to-[#F3FAF9] px-8 py-[18px] shadow-[0_4px_18px_rgba(11,31,51,0.05)] max-md:px-[18px]">
       {/* Left: hamburger (mobile) + greeting */}
       <div className="flex items-center gap-3">
         <button
@@ -59,7 +59,7 @@ export function Topbar({
           <Menu className="h-6 w-6" aria-hidden="true" />
         </button>
         <div>
-          <h1 className="m-0 text-[27px] text-navy">{greeting}</h1>
+          <h1 className="m-0 text-[27px] font-bold tracking-[-0.02em] text-navy">{greeting}</h1>
           {subtitle && (
             <p className="mt-[5px] text-muted">{subtitle}</p>
           )}

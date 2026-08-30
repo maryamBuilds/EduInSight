@@ -60,6 +60,7 @@ export function StudentLayout() {
         : subtitle
 
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const openDrawer = useCallback(() => setDrawerOpen(true), [])
   const closeDrawer = useCallback(() => setDrawerOpen(false), [])
 
@@ -84,9 +85,9 @@ export function StudentLayout() {
   }, [drawerOpen])
 
   return (
-    <main className="grid min-h-screen grid-cols-1 md:grid-cols-[78px_1fr] lg:grid-cols-[255px_1fr]">
+    <main className={`grid min-h-screen grid-cols-1 transition-[grid-template-columns] duration-300 md:grid-cols-[78px_1fr] ${sidebarCollapsed ? 'lg:grid-cols-[78px_1fr]' : 'lg:grid-cols-[255px_1fr]'}`}>
       {/* Desktop / tablet sidebar */}
-      <Sidebar role="student" fullName={fullName} />
+      <Sidebar role="student" fullName={fullName} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed((value) => !value)} />
 
       {/* Mobile navigation drawer */}
       {drawerOpen && (
