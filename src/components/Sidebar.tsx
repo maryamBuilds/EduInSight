@@ -13,6 +13,9 @@ import {
   Flag,
   Building2,
   ClipboardCheck,
+  BarChart3,
+  PanelLeftClose,
+  PanelLeftOpen,
   LogOut,
   X,
   type LucideIcon,
@@ -47,6 +50,7 @@ const TEACHER_NAV: NavItem[] = [
   { label: 'Learning Insights', to: '/teacher/insights', icon: BookOpen },
   { label: 'Feedback', to: '/teacher/feedback', icon: FileText },
   { label: 'Actions', to: '/teacher/actions', icon: Target },
+  { label: 'Reports', to: '/teacher/reports', icon: BarChart3 },
 ]
 
 const ADMIN_NAV: NavItem[] = [
@@ -55,6 +59,7 @@ const ADMIN_NAV: NavItem[] = [
   { label: 'Departments', to: '/admin/departments', icon: Building2 },
   { label: 'Action Tracking', to: '/admin/actions', icon: ClipboardCheck },
   { label: 'Student Updates', to: '/admin/updates', icon: CircleDot },
+  { label: 'Reports', to: '/admin/reports', icon: BarChart3 },
 ]
 
 const NAV_MAP: Record<UserRole, NavItem[]> = {
@@ -96,6 +101,10 @@ interface SidebarProps {
    * Only used when mobile is true.
    */
   onClose?: () => void
+  /** Whether the desktop sidebar is collapsed to icon-only mode. */
+  collapsed?: boolean
+  /** Toggles desktop sidebar collapsed state. */
+  onToggleCollapse?: () => void
 }
 
 /**
@@ -106,7 +115,7 @@ interface SidebarProps {
  * - Tablet (768–1023px): 78px icon-only sidebar.
  * - Mobile (<768px): hidden; layouts render a drawer instance instead.
  */
-export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose }: SidebarProps) {
+export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose, collapsed = false, onToggleCollapse }: SidebarProps) {
   const { logout } = useAuth()
   const navigate = useNavigate()
   const navItems = NAV_MAP[role]
@@ -156,7 +165,7 @@ export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose }: 
               end={to === `/${role}`}
               onClick={onNavigate}
               className={({ isActive }) =>
-                `flex items-center gap-[13px] rounded-[9px] px-4 py-3.5 text-left text-[#E5EFF3] transition-colors hover:bg-white/[0.08] ${
+                `flex items-center gap-[13px] rounded-[9px] px-4 py-3.5 text-left font-semibold text-[#E5EFF3] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aqua hover:bg-white/[0.08] ${
                   isActive
                     ? '!text-white !bg-black/20 shadow-[inset_4px_0_0_#76C7C0]'
                     : ''
@@ -171,7 +180,7 @@ export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose }: 
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-[13px] rounded-[9px] px-4 py-3.5 text-left text-[#E5EFF3] transition-colors hover:bg-white/[0.08]"
+            className="flex w-full items-center gap-[13px] rounded-[9px] px-4 py-3.5 text-left font-semibold text-[#E5EFF3] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aqua hover:bg-white/[0.08]"
           >
             <LogOut className="h-[19px] w-[19px] shrink-0" aria-hidden="true" />
             Sign Out
@@ -181,11 +190,10 @@ export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose }: 
         {extra}
 
         {/* User profile */}
-        {role === 'student' ? (
         <NavLink
-          to="/student/profile"
+          to={`/${role}/profile`}
           onClick={onNavigate}
-          className="mt-auto flex items-center gap-[11px] rounded-lg border-t border-white/20 pt-[18px] transition hover:bg-white/[0.06]"
+          className="mt-auto flex items-center gap-[11px] rounded-xl border-t border-white/20 pt-[18px] transition hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aqua"
           aria-label="Open my profile"
         >
           <span
@@ -199,15 +207,6 @@ export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose }: 
             <small className="text-[#BDD1D9]">{ROLE_LABELS[role]}</small>
           </div>
         </NavLink>
-        ) : (
-          <div className="mt-auto flex items-center gap-[11px] border-t border-white/20 pt-[18px]">
-            <span className="grid h-[45px] w-[45px] shrink-0 place-items-center rounded-full bg-aqua font-bold text-navy" aria-hidden="true">{initials}</span>
-            <div className="grid gap-[3px]">
-              <strong className="text-sm">{fullName}</strong>
-              <small className="text-[#BDD1D9]">{ROLE_LABELS[role]}</small>
-            </div>
-          </div>
-        )}
       </aside>
     )
   }
@@ -215,7 +214,7 @@ export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose }: 
   /* ── Desktop / tablet sidebar (hidden on mobile) ── */
   return (
     <aside
-      className="sticky top-0 hidden h-screen min-h-screen flex-col px-[18px] py-7 text-white md:flex lg:w-[255px]"
+      className={`sticky top-0 hidden h-screen min-h-screen flex-col py-7 text-white shadow-[8px_0_28px_rgba(11,31,51,0.12)] transition-[width,padding] duration-300 md:flex ${collapsed ? 'px-3 lg:w-[78px]' : 'px-[18px] lg:w-[255px]'}`}
       style={{
         background: `
           radial-gradient(circle at 10% 8%, rgba(118,199,192,0.15), transparent 28%),
@@ -224,8 +223,19 @@ export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose }: 
       }}
     >
       {/* Logo */}
-      <div className="mx-3 mb-9">
-        <Logo className="text-white" />
+      <div className={`mb-14 flex items-center ${collapsed ? 'justify-center' : 'mx-3'}`}>
+        <Logo className="text-white" nameClassName={collapsed ? 'hidden' : 'max-lg:hidden'} />
+        {onToggleCollapse && (
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            className={`absolute top-[82px] hidden h-9 w-9 shrink-0 place-items-center rounded-lg border border-white/15 bg-white/[0.07] text-[#DCEAED] transition hover:border-aqua/50 hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aqua lg:grid ${collapsed ? 'left-1/2 -translate-x-1/2' : 'right-4'}`}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {collapsed ? <PanelLeftOpen className="h-[18px] w-[18px]" aria-hidden="true" /> : <PanelLeftClose className="h-[18px] w-[18px]" aria-hidden="true" />}
+          </button>
+        )}
       </div>
 
       {/* Navigation */}
@@ -239,36 +249,37 @@ export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose }: 
             to={to}
             end={to === `/${role}`}
             onClick={onNavigate}
+            title={collapsed ? label : undefined}
             className={({ isActive }) =>
-              `flex items-center gap-[13px] rounded-[9px] px-4 py-3.5 text-left text-[#E5EFF3] transition-colors hover:bg-white/[0.08] ${
+              `flex items-center gap-[13px] rounded-[9px] px-4 py-3.5 text-left font-semibold text-[#E5EFF3] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aqua hover:bg-white/[0.08] ${
                 isActive
-                  ? '!text-white !bg-black/20 shadow-[inset_4px_0_0_#76C7C0]'
+                  ? '!bg-white/[0.11] !text-white shadow-[inset_4px_0_0_#76C7C0,0_8px_20px_rgba(0,0,0,0.12)]'
                   : ''
               }`
             }
           >
             <Icon className="h-[19px] w-[19px] shrink-0" aria-hidden="true" />
-            <span className="max-lg:hidden">{label}</span>
+            <span className={collapsed ? 'hidden' : 'max-lg:hidden'}>{label}</span>
           </NavLink>
         ))}
 
         <button
           type="button"
           onClick={handleLogout}
-          className="flex w-full items-center gap-[13px] rounded-[9px] px-4 py-3.5 text-left text-[#E5EFF3] transition-colors hover:bg-white/[0.08]"
+          title={collapsed ? 'Sign Out' : undefined}
+          className="flex w-full items-center gap-[13px] rounded-[9px] px-4 py-3.5 text-left font-semibold text-[#E5EFF3] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aqua hover:bg-white/[0.08]"
         >
           <LogOut className="h-[19px] w-[19px] shrink-0" aria-hidden="true" />
-          <span className="max-lg:hidden">Sign Out</span>
+          <span className={collapsed ? 'hidden' : 'max-lg:hidden'}>Sign Out</span>
         </button>
       </nav>
 
       {extra}
 
-      {/* User profile */}
-      {role === 'student' ? (
       <NavLink
-        to="/student/profile"
-        className="mt-auto flex items-center gap-[11px] rounded-lg border-t border-white/20 pt-[18px] transition hover:bg-white/[0.06]"
+        to={`/${role}/profile`}
+        title={collapsed ? `${fullName} · ${ROLE_LABELS[role]}` : undefined}
+        className={`mt-auto flex items-center gap-[11px] rounded-xl border-t border-white/20 pt-[18px] transition hover:bg-white/[0.06] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aqua ${collapsed ? 'justify-center' : ''}`}
         aria-label="Open my profile"
       >
         <span
@@ -277,20 +288,11 @@ export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose }: 
         >
           {initials}
         </span>
-        <div className="grid gap-[3px] max-lg:hidden">
+        <div className={`gap-[3px] ${collapsed ? 'hidden' : 'grid max-lg:hidden'}`}>
           <strong className="text-sm">{fullName}</strong>
           <small className="text-[#BDD1D9]">{ROLE_LABELS[role]}</small>
         </div>
       </NavLink>
-      ) : (
-        <div className="mt-auto flex items-center gap-[11px] border-t border-white/20 pt-[18px]">
-          <span className="grid h-[45px] w-[45px] shrink-0 place-items-center rounded-full bg-aqua font-bold text-navy" aria-hidden="true">{initials}</span>
-          <div className="grid gap-[3px] max-lg:hidden">
-            <strong className="text-sm">{fullName}</strong>
-            <small className="text-[#BDD1D9]">{ROLE_LABELS[role]}</small>
-          </div>
-        </div>
-      )}
     </aside>
   )
 }

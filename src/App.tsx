@@ -235,7 +235,8 @@ export default function App() {
             <Route path="/teacher/insights" element={<TeacherDashboard view="insights" />} />
             <Route path="/teacher/feedback" element={<TeacherDashboard view="feedback" />} />
             <Route path="/teacher/actions" element={<TeacherDashboard view="actions" />} />
-            <Route path="/teacher/reports" element={<Navigate to="/teacher" replace />} />
+            <Route path="/teacher/reports" element={<TeacherDashboard view="reports" />} />
+            <Route path="/teacher/profile" element={<StudentProfile />} />
           </Route>
         </Route>
       </Route>
@@ -249,7 +250,8 @@ export default function App() {
             <Route path="/admin/departments" element={<AdminDashboard view="departments" />} />
             <Route path="/admin/actions" element={<AdminDashboard view="actions" />} />
             <Route path="/admin/updates" element={<AdminDashboard view="updates" />} />
-            <Route path="/admin/reports" element={<Navigate to="/admin" replace />} />
+            <Route path="/admin/reports" element={<AdminDashboard view="reports" />} />
+            <Route path="/admin/profile" element={<StudentProfile />} />
           </Route>
         </Route>
       </Route>

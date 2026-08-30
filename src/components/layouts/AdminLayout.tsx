@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import { Sidebar } from '../Sidebar'
 import { Topbar } from '../Topbar'
 import { useAuth } from '@/context/AuthContext'
@@ -16,10 +16,12 @@ import { getTimeGreeting } from '@/lib/utils'
  */
 export function AdminLayout() {
   const { profile } = useAuth()
+  const location = useLocation()
   const fullName = profile?.full_name ?? 'Administrator'
-  const subtitle = 'Institutional feedback intelligence'
+  const isProfilePage = location.pathname === '/admin/profile'
 
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const openDrawer = useCallback(() => setDrawerOpen(true), [])
   const closeDrawer = useCallback(() => setDrawerOpen(false), [])
 
@@ -44,9 +46,9 @@ export function AdminLayout() {
   }, [drawerOpen])
 
   return (
-    <main className="grid min-h-screen grid-cols-1 md:grid-cols-[78px_1fr] lg:grid-cols-[260px_1fr]">
+    <main className={`grid min-h-screen grid-cols-1 transition-[grid-template-columns] duration-300 md:grid-cols-[78px_1fr] ${sidebarCollapsed ? 'lg:grid-cols-[78px_1fr]' : 'lg:grid-cols-[255px_1fr]'}`}>
       {/* Desktop / tablet sidebar */}
-      <Sidebar role="admin" fullName={fullName} />
+      <Sidebar role="admin" fullName={fullName} collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed((value) => !value)} />
 
       {/* Mobile navigation drawer */}
       {drawerOpen && (
@@ -68,9 +70,10 @@ export function AdminLayout() {
 
       <section className="min-w-0">
         <Topbar
-          greeting={`${getTimeGreeting()}, ${fullName}`}
-          subtitle={subtitle}
+          greeting={isProfilePage ? 'My Profile' : `${getTimeGreeting()}, ${fullName}`}
+          subtitle={isProfilePage ? 'Review your administrator account and institutional details.' : 'Institutional feedback intelligence'}
           avatarName={fullName}
+          avatarHref="/admin/profile"
           onMenuClick={openDrawer}
           menuExpanded={drawerOpen}
           menuControlsId="mobile-nav-admin"

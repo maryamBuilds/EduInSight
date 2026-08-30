@@ -10,9 +10,11 @@ interface LogoProps {
   showName?: boolean
   /** Additional CSS class for the wrapper. */
   className?: string
+  /** Additional CSS class for the wordmark only. */
+  nameClassName?: string
 }
 
-export function Logo({ showName = true, className = '' }: LogoProps) {
+export function Logo({ showName = true, className = '', nameClassName = '' }: LogoProps) {
   return (
     <div className={`flex items-center gap-[11px] text-[23px] font-bold ${className}`}>
       {/* Graph-bar logo mark */}
@@ -27,7 +29,7 @@ export function Logo({ showName = true, className = '' }: LogoProps) {
         <span className="h-[24px] w-[5px] bg-aqua" />
       </div>
 
-      {showName && <strong className="text-inherit">EduInSight</strong>}
+      {showName && <strong className={`text-inherit ${nameClassName}`}>EduInSight</strong>}
     </div>
   )
 }

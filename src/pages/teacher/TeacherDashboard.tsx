@@ -41,7 +41,7 @@ import { useAuth } from '@/context/AuthContext'
 // ---------------------------------------------------------------------------
 
 type TeacherFilter = 'all' | 'high' | 'medium'
-export type TeacherDashboardView = 'overview' | 'insights' | 'feedback' | 'actions'
+export type TeacherDashboardView = 'overview' | 'insights' | 'feedback' | 'actions' | 'reports'
 
 const VIEW_COPY: Record<TeacherDashboardView, { title: string; description: string }> = {
   overview: {
@@ -59,6 +59,10 @@ const VIEW_COPY: Record<TeacherDashboardView, { title: string; description: stri
   actions: {
     title: 'Teaching Actions',
     description: 'Track the improvements created in response to student feedback.',
+  },
+  reports: {
+    title: 'Teaching Reports',
+    description: 'Review feedback coverage, analysis progress, and action outcomes for your assigned sections.',
   },
 }
 
@@ -415,6 +419,13 @@ export default function TeacherDashboard({
     inProgress: actions.filter((action) => action.status === 'in_progress').length,
     completed: actions.filter((action) => action.status === 'completed').length,
   }
+  const completedAnalyses = analyses.filter((analysis) => analysis.status === 'completed').length
+  const pendingAnalyses = analyses.filter(
+    (analysis) => analysis.status === 'pending' || analysis.status === 'processing',
+  ).length
+  const reviewRequiredAnalyses = analyses.filter(
+    (analysis) => analysis.requires_human_review,
+  ).length
 
   return (
     <>
@@ -720,6 +731,86 @@ export default function TeacherDashboard({
         </section>
         )}
       </div>
+
+      {view === 'reports' && (
+        <div className="grid gap-5">
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Teaching report summary">
+            <MetricCard icon={<FileText className="h-5 w-5" />} label="Visible Feedback" value={feedbacks.length} iconBg="bg-soft-blue" iconColour="text-ocean" />
+            <MetricCard icon={<CheckCircle className="h-5 w-5" />} label="AI Analysed" value={completedAnalyses} iconBg="bg-soft-teal" iconColour="text-teal-dark" />
+            <MetricCard icon={<AlertTriangle className="h-5 w-5" />} label="Human Review" value={reviewRequiredAnalyses} iconBg="bg-soft-amber" iconColour="text-warning" />
+            <MetricCard icon={<Flag className="h-5 w-5" />} label="Active Actions" value={actionCounts.planned + actionCounts.inProgress} iconBg="bg-soft-red" iconColour="text-danger" />
+          </section>
+
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
+            <Panel title="Feedback by Area">
+              {distributions.length > 0 ? (
+                <div className="grid gap-4">
+                  {distributions.map((distribution) => (
+                    <ProgressBar
+                      key={distribution.label}
+                      label={distribution.label}
+                      value={distribution.percent}
+                      valueText={`${distribution.percent}% · ${distribution.count}`}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="py-8 text-center text-sm text-muted">No feedback data is available for reporting yet.</p>
+              )}
+            </Panel>
+
+            <Panel title="Analysis Coverage">
+              <div className="grid gap-4">
+                <ProgressBar
+                  label="Completed"
+                  value={feedbacks.length ? Math.round((completedAnalyses / feedbacks.length) * 100) : 0}
+                  valueText={`${completedAnalyses} records`}
+                />
+                <ProgressBar
+                  label="Pending or processing"
+                  value={feedbacks.length ? Math.round((pendingAnalyses / feedbacks.length) * 100) : 0}
+                  valueText={`${pendingAnalyses} records`}
+                />
+                <ProgressBar
+                  label="Human review required"
+                  value={feedbacks.length ? Math.round((reviewRequiredAnalyses / feedbacks.length) * 100) : 0}
+                  valueText={`${reviewRequiredAnalyses} records`}
+                />
+              </div>
+              <p className="mt-5 text-xs leading-relaxed text-muted">
+                AI-generated results remain suggestions. Teachers should review the supporting evidence before creating an action.
+              </p>
+            </Panel>
+          </div>
+
+          <section className="overflow-hidden rounded-xl border border-border bg-white">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-5 py-[18px]">
+              <h3 className="m-0 text-[19px] text-navy">Recent Feedback Activity</h3>
+              <span className="text-sm font-semibold text-muted">Last 5 visible submissions</span>
+            </div>
+            {feedbacks.length > 0 ? (
+              <div className="divide-y divide-border">
+                {feedbacks.slice(0, 5).map((feedback) => {
+                  const analysis = analysisById.get(feedback.id)
+                  return (
+                    <article key={feedback.id} className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <strong className="text-sm text-navy">{feedback.feedback_area || feedback.university_service || 'General feedback'}</strong>
+                        <p className="mt-1 text-xs text-muted">{feedback.reference_number} · {new Date(feedback.submitted_at).toLocaleDateString()}</p>
+                      </div>
+                      <span className={`w-fit rounded-full px-2.5 py-1 text-xs font-semibold ${analysis?.status === 'completed' ? 'bg-soft-teal text-success' : 'bg-soft-amber text-warning'}`}>
+                        {analysis ? analysisStatusLabel(analysis) : 'Analysis not started'}
+                      </span>
+                    </article>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className="p-8 text-center text-sm text-muted">No feedback activity is available for your assigned sections yet.</p>
+            )}
+          </section>
+        </div>
+      )}
 
       {/* ── Issue Detail Dialog ── */}
       <OverlayDialog
