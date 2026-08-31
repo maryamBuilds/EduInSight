@@ -403,6 +403,14 @@ Deno.serve(async (req: Request) => {
       if (feedbackError) safeLog(feedbackId, 'feedback-status', feedbackError.message)
     }
 
+    // Clustering is a separate, idempotent database step. A clustering error
+    // is logged safely but never changes or deletes the completed analysis.
+    const { error: clusteringError } = await admin.rpc(
+      'cluster_completed_feedback_analysis',
+      { p_feedback_id: feedbackId },
+    )
+    if (clusteringError) safeLog(feedbackId, 'clustering', clusteringError.message)
+
     return jsonResponse({ feedbackId, status: 'completed' }, 200, headers)
   } catch (error) {
     safeLog(
