@@ -82,6 +82,10 @@ export function buildProviderRequest(
     model: config.model,
     temperature: 0.1,
     response_format: { type: 'json_object' },
+    // Groq-hosted Qwen reasoning can consume the entire output allowance
+    // before producing the required JSON, which Groq reports as
+    // json_validate_failed. Classification does not need chain-of-thought.
+    ...(config.provider === 'groq' ? { reasoning_effort: 'none' } : {}),
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       { role: 'user', content: JSON.stringify(buildUserPayload(context)) },
@@ -110,6 +114,7 @@ export async function callProvider(
   config: ProviderConfig,
   context: ProviderRequestContext,
   fetchImpl: typeof fetch = fetch,
+  onDiagnostic: (code: string) => void = () => undefined,
 ): Promise<ProviderCallOutcome> {
   const request = buildProviderRequest(config, context)
   const controller = new AbortController()
@@ -122,27 +127,33 @@ export async function callProvider(
       signal: controller.signal,
     })
     if (!response.ok) {
+      onDiagnostic(`http_${response.status}`)
       return { ok: false, error: 'ai_provider_error' }
     }
     let parsed: unknown
     try {
       parsed = await response.json()
     } catch {
+      onDiagnostic('invalid_response_json')
       return { ok: false, error: 'ai_provider_error' }
     }
     const content = extractMessageContent(parsed)
     if (content === undefined) {
+      onDiagnostic('missing_message_content')
       return { ok: false, error: 'ai_invalid_response' }
     }
     const json = parseJsonContent(content)
     if (json === undefined) {
+      onDiagnostic('invalid_message_json')
       return { ok: false, error: 'ai_invalid_response' }
     }
     return { ok: true, content: json }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
+      onDiagnostic('request_timeout')
       return { ok: false, error: 'ai_timeout' }
     }
+    onDiagnostic(error instanceof Error ? `network_${error.name}` : 'network_unknown')
     return { ok: false, error: 'ai_provider_error' }
   } finally {
     clearTimeout(timer)
