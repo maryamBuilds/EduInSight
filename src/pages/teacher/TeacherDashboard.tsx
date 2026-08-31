@@ -97,6 +97,7 @@ export default function TeacherDashboard({
   const [priorityFilter, setPriorityFilter] = useState<TeacherFilter>('all')
   const [search, setSearch] = useState('')
   const [selectedCluster, setSelectedCluster] = useState<TeacherClusterRow | null>(null)
+  const [selectedFeedback, setSelectedFeedback] = useState<TeacherFeedbackRow | null>(null)
   const [acknowledged, setAcknowledged] = useState(false)
   const [actionFormOpen, setActionFormOpen] = useState(false)
   const [toastOpen, setToastOpen] = useState(false)
@@ -228,6 +229,10 @@ export default function TeacherDashboard({
   const analysisById = useMemo(() => {
     return new Map(analyses.map((item) => [item.feedback_id, item]))
   }, [analyses])
+
+  const selectedFeedbackAnalysis = selectedFeedback
+    ? analysisById.get(selectedFeedback.id)
+    : undefined
 
   // ── Cluster evidence (feedback matching the selected cluster's topic) ──
   const clusterEvidence = useMemo(() => {
@@ -583,7 +588,13 @@ export default function TeacherDashboard({
                 feedbacks.map((feedback) => {
                   const analysis = analysisById.get(feedback.id)
                   return (
-                  <article key={feedback.id} className="p-5">
+                  <button
+                    key={feedback.id}
+                    type="button"
+                    onClick={() => setSelectedFeedback(feedback)}
+                    className="block w-full p-5 text-left transition-colors hover:bg-[#F7FAF9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-teal"
+                    aria-label={`View feedback details for ${feedback.reference_number}`}
+                  >
                     <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-2">
                         <strong className="text-ocean">
@@ -652,8 +663,11 @@ export default function TeacherDashboard({
                         )}
                       </div>
                     )}
-                    <p className="mt-3 text-xs text-muted">Reference: {feedback.reference_number}</p>
-                  </article>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-muted">
+                      <span>Reference: {feedback.reference_number}</span>
+                      <span className="font-semibold text-teal-dark">View details →</span>
+                    </div>
+                  </button>
                   )
                 })
               ) : (
@@ -811,6 +825,104 @@ export default function TeacherDashboard({
           </section>
         </div>
       )}
+
+      {/* ── Feedback Detail Dialog ── */}
+      <OverlayDialog
+        open={!!selectedFeedback}
+        onClose={() => setSelectedFeedback(null)}
+        title={selectedFeedback?.feedback_area || selectedFeedback?.university_service || 'Feedback details'}
+        subtitle={selectedFeedback ? `Anonymised feedback · ${selectedFeedback.reference_number}` : undefined}
+        maxWidth="min(760px, 100%)"
+        footer={
+          <button
+            type="button"
+            onClick={() => setSelectedFeedback(null)}
+            className="rounded-lg bg-teal px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-teal-dark"
+          >
+            Close
+          </button>
+        }
+      >
+        {selectedFeedback && (
+          <div className="space-y-5">
+            <div>
+              <h3 className="mb-2 text-base text-ocean">Original feedback</h3>
+              <div className="rounded-lg border-l-4 border-aqua bg-[#F7FAF9] p-4 leading-relaxed text-text">
+                {selectedFeedback.original_text}
+              </div>
+              <p className="mt-2 text-xs text-muted">
+                Student identity is protected. Original wording is preserved.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+              <div className="rounded-lg bg-soft-blue p-3">
+                <small className="text-muted">Submitted</small>
+                <strong className="mt-1 block">
+                  {new Date(selectedFeedback.submitted_at).toLocaleDateString()}
+                </strong>
+              </div>
+              <div className="rounded-lg bg-soft-blue p-3">
+                <small className="text-muted">Study stage</small>
+                <strong className="mt-1 block">{selectedFeedback.study_stage}</strong>
+              </div>
+              <div className="rounded-lg bg-soft-blue p-3">
+                <small className="text-muted">Status</small>
+                <strong className="mt-1 block capitalize">{selectedFeedback.status.replace('_', ' ')}</strong>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="mb-2 text-base text-ocean">Feedback type</h3>
+              <div className="flex flex-wrap gap-2">
+                {selectedFeedback.feedback_types.map((type) => (
+                  <span key={type} className="rounded-full bg-soft-teal px-2.5 py-1 text-xs font-semibold text-teal-dark">
+                    {type}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {selectedFeedbackAnalysis && (
+              <div className="rounded-lg border border-border bg-[#F7FAF9] p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h3 className="mr-1 text-base text-ocean">AI analysis</h3>
+                  {selectedFeedbackAnalysis.detected_language && (
+                    <span className="rounded-full bg-soft-blue px-2 py-1 text-xs font-semibold text-ocean">
+                      {LANGUAGE_LABELS[selectedFeedbackAnalysis.detected_language]}
+                    </span>
+                  )}
+                  {selectedFeedbackAnalysis.sentiment && (
+                    <span className="rounded-full bg-soft-teal px-2 py-1 text-xs font-semibold text-teal-dark">
+                      {SENTIMENT_LABELS[selectedFeedbackAnalysis.sentiment]}
+                    </span>
+                  )}
+                  {selectedFeedbackAnalysis.priority && (
+                    <PriorityBadge level={selectedFeedbackAnalysis.priority} />
+                  )}
+                </div>
+                {selectedFeedbackAnalysis.english_summary && (
+                  <p className="mt-3 leading-relaxed text-text">
+                    {selectedFeedbackAnalysis.english_summary}
+                  </p>
+                )}
+                {selectedFeedbackAnalysis.key_topics && selectedFeedbackAnalysis.key_topics.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {selectedFeedbackAnalysis.key_topics.map((topic) => (
+                      <span key={topic} className="rounded-full bg-soft-teal px-2 py-0.5 text-[11px] font-semibold text-teal-dark">
+                        {topic}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <p className="mt-3 text-xs font-semibold text-muted">
+                  AI-generated · human review required
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </OverlayDialog>
 
       {/* ── Issue Detail Dialog ── */}
       <OverlayDialog
