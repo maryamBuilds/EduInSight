@@ -339,7 +339,7 @@ Deno.serve(async (req: Request) => {
       feedbackText: feedback.original_text,
       feedbackArea: feedback.feedback_area,
       universityService: feedback.university_service,
-    })
+    }, undefined, (diagnosticCode) => safeLog(feedbackId, 'provider', diagnosticCode))
 
     if (!outcome.ok) {
       await markAnalysisFailed(admin, feedbackId, attempts, outcome.error)

@@ -76,6 +76,11 @@ describe('buildProviderRequest', () => {
     expect(body.messages).toHaveLength(2)
   })
 
+  it('disables reasoning for Groq JSON classification', () => {
+    const body = JSON.parse(buildProviderRequest({ ...CONFIG, provider: 'groq' }, CONTEXT).body)
+    expect(body.reasoning_effort).toBe('none')
+  })
+
   it('includes prompt-injection resistance in the system prompt', () => {
     const body = JSON.parse(buildProviderRequest(CONFIG, CONTEXT).body)
     const system = body.messages[0].content as string
@@ -144,12 +149,15 @@ describe('callProvider', () => {
   })
 
   it('classifies provider HTTP failures as ai_provider_error', async () => {
+    const diagnostics: string[] = []
     const serverError = await callProvider(
       CONFIG,
       CONTEXT,
       async () => providerResponse('error', 500),
+      (code) => diagnostics.push(code),
     )
     expect(serverError).toEqual({ ok: false, error: 'ai_provider_error' })
+    expect(diagnostics).toEqual(['http_500'])
 
     const unauthorized = await callProvider(
       CONFIG,
