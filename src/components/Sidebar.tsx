@@ -165,7 +165,7 @@ export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose, co
               end={to === `/${role}`}
               onClick={onNavigate}
               className={({ isActive }) =>
-                `flex items-center gap-[13px] rounded-[9px] px-4 py-3.5 text-left font-semibold text-[#E5EFF3] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aqua hover:bg-white/[0.08] ${
+                `font-heading flex items-center gap-[13px] rounded-[9px] px-4 py-3.5 text-left font-semibold text-[#E5EFF3] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aqua hover:bg-white/[0.08] ${
                   isActive
                     ? '!text-white !bg-black/20 shadow-[inset_4px_0_0_#76C7C0]'
                     : ''
@@ -180,7 +180,7 @@ export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose, co
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-[13px] rounded-[9px] px-4 py-3.5 text-left font-semibold text-[#E5EFF3] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aqua hover:bg-white/[0.08]"
+            className="font-heading flex w-full items-center gap-[13px] rounded-[9px] px-4 py-3.5 text-left font-semibold text-[#E5EFF3] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aqua hover:bg-white/[0.08]"
           >
             <LogOut className="h-[19px] w-[19px] shrink-0" aria-hidden="true" />
             Sign Out
@@ -251,7 +251,7 @@ export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose, co
             onClick={onNavigate}
             title={collapsed ? label : undefined}
             className={({ isActive }) =>
-              `flex items-center gap-[13px] rounded-[9px] px-4 py-3.5 text-left font-semibold text-[#E5EFF3] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aqua hover:bg-white/[0.08] ${
+              `font-heading flex items-center gap-[13px] rounded-[9px] px-4 py-3.5 text-left font-semibold text-[#E5EFF3] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aqua hover:bg-white/[0.08] ${
                 isActive
                   ? '!bg-white/[0.11] !text-white shadow-[inset_4px_0_0_#76C7C0,0_8px_20px_rgba(0,0,0,0.12)]'
                   : ''
@@ -267,7 +267,7 @@ export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose, co
           type="button"
           onClick={handleLogout}
           title={collapsed ? 'Sign Out' : undefined}
-          className="flex w-full items-center gap-[13px] rounded-[9px] px-4 py-3.5 text-left font-semibold text-[#E5EFF3] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aqua hover:bg-white/[0.08]"
+          className="font-heading flex w-full items-center gap-[13px] rounded-[9px] px-4 py-3.5 text-left font-semibold text-[#E5EFF3] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aqua hover:bg-white/[0.08]"
         >
           <LogOut className="h-[19px] w-[19px] shrink-0" aria-hidden="true" />
           <span className={collapsed ? 'hidden' : 'max-lg:hidden'}>Sign Out</span>

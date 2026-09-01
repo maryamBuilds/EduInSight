@@ -63,7 +63,7 @@ export default function StudentProfile() {
       ? 'Teacher'
       : 'Administrator'
   const roleDescription = profile.role === 'student'
-    ? 'Your verified educational details used across EduInSight.'
+    ? 'Your verified educational details used across IlmVox AI.'
     : profile.role === 'teacher'
       ? 'Your verified teaching account used to review authorised course feedback.'
       : 'Your verified administrative account used for institutional feedback oversight.'
@@ -107,7 +107,7 @@ export default function StudentProfile() {
             <div>
               <h3 className="font-bold text-navy">Active {roleLabel.toLowerCase()} profile</h3>
               <p className="mt-1 text-sm leading-6 text-muted">
-                These verified details identify your account and determine which EduInSight information you can access.
+                These verified details identify your account and determine which IlmVox AI information you can access.
               </p>
             </div>
           </div>

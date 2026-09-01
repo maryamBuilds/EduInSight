@@ -1,7 +1,7 @@
-# EduInSight Project Rules
+# IlmVox AI Project Rules
 
 ## Visual Identity
-- Preserve the EduInSight name, graph logo and navy-teal-ivory visual design.
+- Preserve the IlmVox AI name, graph logo and navy-teal-ivory visual design.
 - Treat all existing wireframes as approved visual references.
 - Preserve the existing wireframe files until replacement pages are tested.
 

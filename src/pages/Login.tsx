@@ -36,7 +36,7 @@ export default function Login() {
         Welcome back
       </h2>
       <p className="mb-8 text-center text-muted">
-        Sign in to continue to EduInSight
+        Sign in to continue to IlmVox AI
       </p>
 
       {(error || authError) && (

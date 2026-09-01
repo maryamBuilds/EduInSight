@@ -211,7 +211,7 @@ export default function StudentDashboard() {
             <ol className="mt-1 space-y-0">
               {[
                 ['Submitted', 'Your feedback was submitted successfully.'],
-                ['Analysed', 'EduInSight identified the reported issue.'],
+                ['Analysed', 'IlmVox AI identified the reported issue.'],
                 ['Under Review', 'The relevant team is reviewing the evidence.'],
                 ['Action Update', 'You will be notified when action is taken.'],
               ].map(([label, description], index) => {

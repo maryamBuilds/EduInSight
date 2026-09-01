@@ -1,10 +1,10 @@
-# EduInSight — Screen Plan
+# IlmVox AI — Screen Plan
 
 ## 1. Shared Screens
 
 ### 1.1 Login Page
 
-- EduInSight logo and purpose
+- IlmVox AI logo and purpose
 - University email
 - Password
 - Remember me
@@ -12,7 +12,7 @@
 - Sign-in button
 - Student registration link
 
-The user will not select a role. EduInSight will identify the role after login.
+The user will not select a role. IlmVox AI will identify the role after login.
 
 ### 1.2 Forgot Password Page
 

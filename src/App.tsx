@@ -43,7 +43,7 @@ function AuthLoader() {
     <div className="flex min-h-screen items-center justify-center bg-ivory">
       <div className="flex flex-col items-center gap-4 text-navy">
         <Loader2 className="h-8 w-8 animate-spin" aria-hidden="true" />
-        <p className="text-sm text-muted">Loading EduInSight…</p>
+        <p className="text-sm text-muted">Loading IlmVox AI…</p>
       </div>
     </div>
   )
@@ -176,7 +176,7 @@ function UnauthorizedPage() {
 function Placeholder({ label }: { label: string }) {
   return (
     <div className="rounded-2xl border border-border bg-white px-8 py-6 text-center shadow-sm">
-      <h2 className="mb-2 text-2xl font-bold text-navy">EduInSight</h2>
+      <h2 className="mb-2 text-2xl font-bold text-navy">IlmVox AI</h2>
       <p className="text-muted">{label}</p>
     </div>
   )

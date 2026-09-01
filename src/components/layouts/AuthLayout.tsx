@@ -32,7 +32,7 @@ export function AuthLayout() {
             <span className="block text-[#18D0C2]">Visible action.</span>
           </h1>
           <p className="text-[18px] leading-[1.6] text-[#D6E3E8]">
-            EduInSight converts multilingual student feedback into
+            IlmVox AI converts multilingual student feedback into
             evidence-backed academic and institutional improvements.
           </p>
 

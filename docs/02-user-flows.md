@@ -1,8 +1,8 @@
-# EduInSight — User Flows
+# IlmVox AI — User Flows
 
 ## 1. Shared Login Flow
 
-1. The user opens EduInSight.
+1. The user opens IlmVox AI.
 2. The user enters their university email and password.
 3. The system verifies the account and role.
 4. The user is automatically directed to the correct dashboard.
@@ -76,7 +76,7 @@ Submitted → Analysed → Under Review → Action Update
 ## 5. Main Feedback-to-Action Flow
 
 Student submits feedback  
-→ EduInSight identifies the problem  
+→ IlmVox AI identifies the problem  
 → Similar feedback is grouped  
 → Evidence and priority are displayed  
 → Teacher or administrator reviews it  
@@ -90,4 +90,4 @@ Student submits feedback
 2. The feedback is excluded from ordinary dashboard analytics.
 3. It is routed to a restricted authorised channel.
 4. An authorised university representative reviews it.
-5. EduInSight does not investigate or decide the case automatically.
+5. IlmVox AI does not investigate or decide the case automatically.

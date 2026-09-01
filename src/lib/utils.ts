@@ -1,5 +1,5 @@
 /**
- * EduInSight — shared utility functions
+ * IlmVox AI — shared utility functions
  */
 
 /**

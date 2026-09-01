@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /*
-  EduInSight — approved visual identity palette
+  IlmVox AI — approved visual identity palette
   Navy:   #0B1F33
   Ocean:  #12344D
   Teal:   #2A9D8F
@@ -32,6 +32,10 @@
   --color-warning: #D98B28;
 }
 
+:root {
+  --font-heading: "Poppins", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
 /* Base styles */
 body {
   margin: 0;
@@ -45,4 +49,9 @@ body {
 
 *, *::before, *::after {
   box-sizing: border-box;
+}
+
+h1, h2, h3,
+.font-heading {
+  font-family: var(--font-heading);
 }

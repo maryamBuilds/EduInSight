@@ -1,4 +1,4 @@
-# EduInSight — Technical Architecture
+# IlmVox AI — Technical Architecture
 
 ## 1. Technology Stack
 
@@ -31,7 +31,7 @@ An existing multilingual AI API will be used for:
 - Suggested problem category
 - Suggested responsible department
 
-EduInSight will not train its own AI model during the five-day hackathon.
+IlmVox AI will not train its own AI model during the five-day hackathon.
 
 ## 2. User Roles
 

@@ -1,12 +1,12 @@
-# EduInSight — Project Scope
+# IlmVox AI — Project Scope
 
 ## 1. Project Overview
 
-EduInSight is a multilingual student-feedback intelligence and institutional action-tracking platform designed initially for Pakistani universities.
+IlmVox AI is a multilingual student-feedback intelligence and institutional action-tracking platform designed initially for Pakistani universities.
 
 The system will enable students to provide feedback naturally in English, Urdu, Roman Urdu or mixed Urdu–English. It will convert this feedback into structured, evidence-backed insights that help teachers and university administrators identify real academic and institutional problems, determine where those problems occur and take appropriate action.
 
-EduInSight is not simply a feedback form, satisfaction survey or sentiment-analysis dashboard. Its central purpose is to close the gap between student feedback and visible university action.
+IlmVox AI is not simply a feedback form, satisfaction survey or sentiment-analysis dashboard. Its central purpose is to close the gap between student feedback and visible university action.
 
 ## 2. Problem Statement
 
@@ -26,7 +26,7 @@ Pakistani students may communicate through English, Urdu, Roman Urdu and mixed U
 
 ## 3. Proposed Solution
 
-EduInSight will provide a structured feedback-to-action process:
+IlmVox AI will provide a structured feedback-to-action process:
 
 1. A student submits multilingual feedback.
 2. The system preserves the original comment.
@@ -43,7 +43,7 @@ EduInSight will provide a structured feedback-to-action process:
 
 ## 4. Target Users
 
-EduInSight will initially support three user roles:
+IlmVox AI will initially support three user roles:
 
 ### 4.1 Student
 
@@ -88,7 +88,7 @@ The main prototype demonstration will show:
 
 1. A student logs in.
 2. The student submits mixed Urdu–English feedback.
-3. EduInSight identifies the relevant course, topic and learning problem.
+3. IlmVox AI identifies the relevant course, topic and learning problem.
 4. The system separates multiple issues where necessary.
 5. Equivalent feedback across languages is grouped.
 6. A teacher reviews the learning bottleneck and supporting evidence.
@@ -153,7 +153,7 @@ AI-generated interpretations and recommendations must be clearly labelled as req
 
 ## 10. Ethical and Safety Boundaries
 
-EduInSight must:
+IlmVox AI must:
 
 - Protect student identities
 - Restrict access according to role
@@ -186,7 +186,7 @@ The initial MVP will not include:
 The MVP will be considered successful if it demonstrates that:
 
 - A student can submit multilingual feedback.
-- EduInSight can identify what the problem is and where it occurs.
+- IlmVox AI can identify what the problem is and where it occurs.
 - Similar feedback can be grouped across supported languages.
 - Teachers can view evidence-backed learning insights.
 - Priority can be explained transparently.
@@ -196,4 +196,4 @@ The MVP will be considered successful if it demonstrates that:
 
 ## 13. Core Product Statement
 
-EduInSight is a multilingual student-voice-to-institutional-action platform that identifies what problem students face, where it occurs, how serious and widespread it is, and whether the responsible university unit acted on it.
+IlmVox AI is a multilingual student-voice-to-institutional-action platform that identifies what problem students face, where it occurs, how serious and widespread it is, and whether the responsible university unit acted on it.

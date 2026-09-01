@@ -160,7 +160,7 @@ export default function Register() {
         Create your account
       </h2>
       <p className="mb-8 text-center text-muted">
-        Student self-registration for EduInSight
+        Student self-registration for IlmVox AI
       </p>
 
       {error && (

@@ -1,5 +1,5 @@
 /*
-  EduInSight — TypeScript type definitions
+  IlmVox AI — TypeScript type definitions
 
   These interfaces mirror the database schema defined in
   supabase/migrations/001_initial_schema.sql.
