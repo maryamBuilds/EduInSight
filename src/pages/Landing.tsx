@@ -95,27 +95,29 @@ function JourneyPreview() {
       </span>
       <ol className="grid gap-3">
         <li className="rounded-xl border border-border bg-[#FCFCFA] p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-muted">1 · Student writes</p>
-          <p className="mt-2 leading-relaxed text-text">
-            “Database ka lecture bohat fast hai, normalization samajh nahi aa rahi.”
-          </p>
-          <p className="mt-2 text-xs text-muted">Roman Urdu · anonymous</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-muted">1 · Students write, each in their own way</p>
+          <ul className="mt-2 grid gap-1.5 text-[15px] leading-relaxed text-text">
+            <li>“OS aur DBMS ka final ek hi din hai, tayyari kaise karein?”</li>
+            <li dir="rtl" lang="ur" className="text-right">“دونوں پیپر ایک ہی دن رکھ دیے گئے ہیں۔”</li>
+            <li>“Two finals on the same day again. Nobody is responding.”</li>
+          </ul>
+          <p className="mt-2 text-xs text-muted">Roman Urdu · Urdu · English · anonymous</p>
         </li>
         <li className="rounded-xl border border-border bg-soft-blue p-4">
-          <p className="text-xs font-bold uppercase tracking-wide text-ocean">2 · Staff see a reviewed insight</p>
-          <p className="mt-2 font-semibold text-navy">Teaching pace · Database Systems</p>
-          <p className="mt-1 text-sm text-text">Grouped with similar concerns from the same section</p>
+          <p className="text-xs font-bold uppercase tracking-wide text-ocean">2 · Staff see one reviewed issue</p>
+          <p className="mt-2 font-semibold text-navy">Exam timetable clash · BS CS Semester 5</p>
+          <p className="mt-1 text-sm text-text">38 students · 3 languages · grouped with the quotes behind it</p>
         </li>
         <li className="rounded-xl border border-border bg-soft-teal p-4">
           <p className="text-xs font-bold uppercase tracking-wide text-teal-dark">3 · An owned action</p>
-          <p className="mt-2 font-semibold text-navy">Extra worked-example session on normalization</p>
-          <p className="mt-1 text-sm text-text">Course teacher · In progress</p>
+          <p className="mt-2 font-semibold text-navy">Reschedule the Operating Systems final</p>
+          <p className="mt-1 text-sm text-text">Examination Office · Completed before the timetable was final</p>
         </li>
         <li className="flex items-start gap-3 rounded-xl border border-border bg-white p-4">
           <CircleCheckBig className="mt-0.5 h-5 w-5 shrink-0 text-success" aria-hidden="true" />
           <p className="text-sm leading-relaxed text-text">
-            <strong className="text-navy">4 · The student is told what changed</strong>
-            <span className="block">“A revision session has been scheduled for Thursday.”</span>
+            <strong className="text-navy">4 · Every student who raised it is told</strong>
+            <span className="block">“The Operating Systems final has moved to Monday. Your timetable is updated.”</span>
           </p>
         </li>
       </ol>
