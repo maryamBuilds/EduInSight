@@ -31,6 +31,7 @@ import {
   MetricCard,
   Panel,
   PriorityBadge,
+  IdentityBadge,
   FilterButtons,
   ProgressBar,
   EvidenceQuote,
@@ -60,7 +61,7 @@ const VIEW_COPY: Record<TeacherDashboardView, { title: string; description: stri
   },
   feedback: {
     title: 'Student Feedback',
-    description: 'Review anonymised feedback from the course sections assigned to you.',
+    description: 'Review feedback from your assigned course sections. Names appear only when a student chose to share theirs.',
   },
   actions: {
     title: 'Teaching Actions',
@@ -628,6 +629,11 @@ export default function TeacherDashboard({
                             {LANGUAGE_LABELS[feedback.language_detected]}
                           </span>
                         )}
+                        <IdentityBadge
+                          isAnonymous={feedback.is_anonymous}
+                          name={feedback.student_name}
+                          department={feedback.student_department}
+                        />
                       </div>
                       <span className="text-xs text-muted">
                         {new Date(feedback.submitted_at).toLocaleDateString()}
@@ -854,7 +860,11 @@ export default function TeacherDashboard({
         open={!!selectedFeedback}
         onClose={() => setSelectedFeedback(null)}
         title={selectedFeedback?.feedback_area || selectedFeedback?.university_service || 'Feedback details'}
-        subtitle={selectedFeedback ? `Anonymised feedback · ${selectedFeedback.reference_number}` : undefined}
+        subtitle={
+          selectedFeedback
+            ? `${selectedFeedback.is_anonymous || !selectedFeedback.student_name ? 'Anonymous feedback' : `From ${selectedFeedback.student_name}${selectedFeedback.student_department ? ` (${selectedFeedback.student_department})` : ''}`} · ${selectedFeedback.reference_number}`
+            : undefined
+        }
         maxWidth="min(760px, 100%)"
         footer={
           <button
@@ -874,9 +884,40 @@ export default function TeacherDashboard({
                 {selectedFeedback.original_text}
               </div>
               <p className="mt-2 text-xs text-muted">
-                Student identity is protected. Original wording is preserved.
+                {selectedFeedback.is_anonymous || !selectedFeedback.student_name
+                  ? 'Sent anonymously. Student identity is protected. Original wording is preserved.'
+                  : `${selectedFeedback.student_name} chose to share their details so you can follow up. Original wording is preserved.`}
               </p>
             </div>
+
+            {!selectedFeedback.is_anonymous && selectedFeedback.student_name && (
+              <div className="rounded-lg border border-teal/40 bg-soft-teal/50 p-4">
+                <h3 className="mb-2 text-base text-ocean">Student details</h3>
+                <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
+                  {[
+                    ['Name', selectedFeedback.student_name],
+                    ['Department', selectedFeedback.student_department],
+                    ['Programme', selectedFeedback.programme],
+                    ['Study stage', selectedFeedback.study_stage],
+                  ].map(([label, value]) => (
+                    <div key={label}>
+                      <dt className="text-xs text-muted">{label}</dt>
+                      <dd className="font-semibold text-text">{value || '—'}</dd>
+                    </div>
+                  ))}
+                  {selectedFeedback.student_email && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-xs text-muted">Email</dt>
+                      <dd className="font-semibold">
+                        <a href={`mailto:${selectedFeedback.student_email}`} className="break-all text-teal-dark underline">
+                          {selectedFeedback.student_email}
+                        </a>
+                      </dd>
+                    </div>
+                  )}
+                </dl>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
               <div className="rounded-lg bg-soft-blue p-3">

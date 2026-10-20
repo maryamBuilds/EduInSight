@@ -564,8 +564,8 @@ export default function SubmitFeedback() {
                   <legend className="sr-only">Submission identity</legend>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {[
-                      { anonymous: true, title: 'Submit anonymously', text: 'Your name does not appear in ordinary feedback analytics.' },
-                      { anonymous: false, title: 'Submit with my name', text: 'Authorised staff may contact you for clarification.' },
+                      { anonymous: true, title: 'Submit anonymously', text: 'No one on staff sees your name. Your teacher sees only "Anonymous student".' },
+                      { anonymous: false, title: 'Submit with my name', text: `Your course teacher and the university admin will see your name${profile?.full_name ? ` (${profile.full_name})` : ''} and department, so they can follow up with you.` },
                     ].map((option) => (
                       <label key={option.title} className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 focus-within:ring-4 focus-within:ring-teal/25 ${form.isAnonymous === option.anonymous ? 'border-teal-dark bg-soft-teal' : 'border-[#8A979E]'}`}>
                         <input type="radio" name="identity" checked={form.isAnonymous === option.anonymous} onChange={() => update('isAnonymous', option.anonymous)} className="mt-1 accent-teal-dark" />
@@ -574,6 +574,11 @@ export default function SubmitFeedback() {
                     ))}
                   </div>
                 </fieldset>
+                <p role="status" className={`rounded-lg p-3 text-sm font-semibold ${form.isAnonymous ? 'bg-[#EEF1F2] text-text' : 'bg-soft-teal text-teal-dark'}`}>
+                  {form.isAnonymous
+                    ? 'You are sending this anonymously.'
+                    : `You are sending this with your name${profile?.full_name ? `: ${profile.full_name}` : ''}.`}
+                </p>
                 <p className="rounded-r-lg border-l-4 border-teal bg-[#F5F8F7] p-3 text-sm leading-relaxed text-muted">
                   Do not include unnecessary personal information. Sensitive allegations are handled through a restricted institutional process.
                 </p>
@@ -622,7 +627,7 @@ export default function SubmitFeedback() {
               ['Section', selectedSection ? `${selectedSection.section_name} · ${selectedSection.semester}` : 'Not specified'],
               ['Feedback area', form.feedbackArea],
               ['Feedback type', form.feedbackTypes.join(', ')],
-              ['Identity', form.isAnonymous ? 'Anonymous' : 'Identified'],
+              ['Who sees your name', form.isAnonymous ? 'No one (anonymous)' : `Your teacher and admin will see ${profile?.full_name ?? 'your name'} and your department`],
             ].map(([label, value]) => (
               <div key={label} className="rounded-lg bg-[#F7F8F6] p-4">
                 <dt className="text-xs font-bold uppercase tracking-wide text-muted">{label}</dt>
