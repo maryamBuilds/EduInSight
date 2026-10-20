@@ -9,6 +9,7 @@ import {
 import { useAuth } from '@/context/AuthContext'
 import type { UserRole } from '@/lib/types'
 import { Loader2 } from 'lucide-react'
+import Landing from '@/pages/Landing'
 import Login from '@/pages/Login'
 import Register from '@/pages/Register'
 import ForgotPassword from '@/pages/ForgotPassword'
@@ -113,7 +114,7 @@ function RedirectIfAuth() {
 }
 
 // ---------------------------------------------------------------------------
-// SmartRoot — "/" redirects to the user's role dashboard or login
+// SmartRoot — "/" redirects to the user's role dashboard or shows the landing page
 // ---------------------------------------------------------------------------
 
 function SmartRoot() {
@@ -125,7 +126,7 @@ function SmartRoot() {
     return <Navigate to={ROLE_HOME[profile.role]} replace />
   }
 
-  return <Navigate to="/login" replace />
+  return <Landing />
 }
 
 // ---------------------------------------------------------------------------
@@ -189,7 +190,7 @@ function Placeholder({ label }: { label: string }) {
 export default function App() {
   return (
     <Routes>
-      {/* ── Root: redirect to role dashboard or login ── */}
+      {/* ── Root: redirect to role dashboard or show the public landing page ── */}
       <Route path="/" element={<SmartRoot />} />
 
       {/* ── Public auth routes (redirect if already logged in) ── */}

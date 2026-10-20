@@ -1,4 +1,4 @@
-import { Outlet } from 'react-router-dom'
+import { Link, Outlet } from 'react-router-dom'
 import { BarChart3, CircleCheckBig, MessageSquareText, TrendingUp } from 'lucide-react'
 import { Logo } from '../Logo'
 
@@ -24,7 +24,9 @@ export function AuthLayout() {
           `,
         }}
       >
-        <Logo className="text-white" />
+        <Link to="/" aria-label="EduInSight home" className="w-fit rounded-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-aqua/60">
+          <Logo className="text-white" />
+        </Link>
 
         <div className="mx-auto my-auto max-w-[520px] text-center">
           <h1 className="mb-[18px] text-[40px] leading-[1.2] text-white max-md:text-[30px]">
