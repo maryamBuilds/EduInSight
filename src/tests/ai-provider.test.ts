@@ -47,7 +47,18 @@ describe('readProviderConfig', () => {
       apiKey: 'secret-key',
       baseUrl: 'https://custom.example.com/v1',
       model: 'qwen-max',
+      fallbackModels: [],
     })
+  })
+
+  it('reads fallback models, dropping blanks, duplicates and the main model', () => {
+    const config = readProviderConfig({
+      AI_API_KEY: 'secret-key',
+      AI_BASE_URL: 'https://custom.example.com/v1',
+      AI_MODEL: 'qwen-max',
+      AI_FALLBACK_MODELS: ' backup-a, ,qwen-max,backup-b,backup-a ',
+    })
+    expect(config?.fallbackModels).toEqual(['backup-a', 'backup-b'])
   })
 
   it('honours an explicit provider label', () => {
@@ -79,6 +90,13 @@ describe('buildProviderRequest', () => {
   it('disables reasoning for Groq JSON classification', () => {
     const body = JSON.parse(buildProviderRequest({ ...CONFIG, provider: 'groq' }, CONTEXT).body)
     expect(body.reasoning_effort).toBe('none')
+  })
+
+  it('uses low reasoning for Groq GPT-OSS models, which cannot disable it', () => {
+    const body = JSON.parse(
+      buildProviderRequest({ ...CONFIG, provider: 'groq', model: 'openai/gpt-oss-120b' }, CONTEXT).body,
+    )
+    expect(body.reasoning_effort).toBe('low')
   })
 
   it('includes prompt-injection resistance in the system prompt', () => {
@@ -205,5 +223,87 @@ describe('callProvider', () => {
       throw new TypeError('fetch failed')
     })
     expect(result).toEqual({ ok: false, error: 'ai_provider_error' })
+  })
+
+  it('retries a rate-limited model after waiting', async () => {
+    const waits: number[] = []
+    const diagnostics: string[] = []
+    let calls = 0
+    const outcome = await callProvider(
+      CONFIG,
+      CONTEXT,
+      async () => {
+        calls += 1
+        return calls === 1
+          ? new Response('{}', { status: 429, headers: { 'retry-after': '1.5' } })
+          : providerResponse('{"category":"Teaching"}')
+      },
+      (code) => diagnostics.push(code),
+      async (ms) => { waits.push(ms) },
+    )
+    expect(outcome).toEqual({ ok: true, content: { category: 'Teaching' } })
+    expect(waits).toEqual([1500])
+    expect(diagnostics).toEqual(['http_429'])
+  })
+
+  it('moves to a fallback model when the main model stays rate limited', async () => {
+    const models: string[] = []
+    const waits: number[] = []
+    const outcome = await callProvider(
+      { ...CONFIG, fallbackModels: ['backup-model'] },
+      CONTEXT,
+      async (_url, init) => {
+        const model = JSON.parse(String(init?.body)).model as string
+        models.push(model)
+        return model === 'qwen-plus'
+          ? new Response('{}', { status: 429 })
+          : providerResponse('{"category":"Teaching"}')
+      },
+      undefined,
+      async (ms) => { waits.push(ms) },
+    )
+    expect(outcome.ok).toBe(true)
+    expect(models).toEqual(['qwen-plus', 'qwen-plus', 'qwen-plus', 'backup-model'])
+    expect(waits).toEqual([2000, 4000])
+  })
+
+  it('skips straight to the fallback when Retry-After is long (daily quota)', async () => {
+    const models: string[] = []
+    const waits: number[] = []
+    await callProvider(
+      { ...CONFIG, fallbackModels: ['backup-model'] },
+      CONTEXT,
+      async (_url, init) => {
+        models.push(JSON.parse(String(init?.body)).model as string)
+        return new Response('{}', { status: 429, headers: { 'retry-after': '3600' } })
+      },
+      undefined,
+      async (ms) => { waits.push(ms) },
+    )
+    expect(models).toEqual(['qwen-plus', 'backup-model'])
+    expect(waits).toEqual([])
+  })
+
+  it('returns ai_provider_error when every model stays rate limited', async () => {
+    const outcome = await callProvider(
+      CONFIG,
+      CONTEXT,
+      async () => new Response('{}', { status: 429 }),
+      undefined,
+      async () => undefined,
+    )
+    expect(outcome).toEqual({ ok: false, error: 'ai_provider_error' })
+  })
+
+  it('does not retry other HTTP failures', async () => {
+    let calls = 0
+    await callProvider(
+      { ...CONFIG, fallbackModels: ['backup-model'] },
+      CONTEXT,
+      async () => { calls += 1; return providerResponse('error', 401) },
+      undefined,
+      async () => undefined,
+    )
+    expect(calls).toBe(1)
   })
 })

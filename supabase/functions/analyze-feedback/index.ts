@@ -88,6 +88,7 @@ function envRecord(): Record<string, string | undefined> {
     AI_API_KEY: Deno.env.get('AI_API_KEY'),
     AI_BASE_URL: Deno.env.get('AI_BASE_URL'),
     AI_MODEL: Deno.env.get('AI_MODEL'),
+    AI_FALLBACK_MODELS: Deno.env.get('AI_FALLBACK_MODELS'),
   }
 }
 
