@@ -358,14 +358,14 @@ export default function SubmitFeedback() {
 
   return (
     <div className="mx-auto max-w-[1120px]">
-      <ol tabIndex={0} className="mb-5 flex items-center justify-center gap-3 overflow-x-auto rounded-xl border border-border bg-white px-5 py-4" aria-label="Submission progress">
+      <ol tabIndex={0} className="mb-5 flex items-center justify-center gap-2 overflow-x-auto rounded-xl border border-border bg-white px-3 py-3 sm:gap-3 sm:px-5 sm:py-4" aria-label="Submission progress">
         {['Write Feedback', 'Review', 'Submitted'].map((label, index) => (
-          <li key={label} className="flex shrink-0 items-center gap-3">
-            {index > 0 && <span className="h-0.5 w-8 bg-border sm:w-14" aria-hidden="true" />}
+          <li key={label} className="flex shrink-0 items-center gap-2 sm:gap-3">
+            {index > 0 && <span className="h-0.5 w-5 bg-border sm:w-14" aria-hidden="true" />}
             <span className={`grid h-8 w-8 place-items-center rounded-full border-2 text-sm font-bold ${stepNumber >= index + 1 ? 'border-teal bg-teal text-white' : 'border-gray-300 text-muted'}`}>
               {stepNumber > index + 1 ? <Check className="h-4 w-4" /> : index + 1}
             </span>
-            <span className={stepNumber === index + 1 ? 'font-bold text-teal-dark' : 'font-semibold text-muted'}>{label}</span>
+            <span className={stepNumber === index + 1 ? 'font-bold text-teal-dark' : 'font-semibold text-muted max-sm:sr-only'}>{label}</span>
           </li>
         ))}
       </ol>

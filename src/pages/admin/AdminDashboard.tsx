@@ -495,7 +495,7 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
       )}
 
       {/* ── Metric cards ── */}
-      {view === 'overview' && <section id="admin-overview" className="mb-5 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      {view === 'overview' && <section id="admin-overview" className="mb-5 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-5 max-xl:[&>:last-child]:col-span-2">
         <MetricCard icon={<FileText className="h-5 w-5" />} label="Total Feedback" value={metrics.totalFeedback} iconBg="bg-soft-blue" iconColour="text-ocean" />
         <MetricCard icon={<Flag className="h-5 w-5" />} label="High-Priority Issues" value={metrics.highPriority} iconBg="bg-soft-red" iconColour="text-danger" />
         <MetricCard icon={<Clock className="h-5 w-5" />} label="Actions In Progress" value={metrics.actionsInProgress} iconBg="bg-soft-teal" iconColour="text-teal-dark" />
@@ -513,15 +513,15 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
             <FilterButtons options={FILTER_OPTIONS} active={priorityFilter} onChange={setPriorityFilter} />
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
+            <table className="w-full border-collapse max-md:block">
+              <thead className="max-md:hidden">
                 <tr>
                   {['Problem', 'Reports', 'Trend', 'Priority', 'Owner', 'Status'].map((h) => (
                     <th key={h} className="border-b border-[#E8E2D9] px-3 py-3.5 text-left text-[11px] uppercase text-muted">{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="max-md:block">
                 {filteredProblems.map((c) => {
                   const statusLabel =
                     CLUSTER_STATUS_LABELS[c.status] ??
@@ -530,26 +530,26 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
                   return (
                     <tr
                       key={c.id}
-                      className="cursor-pointer transition-colors hover:bg-[#F7FAF9]"
+                      className="cursor-pointer transition-colors hover:bg-[#F7FAF9] max-md:grid max-md:grid-cols-2 max-md:gap-x-4 max-md:gap-y-3 max-md:border-b max-md:border-[#E8E2D9] max-md:px-5 max-md:py-4"
                       onClick={() => openDialog(c)}
                     >
-                      <td className="border-b border-[#E8E2D9] px-3 py-3.5">
+                      <td className="border-b border-[#E8E2D9] px-3 py-3.5 max-md:col-span-2 max-md:border-0 max-md:p-0">
                         <span className="font-bold text-ocean">{c.title}</span>
                         <span className="mt-1 block text-[11px] text-muted">
                           {c.feedback_area ?? c.university_service ?? '—'}
                         </span>
                       </td>
-                      <td className="border-b border-[#E8E2D9] px-3 py-3.5 text-[13px]">{c.report_count}</td>
-                      <td className={`border-b border-[#E8E2D9] px-3 py-3.5 text-[13px] font-semibold ${TREND_COLOURS[c.trend]}`}>
+                      <td data-label="Reports" className="border-b border-[#E8E2D9] px-3 py-3.5 max-md:border-0 max-md:p-0 max-md:before:mb-1 max-md:before:block max-md:before:text-[11px] max-md:before:font-normal max-md:before:uppercase max-md:before:text-muted max-md:before:content-[attr(data-label)] text-[13px]">{c.report_count}</td>
+                      <td data-label="Trend" className={`border-b border-[#E8E2D9] px-3 py-3.5 max-md:border-0 max-md:p-0 max-md:before:mb-1 max-md:before:block max-md:before:text-[11px] max-md:before:font-normal max-md:before:uppercase max-md:before:text-muted max-md:before:content-[attr(data-label)] text-[13px] font-semibold ${TREND_COLOURS[c.trend]}`}>
                         {TREND_ARROWS[c.trend]} {TREND_LABELS[c.trend]}
                       </td>
-                      <td className="border-b border-[#E8E2D9] px-3 py-3.5">
+                      <td data-label="Priority" className="border-b border-[#E8E2D9] px-3 py-3.5 max-md:border-0 max-md:p-0 max-md:before:mb-1 max-md:before:block max-md:before:text-[11px] max-md:before:font-normal max-md:before:uppercase max-md:before:text-muted max-md:before:content-[attr(data-label)]">
                         <PriorityBadge level={c.priority_level} />
                       </td>
-                      <td className="border-b border-[#E8E2D9] px-3 py-3.5 text-[13px]">
+                      <td data-label="Owner" className="border-b border-[#E8E2D9] px-3 py-3.5 max-md:border-0 max-md:p-0 max-md:before:mb-1 max-md:before:block max-md:before:text-[11px] max-md:before:font-normal max-md:before:uppercase max-md:before:text-muted max-md:before:content-[attr(data-label)] text-[13px]">
                         {c.ai_suggested_department ?? 'Not assigned'}
                       </td>
-                      <td className="border-b border-[#E8E2D9] px-3 py-3.5">
+                      <td data-label="Status" className="border-b border-[#E8E2D9] px-3 py-3.5 max-md:border-0 max-md:p-0 max-md:before:mb-1 max-md:before:block max-md:before:text-[11px] max-md:before:font-normal max-md:before:uppercase max-md:before:text-muted max-md:before:content-[attr(data-label)]">
                         <span className={`inline-block rounded-full px-2 py-1 text-[11px] font-bold ${statusBadgeClass(c.status)}`}>
                           {statusLabel}
                         </span>
@@ -855,7 +855,7 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
 
       {view === 'reports' && (
         <div className="grid gap-5">
-          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Institutional report summary">
+          <section className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4" aria-label="Institutional report summary">
             <MetricCard icon={<FileText className="h-5 w-5" />} label="Total Feedback" value={feedbacks.length} iconBg="bg-soft-blue" iconColour="text-ocean" />
             <MetricCard icon={<CheckCircle className="h-5 w-5" />} label="AI Analysed" value={analysisCounts ? analysisCounts.completed : '—'} iconBg="bg-soft-teal" iconColour="text-teal-dark" />
             <MetricCard icon={<Clock className="h-5 w-5" />} label="Active Actions" value={metrics.actionsInProgress} iconBg="bg-soft-amber" iconColour="text-warning" />

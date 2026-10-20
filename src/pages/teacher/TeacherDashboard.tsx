@@ -468,7 +468,7 @@ export default function TeacherDashboard({
 
       {/* ── Metric cards ── */}
       {view === 'overview' && (
-        <section id="teacher-overview" className="mb-5 scroll-mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section id="teacher-overview" className="mb-5 scroll-mt-4 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
           <MetricCard icon={<FileText className="h-5 w-5" />} label="Total Feedback" value={metrics.totalFeedback} iconBg="bg-soft-blue" iconColour="text-ocean" />
           <MetricCard icon={<AlertTriangle className="h-5 w-5" />} label="Learning Concerns" value={metrics.learningConcerns} iconBg="bg-soft-amber" iconColour="text-[#B66A00]" />
           <MetricCard icon={<Flag className="h-5 w-5" />} label="High Priority" value={metrics.highPriority} iconBg="bg-soft-red" iconColour="text-danger" />
@@ -487,33 +487,33 @@ export default function TeacherDashboard({
             <FilterButtons options={FILTER_OPTIONS} active={priorityFilter} onChange={setPriorityFilter} />
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
+            <table className="w-full border-collapse max-md:block">
+              <thead className="max-md:hidden">
                 <tr>
                   {['Learning problem', 'Reports', 'Share', 'Trend', 'Priority'].map((h) => (
                     <th key={h} className="border-b border-[#E8E2D9] px-3 py-3.5 text-left text-[12px] uppercase text-muted">{h}</th>
                   ))}
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="max-md:block">
                 {filteredBottlenecks.map((c) => (
                   <tr
                     key={c.id}
-                    className="cursor-pointer transition-colors hover:bg-[#F7FAF9]"
+                    className="cursor-pointer transition-colors hover:bg-[#F7FAF9] max-md:grid max-md:grid-cols-2 max-md:gap-x-4 max-md:gap-y-3 max-md:border-b max-md:border-[#E8E2D9] max-md:px-5 max-md:py-4"
                     onClick={() => openDialog(c)}
                   >
-                    <td className="border-b border-[#E8E2D9] px-3 py-3.5 text-sm font-bold text-ocean">{c.title}</td>
-                    <td className="border-b border-[#E8E2D9] px-3 py-3.5 text-sm">{c.report_count}</td>
-                    <td className="border-b border-[#E8E2D9] px-3 py-3.5 text-sm">
+                    <td className="border-b border-[#E8E2D9] px-3 py-3.5 max-md:col-span-2 max-md:border-0 max-md:p-0 text-sm font-bold text-ocean">{c.title}</td>
+                    <td data-label="Reports" className="border-b border-[#E8E2D9] px-3 py-3.5 max-md:border-0 max-md:p-0 max-md:before:mb-1 max-md:before:block max-md:before:text-[11px] max-md:before:font-normal max-md:before:uppercase max-md:before:text-muted max-md:before:content-[attr(data-label)] text-sm">{c.report_count}</td>
+                    <td data-label="Share" className="border-b border-[#E8E2D9] px-3 py-3.5 max-md:border-0 max-md:p-0 max-md:before:mb-1 max-md:before:block max-md:before:text-[11px] max-md:before:font-normal max-md:before:uppercase max-md:before:text-muted max-md:before:content-[attr(data-label)] text-sm">
                       {(() => {
                         const share = sharePercentFor(c.id)
                         return share != null ? `${share}%` : '—'
                       })()}
                     </td>
-                    <td className={`border-b border-[#E8E2D9] px-3 py-3.5 text-sm font-semibold ${TREND_COLOURS[c.trend]}`}>
+                    <td data-label="Trend" className={`border-b border-[#E8E2D9] px-3 py-3.5 max-md:border-0 max-md:p-0 max-md:before:mb-1 max-md:before:block max-md:before:text-[11px] max-md:before:font-normal max-md:before:uppercase max-md:before:text-muted max-md:before:content-[attr(data-label)] text-sm font-semibold ${TREND_COLOURS[c.trend]}`}>
                       {TREND_ARROWS[c.trend]} {TREND_LABELS[c.trend]}
                     </td>
-                    <td className="border-b border-[#E8E2D9] px-3 py-3.5">
+                    <td data-label="Priority" className="border-b border-[#E8E2D9] px-3 py-3.5 max-md:border-0 max-md:p-0 max-md:before:mb-1 max-md:before:block max-md:before:text-[11px] max-md:before:font-normal max-md:before:uppercase max-md:before:text-muted max-md:before:content-[attr(data-label)]">
                       <PriorityBadge level={c.priority_level} />
                     </td>
                   </tr>
@@ -771,7 +771,7 @@ export default function TeacherDashboard({
 
       {view === 'reports' && (
         <div className="grid gap-5">
-          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Teaching report summary">
+          <section className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4" aria-label="Teaching report summary">
             <MetricCard icon={<FileText className="h-5 w-5" />} label="Visible Feedback" value={feedbacks.length} iconBg="bg-soft-blue" iconColour="text-ocean" />
             <MetricCard icon={<CheckCircle className="h-5 w-5" />} label="AI Analysed" value={completedAnalyses} iconBg="bg-soft-teal" iconColour="text-teal-dark" />
             <MetricCard icon={<AlertTriangle className="h-5 w-5" />} label="Human Review" value={reviewRequiredAnalyses} iconBg="bg-soft-amber" iconColour="text-warning" />
