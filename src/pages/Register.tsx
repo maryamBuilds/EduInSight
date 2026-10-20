@@ -6,9 +6,6 @@ import { Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Institution } from '@/lib/types'
 
-/** Institution that students from unlisted universities join for now. */
-const PILOT_INSTITUTION_NAME = 'Demo University'
-
 /** Compare institution names without case or spacing differences. */
 function normaliseName(value: string) {
   return value.trim().replace(/\s+/g, ' ').toLowerCase()
@@ -86,17 +83,9 @@ export default function Register() {
       setError('Please enter your educational institution.')
       return
     }
-    // Unlisted institutions join the pilot institution for now, so the
-    // feedback catalogue and staff dashboards keep working. The typed name is
-    // still kept with the account in signup metadata.
-    const institution =
-      institutions.find((item) => normaliseName(item.name) === typedInstitution) ??
-      institutions.find((item) => item.name === PILOT_INSTITUTION_NAME) ??
-      institutions[0]
-    if (!institution) {
-      setError('Educational institutions could not be loaded. Please refresh and try again.')
-      return
-    }
+    // An unlisted name is sent without an id; the signup trigger creates the
+    // institution (migration 016).
+    const institution = institutions.find((item) => normaliseName(item.name) === typedInstitution)
     if (!programme) {
       setError('Please select your programme.')
       return
@@ -111,7 +100,7 @@ export default function Register() {
       fullName: fullName.trim(),
       email: email.trim(),
       password,
-      institutionId: institution.id,
+      institutionId: institution?.id ?? '',
       institutionName: institutionName.trim().replace(/\s+/g, ' '),
       programme: programme === 'Other programme' ? customProgramme.trim() : programme,
     })
@@ -239,7 +228,7 @@ export default function Register() {
           </datalist>
           <small id="institution-hint" className="text-xs text-muted">
             {institutionNotListed
-              ? `${PILOT_INSTITUTION_NAME} is the only university set up in this pilot. Your account will use the ${PILOT_INSTITUTION_NAME} catalogue for now, and the name you typed is saved with your account.`
+              ? 'This university is new to EduInSight. It will be added when you create your account.'
               : 'Type any university or college name, or pick one from the suggestions.'}
           </small>
         </div>
