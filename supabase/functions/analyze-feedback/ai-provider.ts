@@ -2,8 +2,9 @@
 //
 // The initial production provider is Alibaba Cloud Model Studio / Qwen via
 // its OpenAI-compatible chat-completions API.  Configuration is read only
-// from server-side secrets (AI_PROVIDER, AI_API_KEY, AI_BASE_URL, AI_MODEL);
-// nothing here is ever exposed to the browser.
+// from server-side secrets (AI_PROVIDER, AI_API_KEY, AI_BASE_URL, AI_MODEL,
+// and optionally AI_FALLBACK_MODELS); nothing here is ever exposed to the
+// browser.
 //
 // Only the minimum necessary feedback content (text, feedback area,
 // university service) plus the fixed catalogue context is sent to the
@@ -24,6 +25,8 @@ export interface ProviderConfig {
   apiKey: string
   baseUrl: string
   model: string
+  /** Tried in order when the main model stays rate limited (HTTP 429). */
+  fallbackModels?: string[]
 }
 
 /** The minimum feedback context sent to the provider — no identity data. */
@@ -34,6 +37,17 @@ export interface ProviderRequestContext {
 }
 
 export const PROVIDER_TIMEOUT_MS = 30_000
+
+/** Extra attempts per model after a rate-limit (429) or overload (503). */
+export const RATE_LIMIT_RETRIES = 2
+
+/**
+ * Longest wait before retrying the same model. A longer Retry-After usually
+ * means a daily quota is used up, so the next fallback model is tried instead.
+ */
+export const MAX_RETRY_WAIT_MS = 8_000
+
+const DEFAULT_RETRY_WAIT_MS = 2_000
 
 const DEFAULT_PROVIDER = 'qwen'
 
@@ -60,11 +74,16 @@ export function readProviderConfig(
   const baseUrl = (env.AI_BASE_URL ?? '').trim().replace(/\/+$/, '')
   const model = (env.AI_MODEL ?? '').trim()
   if (!apiKey || !baseUrl || !model) return null
+  const fallbackModels = (env.AI_FALLBACK_MODELS ?? '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item, index, all) => item !== '' && item !== model && all.indexOf(item) === index)
   return {
     provider: (env.AI_PROVIDER ?? DEFAULT_PROVIDER).trim(),
     apiKey,
     baseUrl,
     model,
+    fallbackModels,
   }
 }
 
@@ -106,16 +125,47 @@ export type ProviderCallOutcome =
   | { ok: false; error: Extract<AnalysisErrorCode, 'ai_timeout' | 'ai_provider_error' | 'ai_invalid_response'> }
 
 /**
- * Call the configured provider with a hard timeout.  Returns the parsed JSON
- * object from the message content, or a safe classified error.  Raw provider
- * responses are never returned or stored.
+ * Call the configured provider, retrying briefly when it is rate limited and
+ * then moving on to any fallback models.  Returns the parsed JSON object from
+ * the message content, or a safe classified error.  Raw provider responses
+ * are never returned or stored.
  */
 export async function callProvider(
   config: ProviderConfig,
   context: ProviderRequestContext,
   fetchImpl: typeof fetch = fetch,
   onDiagnostic: (code: string) => void = () => undefined,
+  sleep: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 ): Promise<ProviderCallOutcome> {
+  const models = [config.model, ...(config.fallbackModels ?? [])]
+  let outcome: ProviderCallOutcome = { ok: false, error: 'ai_provider_error' }
+  for (const [modelIndex, model] of models.entries()) {
+    if (modelIndex > 0) onDiagnostic(`fallback_model_${modelIndex}`)
+    for (let retry = 0; ; retry += 1) {
+      const attempt = await callProviderOnce({ ...config, model }, context, fetchImpl, onDiagnostic)
+      if (attempt.ok || attempt.rateLimit === undefined) return attempt.outcome
+      outcome = attempt.outcome
+      const wait = attempt.rateLimit.retryAfterMs ?? DEFAULT_RETRY_WAIT_MS * (retry + 1)
+      if (retry >= RATE_LIMIT_RETRIES || wait > MAX_RETRY_WAIT_MS) break
+      await sleep(wait)
+    }
+  }
+  return outcome
+}
+
+type SingleCallResult =
+  | { ok: true; outcome: ProviderCallOutcome; rateLimit?: undefined }
+  | { ok: false; outcome: ProviderCallOutcome; rateLimit?: { retryAfterMs: number | null } }
+
+/** One request to one model with a hard timeout. */
+async function callProviderOnce(
+  config: ProviderConfig,
+  context: ProviderRequestContext,
+  fetchImpl: typeof fetch,
+  onDiagnostic: (code: string) => void,
+): Promise<SingleCallResult> {
+  const fail = (error: Extract<AnalysisErrorCode, 'ai_timeout' | 'ai_provider_error' | 'ai_invalid_response'>) =>
+    ({ ok: false, outcome: { ok: false, error } }) as const
   const request = buildProviderRequest(config, context)
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), PROVIDER_TIMEOUT_MS)
@@ -128,36 +178,49 @@ export async function callProvider(
     })
     if (!response.ok) {
       onDiagnostic(`http_${response.status}`)
-      return { ok: false, error: 'ai_provider_error' }
+      if (response.status === 429 || response.status === 503) {
+        return {
+          ...fail('ai_provider_error'),
+          rateLimit: { retryAfterMs: parseRetryAfter(response.headers.get('retry-after')) },
+        }
+      }
+      return fail('ai_provider_error')
     }
     let parsed: unknown
     try {
       parsed = await response.json()
     } catch {
       onDiagnostic('invalid_response_json')
-      return { ok: false, error: 'ai_provider_error' }
+      return fail('ai_provider_error')
     }
     const content = extractMessageContent(parsed)
     if (content === undefined) {
       onDiagnostic('missing_message_content')
-      return { ok: false, error: 'ai_invalid_response' }
+      return fail('ai_invalid_response')
     }
     const json = parseJsonContent(content)
     if (json === undefined) {
       onDiagnostic('invalid_message_json')
-      return { ok: false, error: 'ai_invalid_response' }
+      return fail('ai_invalid_response')
     }
-    return { ok: true, content: json }
+    return { ok: true, outcome: { ok: true, content: json } }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
       onDiagnostic('request_timeout')
-      return { ok: false, error: 'ai_timeout' }
+      return fail('ai_timeout')
     }
     onDiagnostic(error instanceof Error ? `network_${error.name}` : 'network_unknown')
-    return { ok: false, error: 'ai_provider_error' }
+    return fail('ai_provider_error')
   } finally {
     clearTimeout(timer)
   }
+}
+
+/** Retry-After in milliseconds (seconds form only), or null when absent. */
+function parseRetryAfter(value: string | null): number | null {
+  if (value === null) return null
+  const seconds = Number(value.trim())
+  return Number.isFinite(seconds) && seconds >= 0 ? Math.ceil(seconds * 1000) : null
 }
 
 // ---------------------------------------------------------------------------

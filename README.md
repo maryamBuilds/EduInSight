@@ -131,6 +131,7 @@ Deploy the complete [`supabase/functions/analyze-feedback/`](supabase/functions/
 | `AI_API_KEY` | Private provider API credential. |
 | `AI_BASE_URL` | Compatible API base URL; the function appends `/chat/completions`. |
 | `AI_MODEL` | The confirmed live model is `qwen/qwen3.8-27b`. No model is selected by default; verify availability for your own provider account. |
+| `AI_FALLBACK_MODELS` | Optional, comma-separated. Tried in order when `AI_MODEL` stays rate limited (HTTP 429). Groq limits each model separately, so a second model adds headroom. |
 | `ALLOWED_ORIGINS` | Comma-separated exact frontend origins, including local development origins if needed. |
 
 The function also uses hosted Supabase runtime values `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. Keep privileged values server-side. The provider must support the request's structured JSON response format and configured options.
