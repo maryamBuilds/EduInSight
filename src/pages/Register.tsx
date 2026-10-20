@@ -61,6 +61,11 @@ export default function Register() {
     return () => { cancelled = true }
   }, [])
 
+  const institutionNotListed =
+    !institutionsLoading &&
+    normaliseName(institutionName) !== '' &&
+    !institutions.some((item) => normaliseName(item.name) === normaliseName(institutionName))
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
@@ -78,11 +83,9 @@ export default function Register() {
       setError('Please enter your educational institution.')
       return
     }
+    // An unlisted name is sent without an id; the signup trigger creates the
+    // institution (migration 016).
     const institution = institutions.find((item) => normaliseName(item.name) === typedInstitution)
-    if (!institution) {
-      setError(`"${institutionName.trim()}" is not registered with EduInSight yet. Check the spelling, or choose one of the suggested names.`)
-      return
-    }
     if (!programme) {
       setError('Please select your programme.')
       return
@@ -97,7 +100,8 @@ export default function Register() {
       fullName: fullName.trim(),
       email: email.trim(),
       password,
-      institutionId: institution.id,
+      institutionId: institution?.id ?? '',
+      institutionName: institutionName.trim().replace(/\s+/g, ' '),
       programme: programme === 'Other programme' ? customProgramme.trim() : programme,
     })
 
@@ -222,7 +226,11 @@ export default function Register() {
               <option key={institution.id} value={institution.name} />
             ))}
           </datalist>
-          <small id="institution-hint" className="text-xs text-muted">Start typing and pick your institution from the suggestions. It is saved with your student profile.</small>
+          <small id="institution-hint" className="text-xs text-muted">
+            {institutionNotListed
+              ? 'This university is new to EduInSight. It will be added when you create your account.'
+              : 'Type any university or college name, or pick one from the suggestions.'}
+          </small>
         </div>
 
         <div className="mb-5 grid gap-2">
