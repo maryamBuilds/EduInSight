@@ -452,6 +452,25 @@ export interface Database {
         }
         Returns: string
       }
+      admin_update_action: {
+        Args: {
+          p_action_id?: string
+          p_title?: string
+          p_status?: string
+          p_responsible_department?: string | null
+          p_responsible_person?: string | null
+          p_deadline?: string | null
+          p_internal_note?: string | null
+        }
+        Returns: string
+      }
+      admin_publish_action_update: {
+        Args: {
+          p_action_id?: string
+          p_student_facing_message?: string
+        }
+        Returns: string
+      }
     }
     Enums: Record<string, never>
   }

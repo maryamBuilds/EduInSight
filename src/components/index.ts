@@ -17,6 +17,9 @@ export { PriorityReasons } from './PriorityReasons'
 export { OverlayDialog } from './OverlayDialog'
 export { SearchInput } from './SearchInput'
 export { PeriodSelector } from './PeriodSelector'
+export { ActionTrackingCard } from './ActionTrackingCard'
+export type { ActionEditValues } from './ActionTrackingCard'
+export { FeedbackToActionChart } from './FeedbackToActionChart'
 
 // Layout components
 export { AuthLayout } from './layouts/AuthLayout'

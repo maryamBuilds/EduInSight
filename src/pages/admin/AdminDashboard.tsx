@@ -43,6 +43,9 @@ import {
   PriorityReasons,
   OverlayDialog,
   Toast,
+  ActionTrackingCard,
+  FeedbackToActionChart,
+  type ActionEditValues,
 } from '@/components'
 import { supabase } from '@/lib/supabase'
 import {
@@ -67,6 +70,8 @@ const FILTER_OPTIONS: { value: AdminFilter; label: string }[] = [
 ]
 
 const DASHBOARD_OPENED_AT = new Date().getTime()
+
+const ADMIN_ACTION_STATUSES = ['assigned', 'in_progress', 'completed'] as const
 
 /** Status badge colour class for cluster and action statuses. */
 function statusBadgeClass(status: string): string {
@@ -451,6 +456,49 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
     [selectedCluster, formTitle, formStatus, formPerson, formDeadline, formNote, formStudentUpdate, submitting, showToast, closeDialog],
   )
 
+  const handleActionSave = useCallback(
+    async (actionId: string, values: ActionEditValues): Promise<string | null> => {
+      const { error: err } = await callRpc('admin_update_action', {
+        p_action_id: actionId,
+        p_title: values.title.trim(),
+        p_status: values.status,
+        p_responsible_department: values.responsible_department,
+        p_responsible_person: values.responsible_person,
+        p_deadline: values.deadline || null,
+        p_internal_note: values.internal_note,
+      })
+      if (err) return friendlyError(err.message)
+      const { data: refreshed } = await supabase
+        .from('actions')
+        .select('*, issue_clusters(title)')
+        .order('created_at', { ascending: false })
+      if (refreshed) {
+        setActions(refreshed as (Action & { issue_clusters: { title: string } })[])
+      }
+      showToast('Action updated.')
+      return null
+    },
+    [showToast],
+  )
+
+  const handleFollowUpPublish = useCallback(
+    async (actionId: string, message: string): Promise<string | null> => {
+      const { error: err } = await callRpc('admin_publish_action_update', {
+        p_action_id: actionId,
+        p_student_facing_message: message,
+      })
+      if (err) return friendlyError(err.message)
+      const { data: refreshed } = await supabase
+        .from('action_updates')
+        .select('*')
+        .order('created_at', { ascending: false })
+      if (refreshed) setUpdates(refreshed as ActionUpdate[])
+      showToast('Follow-up published to students.')
+      return null
+    },
+    [showToast],
+  )
+
   // ── Auth / role guard (render-time, no setState) ───────────────────────
   if (!authLoading && (!profile || profile.role !== 'admin')) {
     return (
@@ -528,6 +576,11 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
         <MetricCard icon={<Clock className="h-5 w-5" />} label="Overdue" value={metrics.overdue} iconBg="bg-soft-red" iconColour="text-danger" />
         <MetricCard icon={<CheckCircle className="h-5 w-5" />} label="Resolved" value={metrics.resolved} iconBg="bg-soft-teal" iconColour="text-teal-dark" />
       </section>}
+
+      {/* ── Feedback-to-action overview ── */}
+      {view === 'overview' && (
+        <FeedbackToActionChart clusters={clusters} feedbacks={feedbacks} actions={actions} updates={updates} />
+      )}
 
       {/* ── Dashboard grid ── */}
       {view !== 'updates' && <div className={`grid grid-cols-1 gap-5 ${view === 'overview' ? 'xl:grid-cols-[1.35fr_0.65fr]' : ''}`}>
@@ -768,30 +821,30 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
         {/* ── Recent Action Activity (full-width row) ── */}
         {view === 'actions' && <section id="admin-actions" className="overflow-hidden rounded-xl border border-border bg-white">
           <div className="flex items-center justify-between border-b border-border px-5 py-[18px]">
-            <h3 className="m-0 text-[19px] text-navy">Recent Action Activity</h3>
+            <h3 className="m-0 text-[19px] text-navy">Action Tracking</h3>
+            <span className="text-sm font-semibold text-muted">
+              {actions.length} {actions.length === 1 ? 'action' : 'actions'}
+            </span>
           </div>
           <div id="admin-actions-section" className="grid gap-3 p-5">
             {actions.length > 0 ? (
-              actions.map((a) => {
-                const statusLabel =
-                  ACTION_STATUS_LABELS[a.status as keyof typeof ACTION_STATUS_LABELS] ?? a.status
-                return (
-                  <div key={a.id} className="rounded-[9px] border border-border p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <strong className="text-sm">{a.title}</strong>
-                      <span className={`inline-block rounded-full px-2 py-1 text-[11px] font-bold ${statusBadgeClass(a.status)}`}>
-                        {statusLabel}
-                      </span>
-                    </div>
-                    <p className="mt-1.5 text-xs leading-relaxed text-muted">
-                      {a.responsible_department ?? 'Unassigned'}
-                      {a.responsible_person && ` · ${a.responsible_person}`}
-                      {a.deadline && ` · Due ${new Date(a.deadline).toLocaleDateString()}`}
-                      {a.issue_clusters && ` · ${a.issue_clusters.title}`}
-                    </p>
-                  </div>
-                )
-              })
+              actions.map((a) => (
+                <ActionTrackingCard
+                  key={`${a.id}-${a.updated_at}`}
+                  action={a}
+                  linkedIssue={a.issue_clusters?.title}
+                  updates={updates.filter((u) => u.action_id === a.id)}
+                  statusOptions={
+                    a.status === 'planned'
+                      ? ['planned', ...ADMIN_ACTION_STATUSES]
+                      : [...ADMIN_ACTION_STATUSES]
+                  }
+                  adminFields
+                  now={DASHBOARD_OPENED_AT}
+                  onSave={(values) => handleActionSave(a.id, values)}
+                  onPublish={(message) => handleFollowUpPublish(a.id, message)}
+                />
+              ))
             ) : (
               <p className="py-4 text-center text-sm text-muted">
                 No institutional actions created yet.
