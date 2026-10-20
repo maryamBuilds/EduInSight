@@ -22,6 +22,12 @@ import {
   loadTeacherAnalyses,
 } from '@/lib/aiAnalysis'
 import {
+  buildClusterMembership,
+  clusterSharePercent,
+  linkedClusterFeedback,
+  type ClusterMembershipRow,
+} from '@/lib/clusterEvidence'
+import {
   MetricCard,
   Panel,
   PriorityBadge,
@@ -90,6 +96,7 @@ export default function TeacherDashboard({
   const [feedbacks, setFeedbacks] = useState<TeacherFeedbackRow[]>([])
   const [actions, setActions] = useState<TeacherActionRow[]>([])
   const [analyses, setAnalyses] = useState<TeacherAnalysisRow[]>([])
+  const [membershipRows, setMembershipRows] = useState<ClusterMembershipRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -152,6 +159,13 @@ export default function TeacherDashboard({
       // Analysis rows are supplementary: any failure here returns an empty
       // list and leaves the rest of the dashboard fully usable.
       setAnalyses(await loadTeacherAnalyses())
+      // Cluster membership is supplementary too: without it the dashboard
+      // shows no evidence rather than unlinked look-alike feedback.
+      const membershipRes = await supabase
+        .from('cluster_feedback_for_teacher')
+        .select('cluster_id, feedback_id')
+      if (cancelled) return
+      setMembershipRows(membershipRes.error ? [] : membershipRes.data ?? [])
       setLoading(false)
     }
 
@@ -234,19 +248,25 @@ export default function TeacherDashboard({
     ? analysisById.get(selectedFeedback.id)
     : undefined
 
-  // ── Cluster evidence (feedback matching the selected cluster's topic) ──
-  const clusterEvidence = useMemo(() => {
-    if (!selectedCluster) return []
-    const tag = selectedCluster.canonical_tag
-    const topic = selectedCluster.feedback_area ?? ''
-    return feedbacks
-      .filter(
-        (f) =>
-          f.topic?.toLowerCase().includes(tag.toLowerCase()) ||
-          f.feedback_area === topic,
-      )
-      .slice(0, 4)
-  }, [selectedCluster, feedbacks])
+  // ── Cluster evidence (feedback actually linked to each cluster) ───────
+  const membership = useMemo(() => buildClusterMembership(membershipRows), [membershipRows])
+
+  const linkedFeedbackFor = useCallback(
+    (clusterId: string) => linkedClusterFeedback(clusterId, membership, feedbacks),
+    [membership, feedbacks],
+  )
+
+  const sharePercentFor = useCallback(
+    (clusterId: string) => clusterSharePercent(linkedFeedbackFor(clusterId).length, feedbacks.length),
+    [linkedFeedbackFor, feedbacks.length],
+  )
+
+  const linkedEvidence = useMemo(
+    () => (selectedCluster ? linkedFeedbackFor(selectedCluster.id) : []),
+    [selectedCluster, linkedFeedbackFor],
+  )
+  const clusterEvidence = linkedEvidence.slice(0, 4)
+  const selectedSharePercent = selectedCluster ? sharePercentFor(selectedCluster.id) : null
 
   // ── Priority reasons (built from cluster metadata) ─────────────────────
   const priorityReasons = useMemo(() => {
@@ -260,9 +280,9 @@ export default function TeacherDashboard({
     } else {
       reasons.push('Reports are improving')
     }
-    if (selectedCluster.feedback_share != null) {
+    if (selectedSharePercent != null) {
       reasons.push(
-        `Represents ${Math.round(selectedCluster.feedback_share * 100)}% of related feedback`,
+        `Represents ${selectedSharePercent}% of feedback from your assigned sections`,
       )
     }
     if (selectedCluster.ai_suggested_department) {
@@ -271,7 +291,7 @@ export default function TeacherDashboard({
       )
     }
     return reasons
-  }, [selectedCluster])
+  }, [selectedCluster, selectedSharePercent])
 
   // ── Handlers ────────────────────────────────────────────────────────────
   const showToast = useCallback((msg: string) => {
@@ -485,7 +505,10 @@ export default function TeacherDashboard({
                     <td className="border-b border-[#E8E2D9] px-3 py-3.5 text-sm font-bold text-ocean">{c.title}</td>
                     <td className="border-b border-[#E8E2D9] px-3 py-3.5 text-sm">{c.report_count}</td>
                     <td className="border-b border-[#E8E2D9] px-3 py-3.5 text-sm">
-                      {c.feedback_share != null ? `${Math.round(c.feedback_share * 100)}%` : '—'}
+                      {(() => {
+                        const share = sharePercentFor(c.id)
+                        return share != null ? `${share}%` : '—'
+                      })()}
                     </td>
                     <td className={`border-b border-[#E8E2D9] px-3 py-3.5 text-sm font-semibold ${TREND_COLOURS[c.trend]}`}>
                       {TREND_ARROWS[c.trend]} {TREND_LABELS[c.trend]}
@@ -970,8 +993,8 @@ export default function TeacherDashboard({
               <div className="rounded-lg bg-soft-blue p-3">
                 <small className="text-muted">Feedback share</small>
                 <strong className="mt-1 block">
-                  {selectedCluster.feedback_share != null
-                    ? `${Math.round(selectedCluster.feedback_share * 100)}% of learning feedback`
+                  {selectedSharePercent != null
+                    ? `${selectedSharePercent}% of your section feedback`
                     : '—'}
                 </strong>
               </div>
@@ -983,10 +1006,14 @@ export default function TeacherDashboard({
               </div>
             </div>
 
-            {/* Evidence */}
-            {clusterEvidence.length > 0 && (
+            {/* Evidence: only submissions linked to this cluster */}
+            {clusterEvidence.length > 0 ? (
               <>
                 <h4 className="text-ocean">Supporting evidence</h4>
+                <p className="text-xs text-muted">
+                  Showing {clusterEvidence.length} of {linkedEvidence.length} linked{' '}
+                  {linkedEvidence.length === 1 ? 'submission' : 'submissions'} from your assigned sections.
+                </p>
                 {clusterEvidence.map((ev) => (
                   <EvidenceQuote
                     key={ev.id}
@@ -995,6 +1022,10 @@ export default function TeacherDashboard({
                   />
                 ))}
               </>
+            ) : (
+              <p className="text-sm text-muted">
+                No linked submissions from your assigned sections are available for this cluster yet.
+              </p>
             )}
 
             {/* Priority reasons */}

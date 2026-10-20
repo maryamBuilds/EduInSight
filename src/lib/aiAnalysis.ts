@@ -124,6 +124,9 @@ export async function loadTeacherAnalyses(): Promise<TeacherAnalysisRow[]> {
   }
 }
 
+/** Number of most recent analysis rows loaded for the admin activity list. */
+export const RECENT_ADMIN_ANALYSES_LIMIT = 20
+
 /** Institution-wide analysis rows for administrators, newest first. */
 export interface AdminAnalysisRow extends FeedbackAnalysis {
   feedback: {
@@ -140,10 +143,40 @@ export async function loadAdminAnalyses(): Promise<AdminAnalysisRow[]> {
       .from('feedback_analysis')
       .select('*, feedback(reference_number, feedback_area, university_service, submitted_at)')
       .order('created_at', { ascending: false })
-      .limit(20)
+      .limit(RECENT_ADMIN_ANALYSES_LIMIT)
     if (error || !data) return []
     return data as AdminAnalysisRow[]
   } catch {
     return []
+  }
+}
+
+export type AnalysisStatusCounts = Record<AnalysisStatus, number>
+
+const ANALYSIS_STATUSES: readonly AnalysisStatus[] = ['completed', 'processing', 'pending', 'failed']
+
+/**
+ * Server-side totals of admin-visible analysis rows by status.  Reports use
+ * these instead of counting the limited recent-activity list.  Returns null
+ * if any count is unavailable, so the UI never shows a partial total.
+ */
+export async function loadAdminAnalysisCounts(): Promise<AnalysisStatusCounts | null> {
+  try {
+    const results = await Promise.all(
+      ANALYSIS_STATUSES.map((status) =>
+        supabase
+          .from('feedback_analysis')
+          .select('feedback_id', { count: 'exact', head: true })
+          .eq('status', status),
+      ),
+    )
+    const counts = {} as AnalysisStatusCounts
+    for (const [index, result] of results.entries()) {
+      if (result.error || result.count == null) return null
+      counts[ANALYSIS_STATUSES[index]] = result.count
+    }
+    return counts
+  } catch {
+    return null
   }
 }
