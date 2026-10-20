@@ -1,0 +1,1985 @@
+{
+  "runLabel": "baseline-v1",
+  "system": "Rules baseline (student-selected area, service mapping, script/function-word language rules)",
+  "startedAt": "2026-10-20T18:33:08.725Z",
+  "dataset": "1.0.0-provisional",
+  "summary": {
+    "overall": {
+      "n": 88,
+      "validOutputRate": 1,
+      "language": {
+        "n": 88,
+        "accuracy": 0.9431818181818182,
+        "macroF1": 0.9424385138670852,
+        "perClass": {
+          "en": {
+            "precision": 1,
+            "recall": 1,
+            "f1": 1,
+            "support": 22
+          },
+          "mixed": {
+            "precision": 1,
+            "recall": 0.7727272727272727,
+            "f1": 0.8717948717948718,
+            "support": 22
+          },
+          "roman_ur": {
+            "precision": 0.8148148148148148,
+            "recall": 1,
+            "f1": 0.8979591836734693,
+            "support": 22
+          },
+          "ur": {
+            "precision": 1,
+            "recall": 1,
+            "f1": 1,
+            "support": 22
+          }
+        },
+        "confusion": {
+          "en": {
+            "en": 22
+          },
+          "ur": {
+            "ur": 22
+          },
+          "roman_ur": {
+            "roman_ur": 22
+          },
+          "mixed": {
+            "mixed": 17,
+            "roman_ur": 5
+          }
+        }
+      },
+      "category": {
+        "n": 88,
+        "accuracy": 0.8181818181818182,
+        "macroF1": 0.8148148148148148,
+        "perClass": {
+          "Accessibility or inclusion": {
+            "precision": 1,
+            "recall": 1,
+            "f1": 1,
+            "support": 4
+          },
+          "Assessment design or fairness": {
+            "precision": 1,
+            "recall": 1,
+            "f1": 1,
+            "support": 4
+          },
+          "Assignment instructions": {
+            "precision": 1,
+            "recall": 1,
+            "f1": 1,
+            "support": 4
+          },
+          "Course content or organisation": {
+            "precision": 1,
+            "recall": 1,
+            "f1": 1,
+            "support": 4
+          },
+          "Difficulty applying knowledge": {
+            "precision": 1,
+            "recall": 1,
+            "f1": 1,
+            "support": 4
+          },
+          "Difficulty understanding a concept": {
+            "precision": 1,
+            "recall": 1,
+            "f1": 1,
+            "support": 4
+          },
+          "Facilities or equipment condition": {
+            "precision": 0.6666666666666666,
+            "recall": 0.6666666666666666,
+            "f1": 0.6666666666666666,
+            "support": 12
+          },
+          "Grading clarity": {
+            "precision": 0.5,
+            "recall": 1,
+            "f1": 0.6666666666666666,
+            "support": 4
+          },
+          "Learning materials and resources": {
+            "precision": 1,
+            "recall": 1,
+            "f1": 1,
+            "support": 4
+          },
+          "Positive experience": {
+            "precision": 1,
+            "recall": 1,
+            "f1": 1,
+            "support": 4
+          },
+          "Sensitive or serious concern": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "support": 8
+          },
+          "Service availability or delay": {
+            "precision": 1,
+            "recall": 1,
+            "f1": 1,
+            "support": 8
+          },
+          "Staff communication or availability": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "support": 0
+          },
+          "Student wellbeing or support": {
+            "precision": 1,
+            "recall": 1,
+            "f1": 1,
+            "support": 4
+          },
+          "Suggestion for improvement": {
+            "precision": 1,
+            "recall": 1,
+            "f1": 1,
+            "support": 4
+          },
+          "Teaching pace or explanation": {
+            "precision": 0.5,
+            "recall": 1,
+            "f1": 0.6666666666666666,
+            "support": 4
+          },
+          "Technical access or system failure": {
+            "precision": 1,
+            "recall": 0.5,
+            "f1": 0.6666666666666666,
+            "support": 8
+          },
+          "Timetable or scheduling": {
+            "precision": 1,
+            "recall": 1,
+            "f1": 1,
+            "support": 4
+          }
+        },
+        "confusion": {
+          "Teaching pace or explanation": {
+            "Teaching pace or explanation": 4
+          },
+          "Difficulty understanding a concept": {
+            "Difficulty understanding a concept": 4
+          },
+          "Technical access or system failure": {
+            "Technical access or system failure": 4,
+            "Facilities or equipment condition": 4
+          },
+          "Positive experience": {
+            "Positive experience": 4
+          },
+          "Suggestion for improvement": {
+            "Suggestion for improvement": 4
+          },
+          "Assignment instructions": {
+            "Assignment instructions": 4
+          },
+          "Grading clarity": {
+            "Grading clarity": 4
+          },
+          "Timetable or scheduling": {
+            "Timetable or scheduling": 4
+          },
+          "Service availability or delay": {
+            "Service availability or delay": 8
+          },
+          "Sensitive or serious concern": {
+            "Staff communication or availability": 4,
+            "Grading clarity": 4
+          },
+          "Student wellbeing or support": {
+            "Student wellbeing or support": 4
+          },
+          "Accessibility or inclusion": {
+            "Accessibility or inclusion": 4
+          },
+          "Facilities or equipment condition": {
+            "Teaching pace or explanation": 4,
+            "Facilities or equipment condition": 8
+          },
+          "Difficulty applying knowledge": {
+            "Difficulty applying knowledge": 4
+          },
+          "Learning materials and resources": {
+            "Learning materials and resources": 4
+          },
+          "Assessment design or fairness": {
+            "Assessment design or fairness": 4
+          },
+          "Course content or organisation": {
+            "Course content or organisation": 4
+          }
+        }
+      },
+      "categoryLenientAccuracy": 0.8181818181818182,
+      "sentiment": {
+        "n": 88,
+        "accuracy": 0.9545454545454546,
+        "macroF1": 0.8803418803418803,
+        "perClass": {
+          "negative": {
+            "precision": 0.95,
+            "recall": 1,
+            "f1": 0.9743589743589743,
+            "support": 76
+          },
+          "neutral": {
+            "precision": 1,
+            "recall": 0.5,
+            "f1": 0.6666666666666666,
+            "support": 8
+          },
+          "positive": {
+            "precision": 1,
+            "recall": 1,
+            "f1": 1,
+            "support": 4
+          }
+        },
+        "confusion": {
+          "negative": {
+            "negative": 76
+          },
+          "positive": {
+            "positive": 4
+          },
+          "neutral": {
+            "neutral": 4,
+            "negative": 4
+          }
+        }
+      },
+      "sentimentLenientAccuracy": 1,
+      "priority": {
+        "n": 88,
+        "accuracy": 0.7272727272727273,
+        "macroF1": 0.6814814814814815,
+        "perClass": {
+          "high": {
+            "precision": 1,
+            "recall": 0.2857142857142857,
+            "f1": 0.4444444444444445,
+            "support": 28
+          },
+          "low": {
+            "precision": 1,
+            "recall": 0.6666666666666666,
+            "f1": 0.8,
+            "support": 12
+          },
+          "medium": {
+            "precision": 0.6666666666666666,
+            "recall": 1,
+            "f1": 0.8,
+            "support": 48
+          }
+        },
+        "confusion": {
+          "medium": {
+            "medium": 48
+          },
+          "high": {
+            "medium": 20,
+            "high": 8
+          },
+          "low": {
+            "low": 8,
+            "medium": 4
+          }
+        }
+      },
+      "priorityLenientAccuracy": 0.8181818181818182,
+      "responsibleArea": {
+        "n": 88,
+        "accuracy": 0.7272727272727273,
+        "macroF1": 0.6840958605664489,
+        "perClass": {
+          "Academic Department": {
+            "precision": 0.7777777777777778,
+            "recall": 0.875,
+            "f1": 0.823529411764706,
+            "support": 32
+          },
+          "Examination Office": {
+            "precision": 0.5,
+            "recall": 1,
+            "f1": 0.6666666666666666,
+            "support": 8
+          },
+          "Facilities Department": {
+            "precision": 1,
+            "recall": 0.5,
+            "f1": 0.6666666666666666,
+            "support": 16
+          },
+          "Finance Department": {
+            "precision": 1,
+            "recall": 1,
+            "f1": 1,
+            "support": 4
+          },
+          "IT Department": {
+            "precision": 1,
+            "recall": 0.5,
+            "f1": 0.6666666666666666,
+            "support": 8
+          },
+          "Library Management": {
+            "precision": 0.5,
+            "recall": 1,
+            "f1": 0.6666666666666666,
+            "support": 4
+          },
+          "Student Affairs": {
+            "precision": 0.5,
+            "recall": 1,
+            "f1": 0.6666666666666666,
+            "support": 4
+          },
+          "Transport Office": {
+            "precision": 1,
+            "recall": 1,
+            "f1": 1,
+            "support": 4
+          },
+          "University Administration": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "support": 8
+          }
+        },
+        "confusion": {
+          "Academic Department": {
+            "Academic Department": 28,
+            "Examination Office": 4
+          },
+          "IT Department": {
+            "IT Department": 4,
+            "Library Management": 4
+          },
+          "Examination Office": {
+            "Examination Office": 8
+          },
+          "Transport Office": {
+            "Transport Office": 4
+          },
+          "Finance Department": {
+            "Finance Department": 4
+          },
+          "University Administration": {
+            "Academic Department": 4,
+            "Examination Office": 4
+          },
+          "Student Affairs": {
+            "Student Affairs": 4
+          },
+          "Facilities Department": {
+            "Student Affairs": 4,
+            "Academic Department": 4,
+            "Facilities Department": 8
+          },
+          "Library Management": {
+            "Library Management": 4
+          }
+        }
+      },
+      "responsibleAreaLenientAccuracy": 0.8181818181818182,
+      "sensitiveDetection": {
+        "positives": 8,
+        "truePositives": 0,
+        "falseNegatives": 8,
+        "falsePositives": 0,
+        "recall": 0,
+        "precision": 0
+      },
+      "highPriority": {
+        "positives": 28,
+        "truePositives": 8,
+        "falseNegatives": 20,
+        "falsePositives": 0,
+        "recall": 0.2857142857142857,
+        "precision": 1
+      },
+      "injectionFollowed": 0,
+      "injectionCases": 4,
+      "latencyP50Ms": null,
+      "latencyP95Ms": null,
+      "meanTotalTokens": null
+    },
+    "byLanguage": {
+      "en": {
+        "n": 22,
+        "validOutputRate": 1,
+        "language": {
+          "n": 22,
+          "accuracy": 1,
+          "macroF1": 1,
+          "perClass": {
+            "en": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 22
+            }
+          },
+          "confusion": {
+            "en": {
+              "en": 22
+            }
+          }
+        },
+        "category": {
+          "n": 22,
+          "accuracy": 0.8181818181818182,
+          "macroF1": 0.8148148148148148,
+          "perClass": {
+            "Accessibility or inclusion": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Assessment design or fairness": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Assignment instructions": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Course content or organisation": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Difficulty applying knowledge": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Difficulty understanding a concept": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Facilities or equipment condition": {
+              "precision": 0.6666666666666666,
+              "recall": 0.6666666666666666,
+              "f1": 0.6666666666666666,
+              "support": 3
+            },
+            "Grading clarity": {
+              "precision": 0.5,
+              "recall": 1,
+              "f1": 0.6666666666666666,
+              "support": 1
+            },
+            "Learning materials and resources": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Positive experience": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Sensitive or serious concern": {
+              "precision": 0,
+              "recall": 0,
+              "f1": 0,
+              "support": 2
+            },
+            "Service availability or delay": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 2
+            },
+            "Staff communication or availability": {
+              "precision": 0,
+              "recall": 0,
+              "f1": 0,
+              "support": 0
+            },
+            "Student wellbeing or support": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Suggestion for improvement": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Teaching pace or explanation": {
+              "precision": 0.5,
+              "recall": 1,
+              "f1": 0.6666666666666666,
+              "support": 1
+            },
+            "Technical access or system failure": {
+              "precision": 1,
+              "recall": 0.5,
+              "f1": 0.6666666666666666,
+              "support": 2
+            },
+            "Timetable or scheduling": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            }
+          },
+          "confusion": {
+            "Teaching pace or explanation": {
+              "Teaching pace or explanation": 1
+            },
+            "Difficulty understanding a concept": {
+              "Difficulty understanding a concept": 1
+            },
+            "Technical access or system failure": {
+              "Technical access or system failure": 1,
+              "Facilities or equipment condition": 1
+            },
+            "Positive experience": {
+              "Positive experience": 1
+            },
+            "Suggestion for improvement": {
+              "Suggestion for improvement": 1
+            },
+            "Assignment instructions": {
+              "Assignment instructions": 1
+            },
+            "Grading clarity": {
+              "Grading clarity": 1
+            },
+            "Timetable or scheduling": {
+              "Timetable or scheduling": 1
+            },
+            "Service availability or delay": {
+              "Service availability or delay": 2
+            },
+            "Sensitive or serious concern": {
+              "Staff communication or availability": 1,
+              "Grading clarity": 1
+            },
+            "Student wellbeing or support": {
+              "Student wellbeing or support": 1
+            },
+            "Accessibility or inclusion": {
+              "Accessibility or inclusion": 1
+            },
+            "Facilities or equipment condition": {
+              "Teaching pace or explanation": 1,
+              "Facilities or equipment condition": 2
+            },
+            "Difficulty applying knowledge": {
+              "Difficulty applying knowledge": 1
+            },
+            "Learning materials and resources": {
+              "Learning materials and resources": 1
+            },
+            "Assessment design or fairness": {
+              "Assessment design or fairness": 1
+            },
+            "Course content or organisation": {
+              "Course content or organisation": 1
+            }
+          }
+        },
+        "categoryLenientAccuracy": 0.8181818181818182,
+        "sentiment": {
+          "n": 22,
+          "accuracy": 0.9545454545454546,
+          "macroF1": 0.8803418803418803,
+          "perClass": {
+            "negative": {
+              "precision": 0.95,
+              "recall": 1,
+              "f1": 0.9743589743589743,
+              "support": 19
+            },
+            "neutral": {
+              "precision": 1,
+              "recall": 0.5,
+              "f1": 0.6666666666666666,
+              "support": 2
+            },
+            "positive": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            }
+          },
+          "confusion": {
+            "negative": {
+              "negative": 19
+            },
+            "positive": {
+              "positive": 1
+            },
+            "neutral": {
+              "neutral": 1,
+              "negative": 1
+            }
+          }
+        },
+        "sentimentLenientAccuracy": 1,
+        "priority": {
+          "n": 22,
+          "accuracy": 0.7272727272727273,
+          "macroF1": 0.6814814814814815,
+          "perClass": {
+            "high": {
+              "precision": 1,
+              "recall": 0.2857142857142857,
+              "f1": 0.4444444444444445,
+              "support": 7
+            },
+            "low": {
+              "precision": 1,
+              "recall": 0.6666666666666666,
+              "f1": 0.8,
+              "support": 3
+            },
+            "medium": {
+              "precision": 0.6666666666666666,
+              "recall": 1,
+              "f1": 0.8,
+              "support": 12
+            }
+          },
+          "confusion": {
+            "medium": {
+              "medium": 12
+            },
+            "high": {
+              "medium": 5,
+              "high": 2
+            },
+            "low": {
+              "low": 2,
+              "medium": 1
+            }
+          }
+        },
+        "priorityLenientAccuracy": 0.8181818181818182,
+        "responsibleArea": {
+          "n": 22,
+          "accuracy": 0.7272727272727273,
+          "macroF1": 0.6840958605664489,
+          "perClass": {
+            "Academic Department": {
+              "precision": 0.7777777777777778,
+              "recall": 0.875,
+              "f1": 0.823529411764706,
+              "support": 8
+            },
+            "Examination Office": {
+              "precision": 0.5,
+              "recall": 1,
+              "f1": 0.6666666666666666,
+              "support": 2
+            },
+            "Facilities Department": {
+              "precision": 1,
+              "recall": 0.5,
+              "f1": 0.6666666666666666,
+              "support": 4
+            },
+            "Finance Department": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "IT Department": {
+              "precision": 1,
+              "recall": 0.5,
+              "f1": 0.6666666666666666,
+              "support": 2
+            },
+            "Library Management": {
+              "precision": 0.5,
+              "recall": 1,
+              "f1": 0.6666666666666666,
+              "support": 1
+            },
+            "Student Affairs": {
+              "precision": 0.5,
+              "recall": 1,
+              "f1": 0.6666666666666666,
+              "support": 1
+            },
+            "Transport Office": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "University Administration": {
+              "precision": 0,
+              "recall": 0,
+              "f1": 0,
+              "support": 2
+            }
+          },
+          "confusion": {
+            "Academic Department": {
+              "Academic Department": 7,
+              "Examination Office": 1
+            },
+            "IT Department": {
+              "IT Department": 1,
+              "Library Management": 1
+            },
+            "Examination Office": {
+              "Examination Office": 2
+            },
+            "Transport Office": {
+              "Transport Office": 1
+            },
+            "Finance Department": {
+              "Finance Department": 1
+            },
+            "University Administration": {
+              "Academic Department": 1,
+              "Examination Office": 1
+            },
+            "Student Affairs": {
+              "Student Affairs": 1
+            },
+            "Facilities Department": {
+              "Student Affairs": 1,
+              "Academic Department": 1,
+              "Facilities Department": 2
+            },
+            "Library Management": {
+              "Library Management": 1
+            }
+          }
+        },
+        "responsibleAreaLenientAccuracy": 0.8181818181818182,
+        "sensitiveDetection": {
+          "positives": 2,
+          "truePositives": 0,
+          "falseNegatives": 2,
+          "falsePositives": 0,
+          "recall": 0,
+          "precision": 0
+        },
+        "highPriority": {
+          "positives": 7,
+          "truePositives": 2,
+          "falseNegatives": 5,
+          "falsePositives": 0,
+          "recall": 0.2857142857142857,
+          "precision": 1
+        },
+        "injectionFollowed": 0,
+        "injectionCases": 1,
+        "latencyP50Ms": null,
+        "latencyP95Ms": null,
+        "meanTotalTokens": null
+      },
+      "ur": {
+        "n": 22,
+        "validOutputRate": 1,
+        "language": {
+          "n": 22,
+          "accuracy": 1,
+          "macroF1": 1,
+          "perClass": {
+            "ur": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 22
+            }
+          },
+          "confusion": {
+            "ur": {
+              "ur": 22
+            }
+          }
+        },
+        "category": {
+          "n": 22,
+          "accuracy": 0.8181818181818182,
+          "macroF1": 0.8148148148148148,
+          "perClass": {
+            "Accessibility or inclusion": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Assessment design or fairness": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Assignment instructions": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Course content or organisation": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Difficulty applying knowledge": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Difficulty understanding a concept": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Facilities or equipment condition": {
+              "precision": 0.6666666666666666,
+              "recall": 0.6666666666666666,
+              "f1": 0.6666666666666666,
+              "support": 3
+            },
+            "Grading clarity": {
+              "precision": 0.5,
+              "recall": 1,
+              "f1": 0.6666666666666666,
+              "support": 1
+            },
+            "Learning materials and resources": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Positive experience": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Sensitive or serious concern": {
+              "precision": 0,
+              "recall": 0,
+              "f1": 0,
+              "support": 2
+            },
+            "Service availability or delay": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 2
+            },
+            "Staff communication or availability": {
+              "precision": 0,
+              "recall": 0,
+              "f1": 0,
+              "support": 0
+            },
+            "Student wellbeing or support": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Suggestion for improvement": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Teaching pace or explanation": {
+              "precision": 0.5,
+              "recall": 1,
+              "f1": 0.6666666666666666,
+              "support": 1
+            },
+            "Technical access or system failure": {
+              "precision": 1,
+              "recall": 0.5,
+              "f1": 0.6666666666666666,
+              "support": 2
+            },
+            "Timetable or scheduling": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            }
+          },
+          "confusion": {
+            "Teaching pace or explanation": {
+              "Teaching pace or explanation": 1
+            },
+            "Difficulty understanding a concept": {
+              "Difficulty understanding a concept": 1
+            },
+            "Technical access or system failure": {
+              "Technical access or system failure": 1,
+              "Facilities or equipment condition": 1
+            },
+            "Positive experience": {
+              "Positive experience": 1
+            },
+            "Suggestion for improvement": {
+              "Suggestion for improvement": 1
+            },
+            "Assignment instructions": {
+              "Assignment instructions": 1
+            },
+            "Grading clarity": {
+              "Grading clarity": 1
+            },
+            "Timetable or scheduling": {
+              "Timetable or scheduling": 1
+            },
+            "Service availability or delay": {
+              "Service availability or delay": 2
+            },
+            "Sensitive or serious concern": {
+              "Staff communication or availability": 1,
+              "Grading clarity": 1
+            },
+            "Student wellbeing or support": {
+              "Student wellbeing or support": 1
+            },
+            "Accessibility or inclusion": {
+              "Accessibility or inclusion": 1
+            },
+            "Facilities or equipment condition": {
+              "Teaching pace or explanation": 1,
+              "Facilities or equipment condition": 2
+            },
+            "Difficulty applying knowledge": {
+              "Difficulty applying knowledge": 1
+            },
+            "Learning materials and resources": {
+              "Learning materials and resources": 1
+            },
+            "Assessment design or fairness": {
+              "Assessment design or fairness": 1
+            },
+            "Course content or organisation": {
+              "Course content or organisation": 1
+            }
+          }
+        },
+        "categoryLenientAccuracy": 0.8181818181818182,
+        "sentiment": {
+          "n": 22,
+          "accuracy": 0.9545454545454546,
+          "macroF1": 0.8803418803418803,
+          "perClass": {
+            "negative": {
+              "precision": 0.95,
+              "recall": 1,
+              "f1": 0.9743589743589743,
+              "support": 19
+            },
+            "neutral": {
+              "precision": 1,
+              "recall": 0.5,
+              "f1": 0.6666666666666666,
+              "support": 2
+            },
+            "positive": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            }
+          },
+          "confusion": {
+            "negative": {
+              "negative": 19
+            },
+            "positive": {
+              "positive": 1
+            },
+            "neutral": {
+              "neutral": 1,
+              "negative": 1
+            }
+          }
+        },
+        "sentimentLenientAccuracy": 1,
+        "priority": {
+          "n": 22,
+          "accuracy": 0.7272727272727273,
+          "macroF1": 0.6814814814814815,
+          "perClass": {
+            "high": {
+              "precision": 1,
+              "recall": 0.2857142857142857,
+              "f1": 0.4444444444444445,
+              "support": 7
+            },
+            "low": {
+              "precision": 1,
+              "recall": 0.6666666666666666,
+              "f1": 0.8,
+              "support": 3
+            },
+            "medium": {
+              "precision": 0.6666666666666666,
+              "recall": 1,
+              "f1": 0.8,
+              "support": 12
+            }
+          },
+          "confusion": {
+            "medium": {
+              "medium": 12
+            },
+            "high": {
+              "medium": 5,
+              "high": 2
+            },
+            "low": {
+              "low": 2,
+              "medium": 1
+            }
+          }
+        },
+        "priorityLenientAccuracy": 0.8181818181818182,
+        "responsibleArea": {
+          "n": 22,
+          "accuracy": 0.7272727272727273,
+          "macroF1": 0.6840958605664489,
+          "perClass": {
+            "Academic Department": {
+              "precision": 0.7777777777777778,
+              "recall": 0.875,
+              "f1": 0.823529411764706,
+              "support": 8
+            },
+            "Examination Office": {
+              "precision": 0.5,
+              "recall": 1,
+              "f1": 0.6666666666666666,
+              "support": 2
+            },
+            "Facilities Department": {
+              "precision": 1,
+              "recall": 0.5,
+              "f1": 0.6666666666666666,
+              "support": 4
+            },
+            "Finance Department": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "IT Department": {
+              "precision": 1,
+              "recall": 0.5,
+              "f1": 0.6666666666666666,
+              "support": 2
+            },
+            "Library Management": {
+              "precision": 0.5,
+              "recall": 1,
+              "f1": 0.6666666666666666,
+              "support": 1
+            },
+            "Student Affairs": {
+              "precision": 0.5,
+              "recall": 1,
+              "f1": 0.6666666666666666,
+              "support": 1
+            },
+            "Transport Office": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "University Administration": {
+              "precision": 0,
+              "recall": 0,
+              "f1": 0,
+              "support": 2
+            }
+          },
+          "confusion": {
+            "Academic Department": {
+              "Academic Department": 7,
+              "Examination Office": 1
+            },
+            "IT Department": {
+              "IT Department": 1,
+              "Library Management": 1
+            },
+            "Examination Office": {
+              "Examination Office": 2
+            },
+            "Transport Office": {
+              "Transport Office": 1
+            },
+            "Finance Department": {
+              "Finance Department": 1
+            },
+            "University Administration": {
+              "Academic Department": 1,
+              "Examination Office": 1
+            },
+            "Student Affairs": {
+              "Student Affairs": 1
+            },
+            "Facilities Department": {
+              "Student Affairs": 1,
+              "Academic Department": 1,
+              "Facilities Department": 2
+            },
+            "Library Management": {
+              "Library Management": 1
+            }
+          }
+        },
+        "responsibleAreaLenientAccuracy": 0.8181818181818182,
+        "sensitiveDetection": {
+          "positives": 2,
+          "truePositives": 0,
+          "falseNegatives": 2,
+          "falsePositives": 0,
+          "recall": 0,
+          "precision": 0
+        },
+        "highPriority": {
+          "positives": 7,
+          "truePositives": 2,
+          "falseNegatives": 5,
+          "falsePositives": 0,
+          "recall": 0.2857142857142857,
+          "precision": 1
+        },
+        "injectionFollowed": 0,
+        "injectionCases": 1,
+        "latencyP50Ms": null,
+        "latencyP95Ms": null,
+        "meanTotalTokens": null
+      },
+      "roman_ur": {
+        "n": 22,
+        "validOutputRate": 1,
+        "language": {
+          "n": 22,
+          "accuracy": 1,
+          "macroF1": 1,
+          "perClass": {
+            "roman_ur": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 22
+            }
+          },
+          "confusion": {
+            "roman_ur": {
+              "roman_ur": 22
+            }
+          }
+        },
+        "category": {
+          "n": 22,
+          "accuracy": 0.8181818181818182,
+          "macroF1": 0.8148148148148148,
+          "perClass": {
+            "Accessibility or inclusion": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Assessment design or fairness": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Assignment instructions": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Course content or organisation": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Difficulty applying knowledge": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Difficulty understanding a concept": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Facilities or equipment condition": {
+              "precision": 0.6666666666666666,
+              "recall": 0.6666666666666666,
+              "f1": 0.6666666666666666,
+              "support": 3
+            },
+            "Grading clarity": {
+              "precision": 0.5,
+              "recall": 1,
+              "f1": 0.6666666666666666,
+              "support": 1
+            },
+            "Learning materials and resources": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Positive experience": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Sensitive or serious concern": {
+              "precision": 0,
+              "recall": 0,
+              "f1": 0,
+              "support": 2
+            },
+            "Service availability or delay": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 2
+            },
+            "Staff communication or availability": {
+              "precision": 0,
+              "recall": 0,
+              "f1": 0,
+              "support": 0
+            },
+            "Student wellbeing or support": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Suggestion for improvement": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Teaching pace or explanation": {
+              "precision": 0.5,
+              "recall": 1,
+              "f1": 0.6666666666666666,
+              "support": 1
+            },
+            "Technical access or system failure": {
+              "precision": 1,
+              "recall": 0.5,
+              "f1": 0.6666666666666666,
+              "support": 2
+            },
+            "Timetable or scheduling": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            }
+          },
+          "confusion": {
+            "Teaching pace or explanation": {
+              "Teaching pace or explanation": 1
+            },
+            "Difficulty understanding a concept": {
+              "Difficulty understanding a concept": 1
+            },
+            "Technical access or system failure": {
+              "Technical access or system failure": 1,
+              "Facilities or equipment condition": 1
+            },
+            "Positive experience": {
+              "Positive experience": 1
+            },
+            "Suggestion for improvement": {
+              "Suggestion for improvement": 1
+            },
+            "Assignment instructions": {
+              "Assignment instructions": 1
+            },
+            "Grading clarity": {
+              "Grading clarity": 1
+            },
+            "Timetable or scheduling": {
+              "Timetable or scheduling": 1
+            },
+            "Service availability or delay": {
+              "Service availability or delay": 2
+            },
+            "Sensitive or serious concern": {
+              "Staff communication or availability": 1,
+              "Grading clarity": 1
+            },
+            "Student wellbeing or support": {
+              "Student wellbeing or support": 1
+            },
+            "Accessibility or inclusion": {
+              "Accessibility or inclusion": 1
+            },
+            "Facilities or equipment condition": {
+              "Teaching pace or explanation": 1,
+              "Facilities or equipment condition": 2
+            },
+            "Difficulty applying knowledge": {
+              "Difficulty applying knowledge": 1
+            },
+            "Learning materials and resources": {
+              "Learning materials and resources": 1
+            },
+            "Assessment design or fairness": {
+              "Assessment design or fairness": 1
+            },
+            "Course content or organisation": {
+              "Course content or organisation": 1
+            }
+          }
+        },
+        "categoryLenientAccuracy": 0.8181818181818182,
+        "sentiment": {
+          "n": 22,
+          "accuracy": 0.9545454545454546,
+          "macroF1": 0.8803418803418803,
+          "perClass": {
+            "negative": {
+              "precision": 0.95,
+              "recall": 1,
+              "f1": 0.9743589743589743,
+              "support": 19
+            },
+            "neutral": {
+              "precision": 1,
+              "recall": 0.5,
+              "f1": 0.6666666666666666,
+              "support": 2
+            },
+            "positive": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            }
+          },
+          "confusion": {
+            "negative": {
+              "negative": 19
+            },
+            "positive": {
+              "positive": 1
+            },
+            "neutral": {
+              "neutral": 1,
+              "negative": 1
+            }
+          }
+        },
+        "sentimentLenientAccuracy": 1,
+        "priority": {
+          "n": 22,
+          "accuracy": 0.7272727272727273,
+          "macroF1": 0.6814814814814815,
+          "perClass": {
+            "high": {
+              "precision": 1,
+              "recall": 0.2857142857142857,
+              "f1": 0.4444444444444445,
+              "support": 7
+            },
+            "low": {
+              "precision": 1,
+              "recall": 0.6666666666666666,
+              "f1": 0.8,
+              "support": 3
+            },
+            "medium": {
+              "precision": 0.6666666666666666,
+              "recall": 1,
+              "f1": 0.8,
+              "support": 12
+            }
+          },
+          "confusion": {
+            "medium": {
+              "medium": 12
+            },
+            "high": {
+              "medium": 5,
+              "high": 2
+            },
+            "low": {
+              "low": 2,
+              "medium": 1
+            }
+          }
+        },
+        "priorityLenientAccuracy": 0.8181818181818182,
+        "responsibleArea": {
+          "n": 22,
+          "accuracy": 0.7272727272727273,
+          "macroF1": 0.6840958605664489,
+          "perClass": {
+            "Academic Department": {
+              "precision": 0.7777777777777778,
+              "recall": 0.875,
+              "f1": 0.823529411764706,
+              "support": 8
+            },
+            "Examination Office": {
+              "precision": 0.5,
+              "recall": 1,
+              "f1": 0.6666666666666666,
+              "support": 2
+            },
+            "Facilities Department": {
+              "precision": 1,
+              "recall": 0.5,
+              "f1": 0.6666666666666666,
+              "support": 4
+            },
+            "Finance Department": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "IT Department": {
+              "precision": 1,
+              "recall": 0.5,
+              "f1": 0.6666666666666666,
+              "support": 2
+            },
+            "Library Management": {
+              "precision": 0.5,
+              "recall": 1,
+              "f1": 0.6666666666666666,
+              "support": 1
+            },
+            "Student Affairs": {
+              "precision": 0.5,
+              "recall": 1,
+              "f1": 0.6666666666666666,
+              "support": 1
+            },
+            "Transport Office": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "University Administration": {
+              "precision": 0,
+              "recall": 0,
+              "f1": 0,
+              "support": 2
+            }
+          },
+          "confusion": {
+            "Academic Department": {
+              "Academic Department": 7,
+              "Examination Office": 1
+            },
+            "IT Department": {
+              "IT Department": 1,
+              "Library Management": 1
+            },
+            "Examination Office": {
+              "Examination Office": 2
+            },
+            "Transport Office": {
+              "Transport Office": 1
+            },
+            "Finance Department": {
+              "Finance Department": 1
+            },
+            "University Administration": {
+              "Academic Department": 1,
+              "Examination Office": 1
+            },
+            "Student Affairs": {
+              "Student Affairs": 1
+            },
+            "Facilities Department": {
+              "Student Affairs": 1,
+              "Academic Department": 1,
+              "Facilities Department": 2
+            },
+            "Library Management": {
+              "Library Management": 1
+            }
+          }
+        },
+        "responsibleAreaLenientAccuracy": 0.8181818181818182,
+        "sensitiveDetection": {
+          "positives": 2,
+          "truePositives": 0,
+          "falseNegatives": 2,
+          "falsePositives": 0,
+          "recall": 0,
+          "precision": 0
+        },
+        "highPriority": {
+          "positives": 7,
+          "truePositives": 2,
+          "falseNegatives": 5,
+          "falsePositives": 0,
+          "recall": 0.2857142857142857,
+          "precision": 1
+        },
+        "injectionFollowed": 0,
+        "injectionCases": 1,
+        "latencyP50Ms": null,
+        "latencyP95Ms": null,
+        "meanTotalTokens": null
+      },
+      "mixed": {
+        "n": 22,
+        "validOutputRate": 1,
+        "language": {
+          "n": 22,
+          "accuracy": 0.7727272727272727,
+          "macroF1": 0.4358974358974359,
+          "perClass": {
+            "mixed": {
+              "precision": 1,
+              "recall": 0.7727272727272727,
+              "f1": 0.8717948717948718,
+              "support": 22
+            },
+            "roman_ur": {
+              "precision": 0,
+              "recall": 0,
+              "f1": 0,
+              "support": 0
+            }
+          },
+          "confusion": {
+            "mixed": {
+              "mixed": 17,
+              "roman_ur": 5
+            }
+          }
+        },
+        "category": {
+          "n": 22,
+          "accuracy": 0.8181818181818182,
+          "macroF1": 0.8148148148148148,
+          "perClass": {
+            "Accessibility or inclusion": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Assessment design or fairness": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Assignment instructions": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Course content or organisation": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Difficulty applying knowledge": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Difficulty understanding a concept": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Facilities or equipment condition": {
+              "precision": 0.6666666666666666,
+              "recall": 0.6666666666666666,
+              "f1": 0.6666666666666666,
+              "support": 3
+            },
+            "Grading clarity": {
+              "precision": 0.5,
+              "recall": 1,
+              "f1": 0.6666666666666666,
+              "support": 1
+            },
+            "Learning materials and resources": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Positive experience": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Sensitive or serious concern": {
+              "precision": 0,
+              "recall": 0,
+              "f1": 0,
+              "support": 2
+            },
+            "Service availability or delay": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 2
+            },
+            "Staff communication or availability": {
+              "precision": 0,
+              "recall": 0,
+              "f1": 0,
+              "support": 0
+            },
+            "Student wellbeing or support": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Suggestion for improvement": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "Teaching pace or explanation": {
+              "precision": 0.5,
+              "recall": 1,
+              "f1": 0.6666666666666666,
+              "support": 1
+            },
+            "Technical access or system failure": {
+              "precision": 1,
+              "recall": 0.5,
+              "f1": 0.6666666666666666,
+              "support": 2
+            },
+            "Timetable or scheduling": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            }
+          },
+          "confusion": {
+            "Teaching pace or explanation": {
+              "Teaching pace or explanation": 1
+            },
+            "Difficulty understanding a concept": {
+              "Difficulty understanding a concept": 1
+            },
+            "Technical access or system failure": {
+              "Technical access or system failure": 1,
+              "Facilities or equipment condition": 1
+            },
+            "Positive experience": {
+              "Positive experience": 1
+            },
+            "Suggestion for improvement": {
+              "Suggestion for improvement": 1
+            },
+            "Assignment instructions": {
+              "Assignment instructions": 1
+            },
+            "Grading clarity": {
+              "Grading clarity": 1
+            },
+            "Timetable or scheduling": {
+              "Timetable or scheduling": 1
+            },
+            "Service availability or delay": {
+              "Service availability or delay": 2
+            },
+            "Sensitive or serious concern": {
+              "Staff communication or availability": 1,
+              "Grading clarity": 1
+            },
+            "Student wellbeing or support": {
+              "Student wellbeing or support": 1
+            },
+            "Accessibility or inclusion": {
+              "Accessibility or inclusion": 1
+            },
+            "Facilities or equipment condition": {
+              "Teaching pace or explanation": 1,
+              "Facilities or equipment condition": 2
+            },
+            "Difficulty applying knowledge": {
+              "Difficulty applying knowledge": 1
+            },
+            "Learning materials and resources": {
+              "Learning materials and resources": 1
+            },
+            "Assessment design or fairness": {
+              "Assessment design or fairness": 1
+            },
+            "Course content or organisation": {
+              "Course content or organisation": 1
+            }
+          }
+        },
+        "categoryLenientAccuracy": 0.8181818181818182,
+        "sentiment": {
+          "n": 22,
+          "accuracy": 0.9545454545454546,
+          "macroF1": 0.8803418803418803,
+          "perClass": {
+            "negative": {
+              "precision": 0.95,
+              "recall": 1,
+              "f1": 0.9743589743589743,
+              "support": 19
+            },
+            "neutral": {
+              "precision": 1,
+              "recall": 0.5,
+              "f1": 0.6666666666666666,
+              "support": 2
+            },
+            "positive": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            }
+          },
+          "confusion": {
+            "negative": {
+              "negative": 19
+            },
+            "positive": {
+              "positive": 1
+            },
+            "neutral": {
+              "neutral": 1,
+              "negative": 1
+            }
+          }
+        },
+        "sentimentLenientAccuracy": 1,
+        "priority": {
+          "n": 22,
+          "accuracy": 0.7272727272727273,
+          "macroF1": 0.6814814814814815,
+          "perClass": {
+            "high": {
+              "precision": 1,
+              "recall": 0.2857142857142857,
+              "f1": 0.4444444444444445,
+              "support": 7
+            },
+            "low": {
+              "precision": 1,
+              "recall": 0.6666666666666666,
+              "f1": 0.8,
+              "support": 3
+            },
+            "medium": {
+              "precision": 0.6666666666666666,
+              "recall": 1,
+              "f1": 0.8,
+              "support": 12
+            }
+          },
+          "confusion": {
+            "medium": {
+              "medium": 12
+            },
+            "high": {
+              "medium": 5,
+              "high": 2
+            },
+            "low": {
+              "low": 2,
+              "medium": 1
+            }
+          }
+        },
+        "priorityLenientAccuracy": 0.8181818181818182,
+        "responsibleArea": {
+          "n": 22,
+          "accuracy": 0.7272727272727273,
+          "macroF1": 0.6840958605664489,
+          "perClass": {
+            "Academic Department": {
+              "precision": 0.7777777777777778,
+              "recall": 0.875,
+              "f1": 0.823529411764706,
+              "support": 8
+            },
+            "Examination Office": {
+              "precision": 0.5,
+              "recall": 1,
+              "f1": 0.6666666666666666,
+              "support": 2
+            },
+            "Facilities Department": {
+              "precision": 1,
+              "recall": 0.5,
+              "f1": 0.6666666666666666,
+              "support": 4
+            },
+            "Finance Department": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "IT Department": {
+              "precision": 1,
+              "recall": 0.5,
+              "f1": 0.6666666666666666,
+              "support": 2
+            },
+            "Library Management": {
+              "precision": 0.5,
+              "recall": 1,
+              "f1": 0.6666666666666666,
+              "support": 1
+            },
+            "Student Affairs": {
+              "precision": 0.5,
+              "recall": 1,
+              "f1": 0.6666666666666666,
+              "support": 1
+            },
+            "Transport Office": {
+              "precision": 1,
+              "recall": 1,
+              "f1": 1,
+              "support": 1
+            },
+            "University Administration": {
+              "precision": 0,
+              "recall": 0,
+              "f1": 0,
+              "support": 2
+            }
+          },
+          "confusion": {
+            "Academic Department": {
+              "Academic Department": 7,
+              "Examination Office": 1
+            },
+            "IT Department": {
+              "IT Department": 1,
+              "Library Management": 1
+            },
+            "Examination Office": {
+              "Examination Office": 2
+            },
+            "Transport Office": {
+              "Transport Office": 1
+            },
+            "Finance Department": {
+              "Finance Department": 1
+            },
+            "University Administration": {
+              "Academic Department": 1,
+              "Examination Office": 1
+            },
+            "Student Affairs": {
+              "Student Affairs": 1
+            },
+            "Facilities Department": {
+              "Student Affairs": 1,
+              "Academic Department": 1,
+              "Facilities Department": 2
+            },
+            "Library Management": {
+              "Library Management": 1
+            }
+          }
+        },
+        "responsibleAreaLenientAccuracy": 0.8181818181818182,
+        "sensitiveDetection": {
+          "positives": 2,
+          "truePositives": 0,
+          "falseNegatives": 2,
+          "falsePositives": 0,
+          "recall": 0,
+          "precision": 0
+        },
+        "highPriority": {
+          "positives": 7,
+          "truePositives": 2,
+          "falseNegatives": 5,
+          "falsePositives": 0,
+          "recall": 0.2857142857142857,
+          "precision": 1
+        },
+        "injectionFollowed": 0,
+        "injectionCases": 1,
+        "latencyP50Ms": null,
+        "latencyP95Ms": null,
+        "meanTotalTokens": null
+      }
+    }
+  }
+}
