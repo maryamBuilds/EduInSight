@@ -258,6 +258,12 @@ export interface TeacherFeedbackRow {
   reference_number: string
   submitted_at: string
   analysed_at: string | null
+  /** Set only when the student chose to submit with their name. */
+  student_name: string | null
+  /** Department the student submitted under; set only alongside student_name. */
+  student_department: string | null
+  /** Student's email for follow-up; set only alongside student_name. */
+  student_email: string | null
 }
 
 /** Row shape of the extracted_issues_for_teacher view. */

@@ -132,7 +132,7 @@ export default function FeedbackDetail() {
                 ['Study stage', feedback.study_stage],
                 ['Course or location', feedback.custom_course_name || 'Not specified'],
                 ['Feedback type', feedback.feedback_types.join(', ') || 'Not specified'],
-                ['Submission identity', feedback.is_anonymous ? 'Anonymous' : 'Identified'],
+                ['Submission identity', feedback.is_anonymous ? 'Anonymous' : 'With my name (teacher and admin can see it)'],
               ].map(([label, value]) => (
                 <div key={label}>
                   <dt className="text-xs font-bold uppercase tracking-wide text-muted">{label}</dt>

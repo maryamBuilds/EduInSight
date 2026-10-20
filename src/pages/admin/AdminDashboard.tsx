@@ -39,6 +39,7 @@ import {
   FilterButtons,
   ProgressBar,
   EvidenceQuote,
+  IdentityBadge,
   PriorityReasons,
   OverlayDialog,
   Toast,
@@ -110,6 +111,9 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
   const [analyses, setAnalyses] = useState<AdminAnalysisRow[]>([])
   const [analysisCounts, setAnalysisCounts] = useState<AnalysisStatusCounts | null>(null)
   const [membershipRows, setMembershipRows] = useState<ClusterMembershipRow[]>([])
+  const [studentNames, setStudentNames] = useState<Map<string, string>>(new Map())
+  const [studentEmails, setStudentEmails] = useState<Map<string, string>>(new Map())
+  const [departmentNames, setDepartmentNames] = useState<Map<string, string>>(new Map())
   const [retryingId, setRetryingId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -182,6 +186,26 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
       setActions((actionsRes.data ?? []) as (Action & { issue_clusters: { title: string } })[])
       setUpdates((updatesRes.data ?? []) as ActionUpdate[])
       setMembershipRows(membershipRes.data ?? [])
+      // Names are looked up only for students who chose to submit with their
+      // name; anonymous submissions never resolve to a person here.
+      const identifiedIds = [
+        ...new Set(((feedbackRes.data ?? []) as Feedback[]).filter((f) => !f.is_anonymous).map((f) => f.student_id)),
+      ]
+      if (identifiedIds.length > 0) {
+        const [{ data: nameRows }, { data: departmentRows }] = await Promise.all([
+          supabase.from('profiles').select('id, full_name, email').in('id', identifiedIds),
+          supabase.from('departments').select('id, name'),
+        ])
+        if (cancelled) return
+        const people = (nameRows ?? []) as { id: string; full_name: string; email: string }[]
+        setStudentNames(new Map(people.map((row) => [row.id, row.full_name])))
+        setStudentEmails(new Map(people.map((row) => [row.id, row.email])))
+        setDepartmentNames(
+          new Map(((departmentRows ?? []) as { id: string; name: string }[]).map((row) => [row.id, row.name])),
+        )
+      } else {
+        setStudentNames(new Map())
+      }
       // Analysis rows are supplementary: any failure here returns an empty
       // list and leaves the rest of the dashboard fully usable.
       const [recentAnalyses, counts] = await Promise.all([loadAdminAnalyses(), loadAdminAnalysisCounts()])
@@ -261,6 +285,8 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
       return matchFilter && matchSearch
     })
   }, [clusters, priorityFilter, search])
+
+  const feedbackById = useMemo(() => new Map(feedbacks.map((f) => [f.id, f])), [feedbacks])
 
   // ── Cluster evidence (feedback actually linked to the cluster) ─────────
   const membership = useMemo(() => buildClusterMembership(membershipRows), [membershipRows])
@@ -605,6 +631,13 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
                         <span className="text-xs text-muted">
                           {analysis.feedback?.feedback_area ?? analysis.feedback?.university_service ?? ''}
                         </span>
+                        {feedbackById.has(analysis.feedback_id) && (
+                          <IdentityBadge
+                            isAnonymous={feedbackById.get(analysis.feedback_id)!.is_anonymous}
+                            name={studentNames.get(feedbackById.get(analysis.feedback_id)!.student_id)}
+                            department={departmentNames.get(feedbackById.get(analysis.feedback_id)!.department_id)}
+                          />
+                        )}
                       </div>
                       <span className={`inline-block rounded-full px-2 py-1 text-[11px] font-bold ${analysis.status === 'completed' ? 'bg-soft-teal text-success' : 'bg-soft-amber text-[#8A5A16]'}`}>
                         {analysisStatusLabel(analysis)}
@@ -992,11 +1025,30 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
                   {selectedSharePercent != null ? ` (${selectedSharePercent}% of all non-sensitive feedback)` : ''}.
                 </p>
                 {clusterEvidence.map((ev) => (
-                  <EvidenceQuote
-                    key={ev.id}
-                    text={ev.original_text}
-                    language={ev.language_detected ?? undefined}
-                  />
+                  <div key={ev.id}>
+                    <EvidenceQuote
+                      text={ev.original_text}
+                      language={ev.language_detected ?? undefined}
+                    />
+                    <IdentityBadge
+                      isAnonymous={ev.is_anonymous}
+                      name={ev.is_anonymous ? null : studentNames.get(ev.student_id)}
+                      department={departmentNames.get(ev.department_id)}
+                    />
+                    {!ev.is_anonymous && studentNames.has(ev.student_id) && (
+                      <p className="mt-1 text-xs text-muted">
+                        {ev.programme} · {ev.study_stage}
+                        {studentEmails.get(ev.student_id) && (
+                          <>
+                            {' · '}
+                            <a href={`mailto:${studentEmails.get(ev.student_id)}`} className="break-all text-teal-dark underline">
+                              {studentEmails.get(ev.student_id)}
+                            </a>
+                          </>
+                        )}
+                      </p>
+                    )}
+                  </div>
                 ))}
               </>
             ) : (
