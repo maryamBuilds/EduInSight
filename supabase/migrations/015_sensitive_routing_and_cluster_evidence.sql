@@ -1,5 +1,5 @@
 -- EduInSight — sensitive-concern routing and traceable cluster evidence
--- Migration: 014_sensitive_routing_and_cluster_evidence.sql
+-- Migration: 015_sensitive_routing_and_cluster_evidence.sql
 --
 -- 1. A submission whose feedback area is "Sensitive or serious concern" is
 --    stored with is_sensitive = true. submit_feedback previously forced the
