@@ -20,10 +20,19 @@ import {
   LANGUAGE_LABELS,
   MAX_ANALYSIS_ATTEMPTS,
   analysisStatusLabel,
+  RECENT_ADMIN_ANALYSES_LIMIT,
   loadAdminAnalyses,
+  loadAdminAnalysisCounts,
   requestFeedbackAnalysis,
   type AdminAnalysisRow,
+  type AnalysisStatusCounts,
 } from '@/lib/aiAnalysis'
+import {
+  buildClusterMembership,
+  clusterSharePercent,
+  linkedClusterFeedback,
+  type ClusterMembershipRow,
+} from '@/lib/clusterEvidence'
 import {
   MetricCard,
   PriorityBadge,
@@ -99,6 +108,8 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
   const [actions, setActions] = useState<(Action & { issue_clusters: { title: string } })[]>([])
   const [updates, setUpdates] = useState<ActionUpdate[]>([])
   const [analyses, setAnalyses] = useState<AdminAnalysisRow[]>([])
+  const [analysisCounts, setAnalysisCounts] = useState<AnalysisStatusCounts | null>(null)
+  const [membershipRows, setMembershipRows] = useState<ClusterMembershipRow[]>([])
   const [retryingId, setRetryingId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -132,7 +143,7 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
       setLoading(true)
       setError(null)
 
-      const [clustersRes, feedbackRes, actionsRes, updatesRes] = await Promise.all([
+      const [clustersRes, feedbackRes, actionsRes, updatesRes, membershipRes] = await Promise.all([
         supabase
           .from('issue_clusters')
           .select('*')
@@ -146,17 +157,19 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
           .from('action_updates')
           .select('*')
           .order('created_at', { ascending: false }),
+        supabase.from('cluster_feedback').select('cluster_id, feedback_id'),
       ])
 
       if (cancelled) return
 
-      if (clustersRes.error || feedbackRes.error || actionsRes.error || updatesRes.error) {
+      if (clustersRes.error || feedbackRes.error || actionsRes.error || updatesRes.error || membershipRes.error) {
         setError(
           friendlyError(
             clustersRes.error?.message ??
               feedbackRes.error?.message ??
               actionsRes.error?.message ??
               updatesRes.error?.message ??
+              membershipRes.error?.message ??
               'Failed to load dashboard data.',
           ),
         )
@@ -168,9 +181,13 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
       setFeedbacks(feedbackRes.data ?? [])
       setActions((actionsRes.data ?? []) as (Action & { issue_clusters: { title: string } })[])
       setUpdates((updatesRes.data ?? []) as ActionUpdate[])
+      setMembershipRows(membershipRes.data ?? [])
       // Analysis rows are supplementary: any failure here returns an empty
       // list and leaves the rest of the dashboard fully usable.
-      setAnalyses(await loadAdminAnalyses())
+      const [recentAnalyses, counts] = await Promise.all([loadAdminAnalyses(), loadAdminAnalysisCounts()])
+      if (cancelled) return
+      setAnalyses(recentAnalyses)
+      setAnalysisCounts(counts)
       setLoading(false)
     }
 
@@ -245,20 +262,17 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
     })
   }, [clusters, priorityFilter, search])
 
-  // ── Cluster evidence (feedback matching the selected cluster) ──────────
-  const clusterEvidence = useMemo(() => {
-    if (!selectedCluster) return []
-    const tag = selectedCluster.canonical_tag
-    const topic = selectedCluster.feedback_area ?? ''
-    return feedbacks
-      .filter(
-        (f) =>
-          f.topic?.toLowerCase().includes(tag.toLowerCase()) ||
-          f.feedback_area === topic ||
-          f.university_service === selectedCluster.university_service,
-      )
-      .slice(0, 5)
-  }, [selectedCluster, feedbacks])
+  // ── Cluster evidence (feedback actually linked to the cluster) ─────────
+  const membership = useMemo(() => buildClusterMembership(membershipRows), [membershipRows])
+
+  const linkedEvidence = useMemo(
+    () => (selectedCluster ? linkedClusterFeedback(selectedCluster.id, membership, feedbacks) : []),
+    [selectedCluster, membership, feedbacks],
+  )
+  const clusterEvidence = linkedEvidence.slice(0, 5)
+  const selectedSharePercent = selectedCluster
+    ? clusterSharePercent(linkedEvidence.length, feedbacks.length)
+    : null
 
   // ── Priority reasons (built from cluster metadata) ─────────────────────
   const priorityReasons = useMemo(() => {
@@ -272,16 +286,14 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
     } else {
       reasons.push('Reports are improving')
     }
-    if (selectedCluster.feedback_share != null) {
-      reasons.push(
-        `Represents ${Math.round(selectedCluster.feedback_share * 100)}% of related feedback`,
-      )
+    if (selectedSharePercent != null) {
+      reasons.push(`Represents ${selectedSharePercent}% of all non-sensitive feedback`)
     }
     if (selectedCluster.ai_suggested_department) {
       reasons.push(`Affects ${selectedCluster.ai_suggested_department}`)
     }
     return reasons
-  }, [selectedCluster])
+  }, [selectedCluster, selectedSharePercent])
 
   // ── Handlers ────────────────────────────────────────────────────────────
   const showToast = useCallback((msg: string) => {
@@ -309,7 +321,9 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
   }, [])
 
   const refreshAnalyses = useCallback(async () => {
-    setAnalyses(await loadAdminAnalyses())
+    const [recentAnalyses, counts] = await Promise.all([loadAdminAnalyses(), loadAdminAnalysisCounts()])
+    setAnalyses(recentAnalyses)
+    setAnalysisCounts(counts)
   }, [])
 
   // Retries are permitted only for pending/failed outcomes that have not
@@ -570,7 +584,8 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
           <div className="flex items-center justify-between border-b border-border px-5 py-[18px]">
             <h3 className="m-0 text-[19px] text-navy">Recent AI Feedback Analysis</h3>
             <span className="text-sm font-semibold text-muted">
-              {analyses.length} {analyses.length === 1 ? 'record' : 'records'}
+              Latest {analyses.length} {analyses.length === 1 ? 'record' : 'records'}
+              {analyses.length >= RECENT_ADMIN_ANALYSES_LIMIT ? ` (showing up to ${RECENT_ADMIN_ANALYSES_LIMIT})` : ''}
             </span>
           </div>
           <div className="grid gap-3 p-5">
@@ -842,7 +857,7 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
         <div className="grid gap-5">
           <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Institutional report summary">
             <MetricCard icon={<FileText className="h-5 w-5" />} label="Total Feedback" value={feedbacks.length} iconBg="bg-soft-blue" iconColour="text-ocean" />
-            <MetricCard icon={<CheckCircle className="h-5 w-5" />} label="AI Analysed" value={analyses.filter((analysis) => analysis.status === 'completed').length} iconBg="bg-soft-teal" iconColour="text-teal-dark" />
+            <MetricCard icon={<CheckCircle className="h-5 w-5" />} label="AI Analysed" value={analysisCounts ? analysisCounts.completed : '—'} iconBg="bg-soft-teal" iconColour="text-teal-dark" />
             <MetricCard icon={<Clock className="h-5 w-5" />} label="Active Actions" value={metrics.actionsInProgress} iconBg="bg-soft-amber" iconColour="text-warning" />
             <MetricCard icon={<Flag className="h-5 w-5" />} label="Published Updates" value={updates.filter((update) => update.is_published).length} iconBg="bg-soft-red" iconColour="text-danger" />
           </section>
@@ -888,10 +903,15 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
             <section className="overflow-hidden rounded-xl border border-border bg-white">
               <div className="border-b border-border px-5 py-[18px]"><h3 className="m-0 text-[19px] text-navy">AI Analysis Coverage</h3></div>
               <div className="grid gap-4 p-5">
-                {(['completed', 'processing', 'pending', 'failed'] as const).map((status) => {
-                  const count = analyses.filter((analysis) => analysis.status === status).length
-                  return <ProgressBar key={status} label={status.charAt(0).toUpperCase() + status.slice(1)} value={feedbacks.length ? Math.round((count / feedbacks.length) * 100) : 0} valueText={`${count} records`} />
-                })}
+                {analysisCounts ? (['completed', 'processing', 'pending', 'failed'] as const).map((status) => {
+                  const count = analysisCounts[status]
+                  return <ProgressBar key={status} label={status.charAt(0).toUpperCase() + status.slice(1)} value={feedbacks.length ? Math.round((count / feedbacks.length) * 100) : 0} valueText={`${count} of ${feedbacks.length} submissions`} />
+                }) : <p className="text-sm text-muted">Analysis totals are unavailable right now.</p>}
+                {analysisCounts && feedbacks.length > 0 && (
+                  <p className="text-xs text-muted">
+                    {Math.max(feedbacks.length - Object.values(analysisCounts).reduce((sum, count) => sum + count, 0), 0)} non-sensitive submissions have no analysis record yet.
+                  </p>
+                )}
                 <p className="text-xs leading-relaxed text-muted">AI recommendations are suggestions and remain subject to authorised human review.</p>
               </div>
             </section>
@@ -962,10 +982,15 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
               </div>
             </div>
 
-            {/* Evidence */}
-            {clusterEvidence.length > 0 && (
+            {/* Evidence: only submissions linked to this cluster */}
+            {clusterEvidence.length > 0 ? (
               <>
                 <h4 className="text-ocean">Supporting multilingual evidence</h4>
+                <p className="text-xs text-muted">
+                  Showing {clusterEvidence.length} of {linkedEvidence.length} linked{' '}
+                  {linkedEvidence.length === 1 ? 'submission' : 'submissions'}
+                  {selectedSharePercent != null ? ` (${selectedSharePercent}% of all non-sensitive feedback)` : ''}.
+                </p>
                 {clusterEvidence.map((ev) => (
                   <EvidenceQuote
                     key={ev.id}
@@ -974,6 +999,8 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
                   />
                 ))}
               </>
+            ) : (
+              <p className="text-sm text-muted">No linked submissions are available for this cluster yet.</p>
             )}
 
             {/* Priority reasons */}

@@ -372,6 +372,7 @@ export interface Database {
       extracted_issues_for_teacher: { Row: TeacherExtractedIssueRow }
       clusters_for_teacher: { Row: TeacherClusterRow }
       feedback_analysis_for_teacher: { Row: TeacherAnalysisRow }
+      cluster_feedback_for_teacher: { Row: { cluster_id: string; feedback_id: string } }
     }
     Functions: {
       submit_feedback: {
