@@ -104,7 +104,10 @@ export function buildProviderRequest(
     // Groq-hosted Qwen reasoning can consume the entire output allowance
     // before producing the required JSON, which Groq reports as
     // json_validate_failed. Classification does not need chain-of-thought.
-    ...(config.provider === 'groq' ? { reasoning_effort: 'none' } : {}),
+    // GPT-OSS models cannot turn reasoning off, so they use the lowest level.
+    ...(config.provider === 'groq'
+      ? { reasoning_effort: config.model.startsWith('openai/gpt-oss') ? 'low' : 'none' }
+      : {}),
     messages: [
       { role: 'system', content: SYSTEM_PROMPT },
       { role: 'user', content: JSON.stringify(buildUserPayload(context)) },

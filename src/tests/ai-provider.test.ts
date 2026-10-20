@@ -92,6 +92,13 @@ describe('buildProviderRequest', () => {
     expect(body.reasoning_effort).toBe('none')
   })
 
+  it('uses low reasoning for Groq GPT-OSS models, which cannot disable it', () => {
+    const body = JSON.parse(
+      buildProviderRequest({ ...CONFIG, provider: 'groq', model: 'openai/gpt-oss-120b' }, CONTEXT).body,
+    )
+    expect(body.reasoning_effort).toBe('low')
+  })
+
   it('includes prompt-injection resistance in the system prompt', () => {
     const body = JSON.parse(buildProviderRequest(CONFIG, CONTEXT).body)
     const system = body.messages[0].content as string
