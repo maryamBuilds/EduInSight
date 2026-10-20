@@ -51,6 +51,8 @@ export interface RegisterData {
   email: string
   password: string
   institutionId: string
+  /** Institution name exactly as the student typed it. */
+  institutionName: string
   programme: string
 }
 
@@ -256,6 +258,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         data: {
           full_name: data.fullName,
           institution_id: data.institutionId,
+          institution_name: data.institutionName,
           programme: data.programme,
           avatar_initials: data.fullName
             .split(/\s+/)
