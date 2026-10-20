@@ -49,30 +49,30 @@ WHERE feedback_area = 'Sensitive or serious concern'
   AND is_sensitive = false;
 
 -- Sensitive feedback must not count as, or be quoted as, ordinary cluster
--- evidence. Remove its links, then recount the affected clusters in a
--- separate statement so the count sees the deletion.
-CREATE TEMPORARY TABLE sensitive_link_clusters AS
-SELECT DISTINCT link.cluster_id
-FROM public.cluster_feedback link
-INNER JOIN public.feedback feedback ON feedback.id = link.feedback_id
-WHERE feedback.is_sensitive = true;
-
-DELETE FROM public.cluster_feedback link
-USING public.feedback feedback
-WHERE feedback.id = link.feedback_id
-  AND feedback.is_sensitive = true;
-
+-- evidence. Recount the affected clusters without it first, then remove its
+-- links. (No temporary table: the Supabase SQL Editor may not keep one
+-- between statements.)
 UPDATE public.issue_clusters cluster
 SET
   report_count = (
     SELECT pg_catalog.count(DISTINCT link.feedback_id)::integer
     FROM public.cluster_feedback link
+    INNER JOIN public.feedback feedback ON feedback.id = link.feedback_id
     WHERE link.cluster_id = cluster.id
+      AND feedback.is_sensitive = false
   ),
   updated_at = pg_catalog.now()
-WHERE cluster.id IN (SELECT affected.cluster_id FROM sensitive_link_clusters affected);
+WHERE cluster.id IN (
+  SELECT link.cluster_id
+  FROM public.cluster_feedback link
+  INNER JOIN public.feedback feedback ON feedback.id = link.feedback_id
+  WHERE feedback.is_sensitive = true
+);
 
-DROP TABLE sensitive_link_clusters;
+DELETE FROM public.cluster_feedback link
+USING public.feedback feedback
+WHERE feedback.id = link.feedback_id
+  AND feedback.is_sensitive = true;
 
 -- ============================================================================
 -- 3. Restricted admin queue, scoped to the caller's institution

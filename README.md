@@ -51,7 +51,7 @@ The analysis service produces a detected language, English summary, category, se
 
 ### Provider disclosure
 
-The team-confirmed live deployment uses **Qwen 3.6 27B served through the Groq API**, with model identifier **`qwen/qwen3.6-27b`**.
+The team-confirmed live deployment uses **Qwen 3.8 27B served through the Groq API**, with model identifier **`qwen/qwen3.8-27b`**.
 
 - **Provider/API platform:** Groq.
 - **Integration:** Groq's OpenAI-compatible chat-completions API, called server-side through the Supabase `analyze-feedback` Edge Function.
@@ -65,7 +65,7 @@ This deployment uses Groq, not Alibaba Cloud Model Studio. The provider adapter 
 | --- | --- |
 | Interface | React 18, TypeScript, Vite, Tailwind CSS, React Router, Lucide React icons |
 | Authentication and data | Supabase Auth, PostgreSQL, Row Level Security, database views and RPC functions |
-| AI orchestration | Supabase Edge Function using Deno; Qwen 3.6 27B served through the Groq API (`qwen/qwen3.6-27b`) |
+| AI orchestration | Supabase Edge Function using Deno; Qwen 3.8 27B served through the Groq API (`qwen/qwen3.8-27b`) |
 | Frontend hosting | Vercel |
 | Quality checks | Vitest, ESLint, TypeScript and Vite production build |
 
@@ -130,7 +130,7 @@ Deploy the complete [`supabase/functions/analyze-feedback/`](supabase/functions/
 | `AI_PROVIDER` | Set to `groq` for the confirmed live configuration and Groq-specific request handling. The source defaults this label to `qwen` when omitted, so configure it explicitly. |
 | `AI_API_KEY` | Private provider API credential. |
 | `AI_BASE_URL` | Compatible API base URL; the function appends `/chat/completions`. |
-| `AI_MODEL` | The confirmed live model is `qwen/qwen3.6-27b`. No model is selected by default; verify availability for your own provider account. |
+| `AI_MODEL` | The confirmed live model is `qwen/qwen3.8-27b`. No model is selected by default; verify availability for your own provider account. |
 | `ALLOWED_ORIGINS` | Comma-separated exact frontend origins, including local development origins if needed. |
 
 The function also uses hosted Supabase runtime values `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. Keep privileged values server-side. The provider must support the request's structured JSON response format and configured options.
@@ -215,7 +215,7 @@ Built by **Sajda Maryam and Fatima Sahar** for the **Alibaba Cloud AI Hackathon 
 
 - **AI-assisted development:** Qoder and ChatGPT/Codex assisted with development, debugging, review, documentation and presentation preparation. Product scope, integration choices, review and submission responsibility remain with the team.
 - **Open-source components:** React, React DOM, React Router, TypeScript, Vite, Tailwind CSS, Lucide React, Supabase JavaScript client, Vitest, ESLint and supporting build/type packages. Direct dependencies appear in [`package.json`](package.json), with resolved dependencies in [`package-lock.json`](package-lock.json). Their respective licences and notices continue to apply.
-- **Services and model:** Supabase provides authentication, database and Edge Function infrastructure; Vercel hosts the frontend. The live deployment uses **Qwen 3.6 27B served through the Groq API** (`qwen/qwen3.6-27b`). We acknowledge Qwen as the model family and Groq as the inference API platform; the team did not train this model. The API key is managed through Supabase Edge Function Secrets.
+- **Services and model:** Supabase provides authentication, database and Edge Function infrastructure; Vercel hosts the frontend. The live deployment uses **Qwen 3.8 27B served through the Groq API** (`qwen/qwen3.8-27b`). We acknowledge Qwen as the model family and Groq as the inference API platform; the team did not train this model. The API key is managed through Supabase Edge Function Secrets.
 - **References:** Setup instructions link to official Supabase documentation. Original planning material is retained in `docs/` and `wireframes/`. Any additional borrowed code, assets or datasets introduced later must be credited with sources and applicable licences.
 
 The repository does not currently include a project-wide licence file. Public visibility alone is not an open-source licence grant; contact the team through the repository before reuse beyond applicable permissions. Third-party components retain their own licences.
