@@ -98,7 +98,7 @@ export default function Login() {
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center gap-2 rounded-[9px] bg-teal py-4 font-bold text-white shadow-[0_8px_20px_rgba(42,157,143,0.22)] transition-all hover:-translate-y-px hover:bg-teal-dark disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-[9px] bg-teal-dark py-4 font-bold text-white shadow-[0_8px_20px_rgba(42,157,143,0.22)] transition-all hover:-translate-y-px hover:bg-ocean disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading && (
             <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />

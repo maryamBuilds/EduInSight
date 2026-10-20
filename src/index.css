@@ -5,7 +5,7 @@
   Navy:   #0B1F33
   Ocean:  #12344D
   Teal:   #2A9D8F
-  Teal-dark: #21867B
+  Teal-dark: #1E7A70 (darkened slightly from #21867B for WCAG AA text contrast)
   Aqua:   #76C7C0
   Ivory:  #F7F4ED
 */
@@ -14,12 +14,12 @@
   --color-navy: #0B1F33;
   --color-ocean: #12344D;
   --color-teal: #2A9D8F;
-  --color-teal-dark: #21867B;
+  --color-teal-dark: #1E7A70;
   --color-aqua: #76C7C0;
   --color-ivory: #F7F4ED;
 
   --color-text: #17212B;
-  --color-muted: #66727D;
+  --color-muted: #5C6873;
   --color-border: #DDD6C8;
 
   --color-soft-teal: #E6F4F1;

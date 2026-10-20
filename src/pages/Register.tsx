@@ -6,6 +6,11 @@ import { Loader2, AlertCircle, CheckCircle } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import type { Institution } from '@/lib/types'
 
+/** Compare institution names without case or spacing differences. */
+function normaliseName(value: string) {
+  return value.trim().replace(/\s+/g, ' ').toLowerCase()
+}
+
 /**
  * Student self-registration page.
  * The database trigger forces role = 'student'; users cannot select a role.
@@ -20,7 +25,7 @@ export default function Register() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [programme, setProgramme] = useState('')
-  const [institutionId, setInstitutionId] = useState('')
+  const [institutionName, setInstitutionName] = useState('')
   const [institutions, setInstitutions] = useState<Institution[]>([])
   const [institutionsLoading, setInstitutionsLoading] = useState(true)
   const [customProgramme, setCustomProgramme] = useState('')
@@ -68,8 +73,14 @@ export default function Register() {
       setError('Passwords do not match.')
       return
     }
-    if (!institutionId) {
-      setError('Please select your educational institution.')
+    const typedInstitution = normaliseName(institutionName)
+    if (!typedInstitution) {
+      setError('Please enter your educational institution.')
+      return
+    }
+    const institution = institutions.find((item) => normaliseName(item.name) === typedInstitution)
+    if (!institution) {
+      setError(`"${institutionName.trim()}" is not registered with EduInSight yet. Check the spelling, or choose one of the suggested names.`)
       return
     }
     if (!programme) {
@@ -86,7 +97,7 @@ export default function Register() {
       fullName: fullName.trim(),
       email: email.trim(),
       password,
-      institutionId,
+      institutionId: institution.id,
       programme: programme === 'Other programme' ? customProgramme.trim() : programme,
     })
 
@@ -194,20 +205,24 @@ export default function Register() {
           <label htmlFor="institution" className="font-bold text-text">
             Educational institution
           </label>
-          <select
+          <input
             id="institution"
-            value={institutionId}
-            onChange={(e) => setInstitutionId(e.target.value)}
+            type="text"
+            value={institutionName}
+            onChange={(e) => setInstitutionName(e.target.value)}
+            list="institution-options"
+            placeholder={institutionsLoading ? 'Loading institutions…' : 'Type your university or college name'}
             required
-            disabled={institutionsLoading}
-            className="w-full rounded-[9px] border border-[#C9D2D5] bg-[#FCFCFA] px-4 py-3.5 text-text transition-colors focus:border-teal focus:shadow-[0_0_0_4px_rgba(42,157,143,0.12)] focus:outline-none disabled:cursor-wait disabled:bg-gray-100"
-          >
-            <option value="">{institutionsLoading ? 'Loading institutions…' : 'Select your institution'}</option>
+            autoComplete="organization"
+            aria-describedby="institution-hint"
+            className="w-full rounded-[9px] border border-[#C9D2D5] bg-[#FCFCFA] px-4 py-3.5 text-text transition-colors focus:border-teal focus:shadow-[0_0_0_4px_rgba(42,157,143,0.12)] focus:outline-none"
+          />
+          <datalist id="institution-options">
             {institutions.map((institution) => (
-              <option key={institution.id} value={institution.id}>{institution.name}</option>
+              <option key={institution.id} value={institution.name} />
             ))}
-          </select>
-          <small className="text-xs text-muted">Your institution will be saved with your student profile.</small>
+          </datalist>
+          <small id="institution-hint" className="text-xs text-muted">Start typing and pick your institution from the suggestions. It is saved with your student profile.</small>
         </div>
 
         <div className="mb-5 grid gap-2">
@@ -300,7 +315,7 @@ export default function Register() {
         <button
           type="submit"
           disabled={loading}
-          className="mt-2 flex w-full items-center justify-center gap-2 rounded-[9px] bg-teal py-4 font-bold text-white shadow-[0_8px_20px_rgba(42,157,143,0.22)] transition-all hover:-translate-y-px hover:bg-teal-dark disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-2 flex w-full items-center justify-center gap-2 rounded-[9px] bg-teal-dark py-4 font-bold text-white shadow-[0_8px_20px_rgba(42,157,143,0.22)] transition-all hover:-translate-y-px hover:bg-ocean disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading && (
             <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />

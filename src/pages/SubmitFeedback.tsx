@@ -56,11 +56,13 @@ const inputClass =
   'w-full rounded-[9px] border border-[#C9D2D5] bg-[#FCFCFA] px-3.5 py-3 text-text outline-none transition focus:border-teal focus:ring-4 focus:ring-teal/10 disabled:cursor-not-allowed disabled:bg-gray-100'
 
 function Field({
+  id,
   label,
   children,
   hint,
   required,
 }: {
+  id: string
   label: string
   children: React.ReactNode
   hint?: string
@@ -68,14 +70,47 @@ function Field({
 }) {
   return (
     <div className="grid gap-2">
-      <span className="font-bold text-text">
-        {label}{required && <span className="ml-1 text-danger">*</span>}
-      </span>
+      <label htmlFor={id} className="font-bold text-text">
+        {label}
+        {required ? <span className="ml-1 text-danger" aria-hidden="true">*</span> : <span className="ml-1 font-normal text-muted">(optional)</span>}
+      </label>
       {children}
-      {hint && <small className="text-xs leading-relaxed text-muted">{hint}</small>}
+      {hint && <small id={`${id}-hint`} className="text-xs leading-relaxed text-muted">{hint}</small>}
     </div>
   )
 }
+
+/** Numbered form section, so the student can see how much is left. */
+function FormSection({
+  number,
+  title,
+  description,
+  children,
+}: {
+  number: number
+  title: string
+  description?: string
+  children: React.ReactNode
+}) {
+  const headingId = `section-${number}-heading`
+  return (
+    <section aria-labelledby={headingId} className="border-t border-border pt-6 first:border-t-0 first:pt-0">
+      <div className="mb-4 flex items-start gap-3">
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-navy text-sm font-bold text-white" aria-hidden="true">
+          {number}
+        </span>
+        <div>
+          <h3 id={headingId} className="text-lg font-bold text-navy">{title}</h3>
+          {description && <p className="mt-0.5 text-sm leading-relaxed text-muted">{description}</p>}
+        </div>
+      </div>
+      <div className="grid gap-5 sm:pl-11">{children}</div>
+    </section>
+  )
+}
+
+const SEMESTER_STAGES = Array.from({ length: 10 }, (_, index) => `Semester ${index + 1}`)
+const YEAR_STAGES = Array.from({ length: 5 }, (_, index) => `Year ${index + 1}`)
 
 export default function SubmitFeedback() {
   const { profile } = useAuth()
@@ -128,9 +163,22 @@ export default function SubmitFeedback() {
         setDepartments((departmentResult.data ?? []) as Department[])
         setCourses((courseResult.data ?? []) as Course[])
         setSections((sectionResult.data ?? []) as CourseSection[])
-        if ((departmentResult.data ?? []).length === 0) {
+        const loadedDepartments = (departmentResult.data ?? []) as Department[]
+        if (loadedDepartments.length === 0) {
           setError('No departments are configured in Supabase yet. The demonstration catalogue must be added before feedback can be submitted.')
         }
+        // Prefill details the student already gave us so the form starts at
+        // the feedback itself. Every prefilled value stays editable.
+        const knownDepartment = loadedDepartments.find((item) => item.id === profile.department_id)
+        const defaultDepartmentId = knownDepartment?.id ?? (loadedDepartments.length === 1 ? loadedDepartments[0].id : '')
+        const knownStage = profile.study_structure && profile.study_stage
+          && (profile.study_structure === 'semester' ? SEMESTER_STAGES : YEAR_STAGES).includes(profile.study_stage)
+        setForm((current) => ({
+          ...current,
+          departmentId: current.departmentId || defaultDepartmentId,
+          studyStructure: current.studyStructure || (knownStage && profile.study_structure ? profile.study_structure : ''),
+          studyStage: current.studyStage || (knownStage && profile.study_stage ? profile.study_stage : ''),
+        }))
       }
       setCatalogLoading(false)
     }
@@ -141,7 +189,7 @@ export default function SubmitFeedback() {
       window.clearTimeout(timeout)
       controller.abort()
     }
-  }, [profile?.institution_id])
+  }, [profile?.institution_id, profile?.department_id, profile?.study_structure, profile?.study_stage])
 
   const filteredCourses = useMemo(
     () => courses.filter(
@@ -158,11 +206,6 @@ export default function SubmitFeedback() {
   const selectedDepartment = departments.find((item) => item.id === form.departmentId)
   const selectedCourse = courses.find((item) => item.id === form.courseId)
   const selectedSection = sections.find((item) => item.id === form.courseSectionId)
-  const availableStages = form.studyStructure === 'semester'
-    ? Array.from({ length: 10 }, (_, index) => `Semester ${index + 1}`)
-    : form.studyStructure === 'year'
-      ? Array.from({ length: 5 }, (_, index) => `Year ${index + 1}`)
-      : []
   const availableFeedbackAreas = form.universityService
     ? FEEDBACK_AREAS_BY_SERVICE[
       form.universityService as keyof typeof FEEDBACK_AREAS_BY_SERVICE
@@ -187,15 +230,14 @@ export default function SubmitFeedback() {
 
   const validate = () => {
     if (!profile?.programme) return 'Your student profile is missing programme information.'
-    if (!form.departmentId) return 'Please select a department.'
-    if (!form.studyStructure) return 'Please select your study structure.'
-    if (!form.studyStage) return 'Please select your current semester or year.'
-    if (!form.universityService) return 'Please select a university service.'
-    if (!form.feedbackArea) return 'Please select a specific feedback area.'
-    if (form.feedbackTypes.length === 0) return 'Please select at least one feedback type.'
     if (form.originalText.trim().length < 20) {
-      return 'Please describe the issue in at least 20 characters.'
+      return 'Please describe what happened in at least 20 characters.'
     }
+    if (form.feedbackTypes.length === 0) return 'Please choose at least one type of feedback.'
+    if (!form.departmentId) return 'Please select your department.'
+    if (!form.studyStructure || !form.studyStage) return 'Please select your current semester or year.'
+    if (!form.universityService) return 'Please choose which university service this is about.'
+    if (!form.feedbackArea) return 'Please choose the specific area.'
     if (form.courseId === 'custom' && !form.customCourseName.trim()) {
       return 'Please enter the relevant course name.'
     }
@@ -302,7 +344,13 @@ export default function SubmitFeedback() {
   }
 
   const reset = () => {
-    setForm(EMPTY_FORM)
+    // Keep the study details prefilled from the profile; clear everything else.
+    setForm((current) => ({
+      ...EMPTY_FORM,
+      departmentId: current.departmentId,
+      studyStructure: current.studyStructure,
+      studyStage: current.studyStage,
+    }))
     setError('')
   }
 
@@ -310,7 +358,7 @@ export default function SubmitFeedback() {
 
   return (
     <div className="mx-auto max-w-[1120px]">
-      <ol className="mb-5 flex items-center justify-center gap-3 overflow-x-auto rounded-xl border border-border bg-white px-5 py-4" aria-label="Submission progress">
+      <ol tabIndex={0} className="mb-5 flex items-center justify-center gap-3 overflow-x-auto rounded-xl border border-border bg-white px-5 py-4" aria-label="Submission progress">
         {['Write Feedback', 'Review', 'Submitted'].map((label, index) => (
           <li key={label} className="flex shrink-0 items-center gap-3">
             {index > 0 && <span className="h-0.5 w-8 bg-border sm:w-14" aria-hidden="true" />}
@@ -330,211 +378,229 @@ export default function SubmitFeedback() {
       )}
 
       {step === 'write' && (
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_330px]">
-          <form onSubmit={review} className="rounded-[14px] border border-border bg-white p-7 max-sm:p-4">
-            <h2 className="text-[23px] font-bold text-navy">Tell us about your experience</h2>
-            <p className="mb-6 mt-2 leading-relaxed text-muted">
-              Provide enough context to help the responsible person understand what the problem is and where it occurs.
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <form onSubmit={review} noValidate className="rounded-[14px] border border-border bg-white p-7 max-sm:p-4" aria-labelledby="feedback-form-heading">
+            <h2 id="feedback-form-heading" className="text-[24px] font-bold text-navy">Share your feedback</h2>
+            <p className="mb-6 mt-1 leading-relaxed text-muted">
+              Submitting as {profile?.programme ?? 'a student'}
+              {institution ? ` at ${institution.name}` : ''}. Fields marked <span className="text-danger" aria-hidden="true">*</span><span className="sr-only">with an asterisk</span> are required.
             </p>
-            <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="University">
-                <input value={institution?.name ?? 'Institution unavailable'} readOnly className={`${inputClass} bg-[#EEF3F2] text-muted`} />
-              </Field>
-              <Field label="Department" required>
-                <select
-                  value={form.departmentId}
-                  onChange={(event) => {
-                    setForm((current) => ({ ...current, departmentId: event.target.value, courseId: '', courseSectionId: '', customCourseName: '' }))
-                    setError('')
-                  }}
-                  disabled={catalogLoading}
-                  className={inputClass}
-                >
-                  <option value="">{catalogLoading ? 'Loading departments…' : 'Select department'}</option>
-                  {departments.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
-                </select>
-              </Field>
-              <Field label="Degree programme">
-                <input value={profile?.programme ?? ''} readOnly className={`${inputClass} bg-[#EEF3F2] text-muted`} />
-              </Field>
-              <Field label="Study structure" required>
-                <select
-                  value={form.studyStructure}
-                  onChange={(event) => setForm((current) => ({
-                    ...current,
-                    studyStructure: event.target.value as FormState['studyStructure'],
-                    studyStage: '',
-                    courseId: '',
-                    courseSectionId: '',
-                    customCourseName: '',
-                  }))}
-                  className={inputClass}
-                >
-                  <option value="">Select semester or year system</option>
-                  <option value="semester">Semester system</option>
-                  <option value="year">Year system</option>
-                </select>
-              </Field>
-              <Field label="Current semester/year" required>
-                <select
-                  value={form.studyStage}
-                  onChange={(event) => setForm((current) => ({
-                    ...current,
-                    studyStage: event.target.value,
-                    courseId: '',
-                    courseSectionId: '',
-                    customCourseName: '',
-                  }))}
-                  disabled={!form.studyStructure}
-                  className={inputClass}
-                >
-                  <option value="">
-                    {form.studyStructure ? 'Select current stage' : 'Select study structure first'}
-                  </option>
-                  {availableStages.map((stage) => <option key={stage}>{stage}</option>)}
-                </select>
-              </Field>
-              <Field label="University service" required>
-                <select
-                  value={form.universityService}
-                  onChange={(event) => setForm((current) => ({
-                    ...current,
-                    universityService: event.target.value,
-                    feedbackArea: '',
-                    courseId: '',
-                    courseSectionId: '',
-                    customCourseName: '',
-                  }))}
-                  className={inputClass}
-                >
-                  <option value="">Select service</option>
-                  {UNIVERSITY_SERVICES.map((item) => <option key={item}>{item}</option>)}
-                </select>
-              </Field>
-              <div className="sm:col-span-2">
-              <Field label="Specific feedback area" required>
-                <select
-                  value={form.feedbackArea}
-                  onChange={(event) => update('feedbackArea', event.target.value)}
-                  disabled={!form.universityService}
-                  className={inputClass}
-                >
-                  <option value="">
-                    {form.universityService ? 'Select the specific concern' : 'Select university service first'}
-                  </option>
-                  {availableFeedbackAreas.map((item) => <option key={item}>{item}</option>)}
-                </select>
-              </Field>
-              </div>
-              {courseRelevant && (
-              <div className="sm:col-span-2">
-              <Field label="Relevant course, if applicable" hint="Choose a configured course or enter a course that is not listed.">
-                <select
-                  value={form.courseId}
-                  onChange={(event) => setForm((current) => ({ ...current, courseId: event.target.value, courseSectionId: '', customCourseName: '' }))}
-                  disabled={!form.departmentId || !form.studyStage}
-                  className={inputClass}
-                >
-                  <option value="">No specific course</option>
-                  {filteredCourses.map((item) => <option key={item.id} value={item.id}>{item.code ? `${item.code} — ` : ''}{item.name}</option>)}
-                  <option value="custom">Course not listed</option>
-                </select>
-              </Field>
-              </div>
-              )}
-              {courseRelevant && form.courseId && form.courseId !== 'custom' && (
-              <Field
-                label="Section, if applicable"
-                hint="Your class group, such as Section A, Section B, Morning or Evening."
-              >
-                <select value={form.courseSectionId} onChange={(event) => update('courseSectionId', event.target.value)} disabled={!form.courseId || form.courseId === 'custom'} className={inputClass}>
-                  <option value="">No specific section</option>
-                  {filteredSections.map((item) => <option key={item.id} value={item.id}>{item.section_name} · {item.semester}</option>)}
-                </select>
-              </Field>
-              )}
-              {form.courseId === 'custom' && (
-                <div className="sm:col-span-2">
-                  <Field label="Course name" required>
-                    <input value={form.customCourseName} onChange={(event) => update('customCourseName', event.target.value)} className={inputClass} placeholder="Enter the relevant course name" />
-                  </Field>
-                </div>
-              )}
-              <div className="sm:col-span-2">
-                <Field label="Course name, topic or location, if required">
-                  <input value={form.topic} onChange={(event) => update('topic', event.target.value)} className={inputClass} placeholder="Example: Database Systems — Database Normalization, Main Library or Computer Lab 2" />
-                </Field>
-              </div>
-              <div className="sm:col-span-2">
-                <Field label="What type of feedback are you sharing?" required>
-                  <div className="flex flex-wrap gap-2">
-                    {FEEDBACK_TYPES.map((item) => (
-                      <label key={item} className={`cursor-pointer rounded-full border px-3 py-2 text-sm transition ${form.feedbackTypes.includes(item) ? 'border-teal bg-soft-teal font-bold text-teal-dark' : 'border-[#C9D2D5] bg-white text-text'}`}>
-                        <input type="checkbox" checked={form.feedbackTypes.includes(item)} onChange={() => toggleType(item)} className="sr-only" />
-                        {item}
-                      </label>
-                    ))}
-                  </div>
-                </Field>
-              </div>
-              <div className="sm:col-span-2">
-                <Field label="Describe your feedback" required>
-                  <div className="rounded-lg bg-soft-teal px-3 py-2.5 text-sm leading-relaxed text-ocean">
-                    You may write naturally in English, Urdu, Roman Urdu or mixed Urdu–English. Your original words will be preserved.
-                  </div>
+
+            <div className="grid gap-7">
+              <FormSection number={1} title="What happened?" description="Write naturally in English, Urdu, Roman Urdu or mixed Urdu–English. Your original words are kept exactly as written.">
+                <Field id="feedback-text" label="Your feedback" required hint="Say where it happens, what the difficulty is and, if you can, what would help.">
                   <textarea
+                    id="feedback-text"
                     dir="auto"
                     value={form.originalText}
                     onChange={(event) => update('originalText', event.target.value)}
                     maxLength={FEEDBACK_MAX_LENGTH}
                     rows={7}
-                    className={`${inputClass} resize-y leading-relaxed`}
-                    placeholder="Describe the exact academic or university problem you are experiencing…"
+                    required
+                    aria-describedby="feedback-text-hint feedback-text-count"
+                    className={`${inputClass} resize-y text-[17px] leading-relaxed`}
+                    placeholder="Example: Database ka lecture bohat fast hai, normalization ke examples zyada hon to samajh aa jaye."
                   />
-                  <span className="text-right text-xs text-muted">{form.originalText.length}/{FEEDBACK_MAX_LENGTH} characters</span>
                 </Field>
-              </div>
-              <div className="sm:col-span-2">
-                <Field label="Submission identity">
+                <span id="feedback-text-count" className="-mt-3 text-right text-xs text-muted">
+                  {form.originalText.length}/{FEEDBACK_MAX_LENGTH} characters
+                </span>
+                <fieldset>
+                  <legend className="mb-2 font-bold text-text">
+                    What kind of feedback is it?<span className="ml-1 text-danger" aria-hidden="true">*</span>
+                    <span className="ml-1 font-normal text-muted">Choose all that apply</span>
+                  </legend>
+                  <div className="flex flex-wrap gap-2">
+                    {FEEDBACK_TYPES.map((item) => {
+                      const checked = form.feedbackTypes.includes(item)
+                      return (
+                        <label key={item} className={`flex cursor-pointer items-center gap-1.5 rounded-full border px-3.5 py-2 text-sm transition focus-within:ring-4 focus-within:ring-teal/25 ${checked ? 'border-teal-dark bg-soft-teal font-bold text-teal-dark' : 'border-[#8A979E] bg-white text-text hover:border-teal-dark'}`}>
+                          <input type="checkbox" checked={checked} onChange={() => toggleType(item)} className="sr-only" />
+                          {checked && <Check className="h-4 w-4" aria-hidden="true" />}
+                          {item}
+                        </label>
+                      )
+                    })}
+                  </div>
+                </fieldset>
+              </FormSection>
+
+              <FormSection number={2} title="Your studies" description="Filled in from your profile where possible. Change anything that is out of date.">
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <Field id="department" label="Department" required>
+                    <select
+                      id="department"
+                      value={form.departmentId}
+                      onChange={(event) => {
+                        setForm((current) => ({ ...current, departmentId: event.target.value, courseId: '', courseSectionId: '', customCourseName: '' }))
+                        setError('')
+                      }}
+                      disabled={catalogLoading}
+                      required
+                      className={inputClass}
+                    >
+                      <option value="">{catalogLoading ? 'Loading departments…' : 'Select department'}</option>
+                      {departments.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                    </select>
+                  </Field>
+                  <Field id="study-stage" label="Current semester or year" required>
+                    <select
+                      id="study-stage"
+                      value={form.studyStructure && form.studyStage ? `${form.studyStructure}:${form.studyStage}` : ''}
+                      onChange={(event) => {
+                        const [structure = '', stage = ''] = event.target.value.split(':')
+                        setForm((current) => ({
+                          ...current,
+                          studyStructure: structure as FormState['studyStructure'],
+                          studyStage: stage,
+                          courseId: '',
+                          courseSectionId: '',
+                          customCourseName: '',
+                        }))
+                        setError('')
+                      }}
+                      required
+                      className={inputClass}
+                    >
+                      <option value="">Select semester or year</option>
+                      <optgroup label="Semester system">
+                        {SEMESTER_STAGES.map((stage) => <option key={stage} value={`semester:${stage}`}>{stage}</option>)}
+                      </optgroup>
+                      <optgroup label="Year system">
+                        {YEAR_STAGES.map((stage) => <option key={stage} value={`year:${stage}`}>{stage}</option>)}
+                      </optgroup>
+                    </select>
+                  </Field>
+                </div>
+              </FormSection>
+
+              <FormSection number={3} title="What is it about?" description="This sends your feedback to the right teacher or office.">
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <Field id="university-service" label="University service" required>
+                    <select
+                      id="university-service"
+                      value={form.universityService}
+                      onChange={(event) => setForm((current) => ({
+                        ...current,
+                        universityService: event.target.value,
+                        feedbackArea: '',
+                        courseId: '',
+                        courseSectionId: '',
+                        customCourseName: '',
+                      }))}
+                      required
+                      className={inputClass}
+                    >
+                      <option value="">Select service</option>
+                      {UNIVERSITY_SERVICES.map((item) => <option key={item}>{item}</option>)}
+                    </select>
+                  </Field>
+                  <Field id="feedback-area" label="Specific area" required>
+                    <select
+                      id="feedback-area"
+                      value={form.feedbackArea}
+                      onChange={(event) => update('feedbackArea', event.target.value)}
+                      disabled={!form.universityService}
+                      required
+                      className={inputClass}
+                    >
+                      <option value="">
+                        {form.universityService ? 'Select the specific area' : 'Choose a service first'}
+                      </option>
+                      {availableFeedbackAreas.map((item) => <option key={item}>{item}</option>)}
+                    </select>
+                  </Field>
+                </div>
+                {courseRelevant && (
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <Field id="course" label="Course" hint="Courses shown match your department and current semester or year.">
+                      <select
+                        id="course"
+                        value={form.courseId}
+                        onChange={(event) => setForm((current) => ({ ...current, courseId: event.target.value, courseSectionId: '', customCourseName: '' }))}
+                        disabled={!form.departmentId || !form.studyStage}
+                        aria-describedby="course-hint"
+                        className={inputClass}
+                      >
+                        <option value="">
+                          {!form.departmentId || !form.studyStage ? 'Set your department and semester first' : 'No specific course'}
+                        </option>
+                        {filteredCourses.map((item) => <option key={item.id} value={item.id}>{item.code ? `${item.code} — ` : ''}{item.name}</option>)}
+                        <option value="custom">Course not listed</option>
+                      </select>
+                    </Field>
+                    {form.courseId && form.courseId !== 'custom' && (
+                      <Field
+                        id="course-section"
+                        label="Section"
+                        hint="Choose your section so the teacher of that section can see and act on your feedback."
+                      >
+                        <select
+                          id="course-section"
+                          value={form.courseSectionId}
+                          onChange={(event) => update('courseSectionId', event.target.value)}
+                          aria-describedby="course-section-hint"
+                          className={inputClass}
+                        >
+                          <option value="">No specific section</option>
+                          {filteredSections.map((item) => <option key={item.id} value={item.id}>{item.section_name} · {item.semester}</option>)}
+                        </select>
+                      </Field>
+                    )}
+                    {form.courseId === 'custom' && (
+                      <Field id="custom-course" label="Course name" required>
+                        <input id="custom-course" value={form.customCourseName} onChange={(event) => update('customCourseName', event.target.value)} required className={inputClass} placeholder="Enter the relevant course name" />
+                      </Field>
+                    )}
+                  </div>
+                )}
+                <Field id="topic" label="Topic or location" hint="For example: Database Normalization, Main Library or Computer Lab 2.">
+                  <input id="topic" value={form.topic} onChange={(event) => update('topic', event.target.value)} aria-describedby="topic-hint" className={inputClass} />
+                </Field>
+              </FormSection>
+
+              <FormSection number={4} title="Who can see your name?">
+                <fieldset>
+                  <legend className="sr-only">Submission identity</legend>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {[
-                      { anonymous: true, title: 'Submit anonymously', text: 'Your identity will not appear in ordinary feedback analytics.' },
-                      { anonymous: false, title: 'Submit with my identity', text: 'Authorised staff may contact you for clarification.' },
+                      { anonymous: true, title: 'Submit anonymously', text: 'Your name does not appear in ordinary feedback analytics.' },
+                      { anonymous: false, title: 'Submit with my name', text: 'Authorised staff may contact you for clarification.' },
                     ].map((option) => (
-                      <label key={option.title} className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 ${form.isAnonymous === option.anonymous ? 'border-teal bg-soft-teal' : 'border-[#C9D2D5]'}`}>
-                        <input type="radio" name="identity" checked={form.isAnonymous === option.anonymous} onChange={() => update('isAnonymous', option.anonymous)} className="mt-1 accent-teal" />
+                      <label key={option.title} className={`flex cursor-pointer items-start gap-3 rounded-lg border p-4 focus-within:ring-4 focus-within:ring-teal/25 ${form.isAnonymous === option.anonymous ? 'border-teal-dark bg-soft-teal' : 'border-[#8A979E]'}`}>
+                        <input type="radio" name="identity" checked={form.isAnonymous === option.anonymous} onChange={() => update('isAnonymous', option.anonymous)} className="mt-1 accent-teal-dark" />
                         <span><strong className="block text-text">{option.title}</strong><small className="mt-1 block leading-relaxed text-muted">{option.text}</small></span>
                       </label>
                     ))}
                   </div>
-                </Field>
-              </div>
-              <div className="sm:col-span-2 rounded-r-lg border-l-4 border-teal bg-[#F5F8F7] p-3 text-sm leading-relaxed text-muted">
-                Do not include unnecessary personal information. Sensitive allegations are handled through a restricted institutional process.
-              </div>
+                </fieldset>
+                <p className="rounded-r-lg border-l-4 border-teal bg-[#F5F8F7] p-3 text-sm leading-relaxed text-muted">
+                  Do not include unnecessary personal information. Sensitive allegations are handled through a restricted institutional process.
+                </p>
+              </FormSection>
             </div>
-            <div className="mt-6 flex justify-end gap-3 border-t border-border pt-5">
-              <button type="button" onClick={reset} className="rounded-lg border border-border bg-white px-5 py-3 font-bold text-ocean hover:bg-gray-50">Clear Form</button>
-              <button type="submit" disabled={catalogLoading || departments.length === 0} className="rounded-lg bg-teal px-5 py-3 font-bold text-white shadow-md hover:bg-teal-dark disabled:cursor-not-allowed disabled:opacity-50">Review and Submit →</button>
+
+            <div className="mt-7 flex flex-wrap justify-end gap-3 border-t border-border pt-5">
+              <button type="button" onClick={reset} className="rounded-lg border border-border bg-white px-5 py-3 font-bold text-ocean hover:bg-gray-50">Clear form</button>
+              <button type="submit" disabled={catalogLoading || departments.length === 0} className="rounded-lg bg-teal-dark px-5 py-3 font-bold text-white shadow-md hover:bg-ocean disabled:cursor-not-allowed disabled:opacity-50">Review and submit →</button>
             </div>
           </form>
 
-          <aside className="h-fit rounded-[14px] border border-border bg-white p-[22px] lg:sticky lg:top-5">
-            <h2 className="text-xl font-bold text-navy">Writing useful feedback</h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted">Helpful feedback identifies the exact issue and explains how it affects learning or the student experience.</p>
-            <ul className="mt-4 list-disc space-y-2 pl-5 text-sm leading-relaxed text-text">
-              <li>Identify the relevant course, service or location.</li>
-              <li>Describe the exact difficulty or experience.</li>
-              <li>Explain where understanding or access breaks down.</li>
-              <li>Include a constructive suggestion where possible.</li>
+          <aside className="h-fit rounded-[14px] border border-border bg-white p-[22px] lg:sticky lg:top-5" aria-labelledby="tips-heading">
+            <h2 id="tips-heading" className="text-xl font-bold text-navy">Writing useful feedback</h2>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-text">
+              <li>Name the course, service or place.</li>
+              <li>Describe the exact difficulty.</li>
+              <li>Explain how it affects your learning.</li>
+              <li>Suggest what would help, if you can.</li>
             </ul>
             <div className="mt-5 rounded-lg bg-soft-blue p-4 text-sm leading-relaxed text-text">
-              <strong className="block text-ocean">Strong academic example</strong>
+              <strong className="block text-ocean">Example of clear feedback</strong>
               <p className="mb-0 mt-2 italic">
                 “Database Systems mein functional dependencies samajh aa rahi hain, lekin 3NF aur BCNF decomposition ke waqt candidate keys identify karna clear nahi. Ek complete relation ko step-by-step decompose karke explain kiya jaye.”
               </p>
             </div>
-            <div className="mt-4 rounded-lg bg-soft-amber p-3 text-xs leading-relaxed text-[#8A5A16]">
+            <div className="mt-4 rounded-lg bg-soft-amber p-3 text-xs leading-relaxed text-[#7A4D0F]">
               The demonstration catalogue is intentionally limited. Actual course options vary by university and programme.
             </div>
           </aside>
@@ -570,7 +636,7 @@ export default function SubmitFeedback() {
           </div>
           <div className="mt-6 flex flex-wrap justify-end gap-3 border-t border-border pt-5">
             <button type="button" onClick={() => setStep('write')} className="rounded-lg border border-border bg-white px-5 py-3 font-bold text-ocean hover:bg-gray-50">Edit Feedback</button>
-            <button type="button" onClick={() => void submit()} disabled={submitting} className="flex items-center gap-2 rounded-lg bg-teal px-5 py-3 font-bold text-white shadow-md hover:bg-teal-dark disabled:opacity-60">
+            <button type="button" onClick={() => void submit()} disabled={submitting} className="flex items-center gap-2 rounded-lg bg-teal-dark px-5 py-3 font-bold text-white shadow-md hover:bg-ocean disabled:opacity-60">
               {submitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
               {submitting ? 'Submitting…' : 'Submit Feedback'}
             </button>
@@ -590,7 +656,7 @@ export default function SubmitFeedback() {
             </div>
           )}
           <div className="mt-7 flex flex-wrap justify-center gap-3">
-            <Link to="/student/feedback" className="rounded-lg bg-teal px-5 py-3 font-bold text-white shadow-md hover:bg-teal-dark">View Status</Link>
+            <Link to="/student/feedback" className="rounded-lg bg-teal-dark px-5 py-3 font-bold text-white shadow-md hover:bg-ocean">View Status</Link>
             <Link to="/student" className="rounded-lg border border-border bg-white px-5 py-3 font-bold text-ocean hover:bg-gray-50">Return to Dashboard</Link>
           </div>
         </section>
