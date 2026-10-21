@@ -158,6 +158,7 @@ describe('validateProviderAnalysis', () => {
       keyTopics: ['Wi-Fi', 'library'],
       requiresHumanReview: false,
       confidence: 0.82,
+      seriousConcern: false,
     })
   })
 
@@ -177,6 +178,38 @@ describe('validateProviderAnalysis', () => {
     if (!result.ok) return
     expect(result.value.category).toBeNull()
     expect(result.value.requiresHumanReview).toBe(true)
+  })
+
+  it('flags a serious concern reported under an ordinary category', () => {
+    const result = validateProviderAnalysis({
+      ...VALID_PAYLOAD,
+      category: 'Teaching pace or explanation',
+      requires_human_review: false,
+      serious_concern: true,
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value.seriousConcern).toBe(true)
+    expect(result.value.requiresHumanReview).toBe(true)
+  })
+
+  it('treats the sensitive category as a serious concern', () => {
+    const result = validateProviderAnalysis({
+      ...VALID_PAYLOAD,
+      category: 'Sensitive or serious concern',
+      requires_human_review: false,
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value.seriousConcern).toBe(true)
+    expect(result.value.requiresHumanReview).toBe(true)
+  })
+
+  it('does not flag a serious concern unless the provider says so explicitly', () => {
+    for (const value of [false, 'true', 1, undefined]) {
+      const result = validateProviderAnalysis({ ...VALID_PAYLOAD, serious_concern: value })
+      expect(result.ok && result.value.seriousConcern).toBe(false)
+    }
   })
 
   it('drops an unknown responsible area without failing the analysis', () => {

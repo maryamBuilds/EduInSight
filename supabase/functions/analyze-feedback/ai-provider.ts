@@ -251,6 +251,11 @@ function buildUserPayload(context: ProviderRequestContext): Record<string, unkno
       responsible_area: 'best matching value from allowed_responsible_areas',
       key_topics: 'array of up to 8 short topic phrases',
       requires_human_review: 'true when the analysis is uncertain or needs staff judgement',
+      serious_concern:
+        'true when the text describes harassment, sexual misconduct, abuse, bullying or ragging, ' +
+        'threats, violence, discrimination, bribery, self-harm or suicide risk, or any other ' +
+        'safety concern, even if feedback_area is an ordinary area; otherwise false. ' +
+        'When true, category must be "Sensitive or serious concern"',
       confidence: 'number between 0 and 1',
     },
   }

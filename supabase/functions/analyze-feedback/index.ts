@@ -12,7 +12,10 @@
 //   - Feedback is read by ID server-side; the browser never supplies
 //     feedback text.
 //   - Sensitive feedback is never sent to the AI provider; it receives the
-//     safe sensitive_requires_human_review outcome instead.
+//     safe sensitive_requires_human_review outcome instead.  A database
+//     keyword screen restricts obvious serious concerns at submission, and
+//     an analysis that reports a serious concern restricts the feedback to
+//     the admin-only path when it is saved (migration 019).
 //   - The original feedback row is only ever updated on a SUCCESSFUL
 //     analysis and only while still in 'submitted' status, so no AI failure
 //     can alter, roll back, or remove the student's submission.
@@ -375,6 +378,7 @@ Deno.serve(async (req: Request) => {
         key_topics: analysis.keyTopics,
         requires_human_review: analysis.requiresHumanReview,
         confidence: analysis.confidence,
+        serious_concern: analysis.seriousConcern,
         error_code: null,
         attempts,
         completed_at: new Date().toISOString(),
@@ -402,6 +406,16 @@ Deno.serve(async (req: Request) => {
         .eq('id', feedbackId)
         .eq('status', 'submitted')
       if (feedbackError) safeLog(feedbackId, 'feedback-status', feedbackError.message)
+    }
+
+    // A serious concern was restricted to the admin-only path by the database
+    // when the analysis was saved, so it is never clustered for teachers.
+    if (analysis.seriousConcern) {
+      return jsonResponse(
+        { feedbackId, status: 'completed', requiresHumanReview: true },
+        200,
+        headers,
+      )
     }
 
     // Clustering is a separate, idempotent database step. A clustering error

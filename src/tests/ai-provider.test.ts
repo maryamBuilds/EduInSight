@@ -118,6 +118,7 @@ describe('buildProviderRequest', () => {
     })
     expect(userMessage.allowed_categories).toContain('Technical access or system failure')
     expect(userMessage.allowed_responsible_areas).toContain('IT Department')
+    expect(userMessage.required_json_output.serious_concern).toMatch(/harassment/i)
 
     const serialized = request.body
     expect(serialized).not.toContain(CONFIG.apiKey)

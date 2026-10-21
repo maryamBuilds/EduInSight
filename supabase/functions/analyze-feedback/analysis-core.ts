@@ -43,6 +43,7 @@ export const ALLOWED_CATEGORIES = [
   'Suggestion for improvement',
   'Sensitive or serious concern',
 ] as const
+export const SENSITIVE_CATEGORY = 'Sensitive or serious concern'
 export const ALLOWED_RESPONSIBLE_AREAS = [
   'IT Department',
   'Examination Office',
@@ -193,6 +194,12 @@ export interface NormalisedAnalysis {
   keyTopics: string[]
   requiresHumanReview: boolean
   confidence: number | null
+  /**
+   * The text describes a serious or safety concern, whatever feedback area
+   * the student chose.  The database restricts such feedback to the
+   * admin-only path when the completed analysis is saved.
+   */
+  seriousConcern: boolean
 }
 
 export type ValidationResult =
@@ -239,9 +246,12 @@ export function validateProviderAnalysis(raw: unknown): ValidationResult {
     ? rawResponsibleArea
     : null
 
+  const seriousConcern =
+    record.serious_concern === true || category === SENSITIVE_CATEGORY
+
   let requiresHumanReview =
     typeof record.requires_human_review === 'boolean' ? record.requires_human_review : true
-  if (category === null) requiresHumanReview = true
+  if (category === null || seriousConcern) requiresHumanReview = true
 
   return {
     ok: true,
@@ -255,6 +265,7 @@ export function validateProviderAnalysis(raw: unknown): ValidationResult {
       keyTopics: normaliseKeyTopics(record.key_topics),
       requiresHumanReview,
       confidence: normaliseConfidence(record.confidence),
+      seriousConcern,
     },
   }
 }
