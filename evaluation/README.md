@@ -41,24 +41,37 @@ Case identifiers are kept outside the feedback text so they cannot influence the
 ```sh
 # Rules baseline: what a plain form reports without AI. No API key needed.
 npm run eval:baseline
+```
 
-# The real analysis pipeline (same prompt, request builder and validator as the Edge Function).
-# Create evaluation/.env (git-ignored) with:
-#   AI_PROVIDER=groq
-#   AI_BASE_URL=https://api.groq.com/openai/v1
-#   AI_MODEL=qwen/qwen3.6-27b
-#   AI_API_KEY=...your key...
-npm run eval:model
+### Real-model run (uses a separate Groq account)
 
-# Text-only run: hide the area the student picked, to test understanding of the text itself.
+Groq rate limits apply to the whole **organisation (account)**, not to each key, so a second key on the live site's account would spend the quota the demo needs. Use a **separate free Groq account** for evaluation:
+
+1. Sign up at [console.groq.com](https://console.groq.com) with a different email address from the live site's account.
+2. Open **API Keys**, choose **Create API Key**, name it `eduinsight-eval`, and copy it.
+3. In this repository, create `evaluation/.env` (it is git-ignored) containing:
+
+   ```dotenv
+   AI_PROVIDER=groq
+   AI_BASE_URL=https://api.groq.com/openai/v1
+   AI_MODEL=qwen/qwen3.8-27b
+   AI_API_KEY=paste-the-new-key-here
+   ```
+
+   Use the same `AI_MODEL` as the live site. Do not add `AI_FALLBACK_MODELS`: the runner ignores fallbacks so all results come from one model.
+4. Run `npm ci` once, then `npm run eval:model`. Node.js 22.6 or newer is needed.
+
+A full run is 88 calls, about 1K tokens each, spaced 9 seconds apart to stay under the free plan's tokens-per-minute limit: roughly 15 minutes and about 100K of the 200K daily tokens. If it stops after three failures in a row (usually a rate limit), run the same command again later; finished cases are kept and only the rest are retried. `--fresh` starts over.
+
+The text-only run hides the area the student picked, to test understanding of the words alone. Run it on another day, or after the first run, because two full runs come close to the daily token limit:
+
+```sh
 npm run eval:model -- --blind-area
 ```
 
-Other options: `--language roman_ur`, `--limit 8` (quick check), `--delay-ms 1500` (stay under provider rate limits), `--label my-run`.
+Other options: `--language roman_ur`, `--limit 8` (quick check), `--delay-ms 9000`, `--label my-run`.
 
-Each run writes `results/<label>/report.md`, `metrics.json` and `predictions.jsonl`. The API key is read only from the environment and is never written to results. Never commit `evaluation/.env`.
-
-Report both runs: the normal run shows the real product behaviour, and the `--blind-area` run shows how much the model understands from the student's words alone.
+Each run writes `results/<label>/report.md`, `metrics.json` and `predictions.jsonl` (`results/model/` by default). The API key is read only from the environment and is never written to results. Never commit `evaluation/.env`.
 
 ## Reading the baseline
 

@@ -8,8 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "test": "vitest run",
-    "eval:baseline": "node evaluation/run-eval.ts --system baseline",
-    "eval:model": "node --env-file=evaluation/.env evaluation/run-eval.ts --system model",
+    "eval:baseline": "node --experimental-strip-types evaluation/run-eval.ts --system baseline",
+    "eval:model": "node --experimental-strip-types --env-file=evaluation/.env evaluation/run-eval.ts --system model",
     "preview": "vite preview"
   },
   "dependencies": {
