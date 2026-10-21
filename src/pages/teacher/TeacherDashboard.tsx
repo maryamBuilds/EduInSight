@@ -211,25 +211,34 @@ export default function TeacherDashboard({
     return { totalFeedback, learningConcerns, highPriority, resolved }
   }, [feedbacks, clusters])
 
-  // ── Computed: trend bars (last 7 days) ──────────────────────────────────
+  // ── Computed: trend bars (last 7 days, oldest → today) ──────────────────
   const trendBars = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    const days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(today)
+      d.setDate(today.getDate() - (6 - i))
+      return d
+    })
     const counts = new Array<number>(7).fill(0)
-    const now = new Date()
     for (const f of feedbacks) {
-      const diff = Math.floor(
-        (now.getTime() - new Date(f.submitted_at).getTime()) / 86_400_000,
-      )
-      if (diff >= 0 && diff < 7) {
-        counts[new Date(f.submitted_at).getDay()]++
-      }
+      const submitted = new Date(f.submitted_at)
+      submitted.setHours(0, 0, 0, 0)
+      const index = 6 - Math.round((today.getTime() - submitted.getTime()) / 86_400_000)
+      if (index >= 0 && index < 7) counts[index]++
     }
-    const maxCount = Math.max(...counts, 1)
-    return counts.map((count, i) => ({
-      label: DAY_LABELS[i],
-      height: Math.round((count / maxCount) * 100),
-      count,
+    const maxCount = Math.max(...counts)
+    return days.map((d, i) => ({
+      label: i === 6 ? 'Today' : DAY_LABELS[d.getDay()],
+      date: d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }),
+      height: maxCount > 0 ? Math.round((counts[i] / maxCount) * 100) : 0,
+      count: counts[i],
+      isPeak: maxCount > 0 && counts[i] === maxCount,
     }))
   }, [feedbacks])
+
+  const trendTotal = trendBars.reduce((sum, bar) => sum + bar.count, 0)
+  const trendPeak = trendBars.find((bar) => bar.isPeak)
 
   // ── Computed: distribution by feedback area ─────────────────────────────
   const distributions = useMemo(() => {
@@ -599,16 +608,48 @@ export default function TeacherDashboard({
         {/* ── Feedback Trend ── */}
         {(view === 'overview' || view === 'insights' || view === 'feedback') && (
         <Panel title="Feedback Trend">
-          {/* Bar chart */}
-          <div className="flex items-end gap-3 border-b border-[#CCD6D9] pb-3" style={{ height: 185 }}>
+          {/* Bar chart: bars are scaled to the busiest day so differences stand out */}
+          <div className="mb-4 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+            <p className="text-sm text-muted">
+              <strong className="text-2xl text-navy">{trendTotal}</strong> in the last 7 days
+            </p>
+            {trendPeak && (
+              <p className="text-xs font-semibold text-teal-dark">
+                Busiest: {trendPeak.label} ({trendPeak.count})
+              </p>
+            )}
+          </div>
+          <div
+            className="flex h-56 items-stretch gap-1.5 border-b border-[#CCD6D9] sm:gap-3"
+            role="img"
+            aria-label={`Feedback per day: ${trendBars.map((bar) => `${bar.label} ${bar.count}`).join(', ')}`}
+          >
             {trendBars.map((bar) => (
-              <div key={bar.label} className="flex flex-1 flex-col items-center text-[11px] text-muted">
+              <div key={bar.label} className="flex min-w-0 flex-1 flex-col justify-end" title={`${bar.date}: ${bar.count}`}>
+                <span className={`mb-1 text-center text-xs font-bold ${bar.count > 0 ? 'text-navy' : 'text-[#A9B5B8]'}`}>
+                  {bar.count}
+                </span>
                 <div
-                  className="mb-1.5 w-full rounded-t-md bg-gradient-to-b from-aqua to-teal"
-                  style={{ height: `${bar.height}%`, minHeight: bar.count > 0 ? 8 : 0 }}
+                  className={`w-full rounded-t-md ${
+                    bar.count === 0
+                      ? 'bg-[#E3E9EA]'
+                      : bar.isPeak
+                        ? 'bg-gradient-to-b from-teal to-teal-dark'
+                        : 'bg-gradient-to-b from-aqua to-teal'
+                  }`}
+                  style={{ height: bar.count > 0 ? `max(${bar.height * 0.85}%, 6px)` : 3 }}
                 />
-                {bar.label}
               </div>
+            ))}
+          </div>
+          <div className="mt-2 flex gap-1.5 sm:gap-3">
+            {trendBars.map((bar) => (
+              <span
+                key={bar.label}
+                className={`min-w-0 flex-1 truncate text-center text-[11px] ${bar.label === 'Today' ? 'font-bold text-navy' : 'text-muted'}`}
+              >
+                {bar.label}
+              </span>
             ))}
           </div>
           <p className="mt-3 text-xs text-muted">Feedback received by day · last 7 days</p>
