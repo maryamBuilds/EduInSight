@@ -43,6 +43,7 @@ export const ALLOWED_CATEGORIES = [
   'Suggestion for improvement',
   'Sensitive or serious concern',
 ] as const
+export const SENSITIVE_CATEGORY = 'Sensitive or serious concern'
 export const ALLOWED_RESPONSIBLE_AREAS = [
   'IT Department',
   'Examination Office',
@@ -180,6 +181,42 @@ export function sensitiveAnalysisRow(): SensitiveAnalysisOutcome {
 }
 
 // ---------------------------------------------------------------------------
+// Keyword safety net
+// ---------------------------------------------------------------------------
+
+// Mirrors private.text_mentions_serious_concern in migration 019 so the
+// screen also works where that migration is not applied.  Deliberately
+// narrow so ordinary academic complaints still reach teachers.
+const SERIOUS_CONCERN_WORDS = new RegExp(
+  '\\b(' +
+    // English
+    'harass\\w*|sexual\\w*|molest\\w*|rape|raped|raping|rapist|grop(e|ed|es|ing)' +
+    '|assault\\w*|stalk(s|ed|er|ers|ing)?|blackmail\\w*|threaten(s|ed|ing)?' +
+    '|abus(e|ed|es|ing|ive)|bull(y|ied|ies|ying)|ragging|discriminat\\w*' +
+    '|brib(e|ed|es|ery|ing)|violen(ce|t)|suicid\\w*|self[- ]?harm\\w*' +
+    '|kill(ing)? myself|end my life|hurt(ing)? myself|touched me|inappropriate(ly)? touch\\w*' +
+    // Roman Urdu
+    '|tang kart[aei]|chh?e[dr]h?(t[aei]|n[aei]|kh?ani|[ -]?chh?aa?r)?|ched ?khani|dhamk\\w*|khud ?kushi|jinsi' +
+    '|maar ?pee?t|mar ?pee?t|rishwat|gaali(yan|an)?' +
+    ')\\b',
+  'i',
+)
+const SERIOUS_CONCERN_URDU = [
+  'ہراس', 'جنسی', 'دھمک', 'خودکشی', 'خود کشی', 'بلیک میل', 'رشوت', 'چھیڑ', 'مار پیٹ', 'تشدد',
+]
+
+/**
+ * True when the text plainly describes a serious concern (harassment,
+ * threats, self-harm, bribery…) in English, Roman Urdu or Urdu, whatever
+ * feedback area the student chose.  Runs before any AI call.
+ */
+export function mentionsSeriousConcern(text: string | null | undefined): boolean {
+  const value = text ?? ''
+  return SERIOUS_CONCERN_WORDS.test(value) ||
+    SERIOUS_CONCERN_URDU.some((term) => value.includes(term))
+}
+
+// ---------------------------------------------------------------------------
 // Provider response validation and normalisation
 // ---------------------------------------------------------------------------
 
@@ -193,6 +230,12 @@ export interface NormalisedAnalysis {
   keyTopics: string[]
   requiresHumanReview: boolean
   confidence: number | null
+  /**
+   * The text describes a serious or safety concern, whatever feedback area
+   * the student chose.  Such feedback is restricted to the admin-only path
+   * and never clustered.
+   */
+  seriousConcern: boolean
 }
 
 export type ValidationResult =
@@ -239,9 +282,12 @@ export function validateProviderAnalysis(raw: unknown): ValidationResult {
     ? rawResponsibleArea
     : null
 
+  const seriousConcern =
+    record.serious_concern === true || category === SENSITIVE_CATEGORY
+
   let requiresHumanReview =
     typeof record.requires_human_review === 'boolean' ? record.requires_human_review : true
-  if (category === null) requiresHumanReview = true
+  if (category === null || seriousConcern) requiresHumanReview = true
 
   return {
     ok: true,
@@ -255,6 +301,7 @@ export function validateProviderAnalysis(raw: unknown): ValidationResult {
       keyTopics: normaliseKeyTopics(record.key_topics),
       requiresHumanReview,
       confidence: normaliseConfidence(record.confidence),
+      seriousConcern,
     },
   }
 }

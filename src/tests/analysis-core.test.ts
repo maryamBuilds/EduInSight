@@ -7,6 +7,7 @@ import {
   buildFeedbackUpdate,
   buildReconciliationUpdate,
   decideProgression,
+  mentionsSeriousConcern,
   sensitiveAnalysisRow,
   validateProviderAnalysis,
 } from '../../supabase/functions/analyze-feedback/analysis-core'
@@ -158,6 +159,7 @@ describe('validateProviderAnalysis', () => {
       keyTopics: ['Wi-Fi', 'library'],
       requiresHumanReview: false,
       confidence: 0.82,
+      seriousConcern: false,
     })
   })
 
@@ -177,6 +179,38 @@ describe('validateProviderAnalysis', () => {
     if (!result.ok) return
     expect(result.value.category).toBeNull()
     expect(result.value.requiresHumanReview).toBe(true)
+  })
+
+  it('flags a serious concern reported under an ordinary category', () => {
+    const result = validateProviderAnalysis({
+      ...VALID_PAYLOAD,
+      category: 'Teaching pace or explanation',
+      requires_human_review: false,
+      serious_concern: true,
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value.seriousConcern).toBe(true)
+    expect(result.value.requiresHumanReview).toBe(true)
+  })
+
+  it('treats the sensitive category as a serious concern', () => {
+    const result = validateProviderAnalysis({
+      ...VALID_PAYLOAD,
+      category: 'Sensitive or serious concern',
+      requires_human_review: false,
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.value.seriousConcern).toBe(true)
+    expect(result.value.requiresHumanReview).toBe(true)
+  })
+
+  it('does not flag a serious concern unless the provider says so explicitly', () => {
+    for (const value of [false, 'true', 1, undefined]) {
+      const result = validateProviderAnalysis({ ...VALID_PAYLOAD, serious_concern: value })
+      expect(result.ok && result.value.seriousConcern).toBe(false)
+    }
   })
 
   it('drops an unknown responsible area without failing the analysis', () => {
@@ -311,5 +345,38 @@ describe('buildReconciliationUpdate (completed-analysis recovery path)', () => {
     expect(
       buildReconciliationUpdate({ status: 'completed', detected_language: 'french' }, 'submitted'),
     ).toBeNull()
+  })
+})
+
+describe('mentionsSeriousConcern', () => {
+  it.each([
+    'My teacher keeps harassing me after class',
+    'Sir humein tang karta hai aur dhamki deta hai',
+    'استاد مجھے ہراساں کرتا ہے',
+    'Wo larkiyon ko chhedta hai',
+    'Seniors hostel mein ragging karte hain',
+    'I feel like I want to end my life',
+    'Teacher touched me inappropriately',
+    'He asked for a bribe for marks',
+    'Mujhe khudkushi ke khayal aate hain',
+  ])('flags "%s"', (text) => {
+    expect(mentionsSeriousConcern(text)).toBe(true)
+  })
+
+  it.each([
+    'The lecture on network security threats was too fast',
+    'The pace is too fast and slides are unclear',
+    'Quadratic discriminant topic was confusing',
+    'I cherish this course',
+    'Wifi is killing me, assignment portal down',
+    'Sir ka lecture samajh nahi aata, bohat tez parhate hain',
+    'Library ki AC kharab hai',
+  ])('leaves ordinary feedback alone: "%s"', (text) => {
+    expect(mentionsSeriousConcern(text)).toBe(false)
+  })
+
+  it('handles missing text', () => {
+    expect(mentionsSeriousConcern(null)).toBe(false)
+    expect(mentionsSeriousConcern(undefined)).toBe(false)
   })
 })

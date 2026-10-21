@@ -12,7 +12,11 @@
 //   - Feedback is read by ID server-side; the browser never supplies
 //     feedback text.
 //   - Sensitive feedback is never sent to the AI provider; it receives the
-//     safe sensitive_requires_human_review outcome instead.
+//     safe sensitive_requires_human_review outcome instead.  A keyword
+//     screen restricts obvious serious concerns (harassment, threats,
+//     self-harm…) before any AI call, and an analysis that reports a serious
+//     concern restricts the feedback to the admin-only path and is never
+//     clustered.  Restricting only sets is_sensitive; the text is unchanged.
 //   - The original feedback row is only ever updated on a SUCCESSFUL
 //     analysis and only while still in 'submitted' status, so no AI failure
 //     can alter, roll back, or remove the student's submission.
@@ -29,6 +33,7 @@ import {
   buildFeedbackUpdate,
   buildReconciliationUpdate,
   decideProgression,
+  mentionsSeriousConcern,
   sensitiveAnalysisRow,
   validateProviderAnalysis,
   type AnalysisStatus,
@@ -116,6 +121,24 @@ async function markAnalysisFailed(
     .eq('feedback_id', feedbackId)
     .eq('status', 'processing')
   if (error) safeLog(feedbackId, 'mark-failed', error.message)
+}
+
+/**
+ * Move feedback to the restricted admin-only path.  is_sensitive already
+ * hides it from every teacher view and ordinary admin access; the original
+ * text is never touched.
+ */
+async function restrictFeedback(
+  admin: ServiceClient,
+  feedbackId: string,
+  stage: string,
+): Promise<void> {
+  const { error } = await admin
+    .from('feedback')
+    .update({ is_sensitive: true })
+    .eq('id', feedbackId)
+    .eq('is_sensitive', false)
+  if (error) safeLog(feedbackId, stage, error.message)
 }
 
 Deno.serve(async (req: Request) => {
@@ -211,8 +234,20 @@ Deno.serve(async (req: Request) => {
       .maybeSingle()
     const existing = existingRow as AnalysisRowSnapshot | null
 
+    // Keyword safety net: a serious concern filed under an ordinary area is
+    // restricted before the provider ever sees it.
+    let restricted = decision === 'sensitive'
+    if (
+      !restricted &&
+      existing?.status !== 'completed' &&
+      mentionsSeriousConcern(feedback.original_text)
+    ) {
+      await restrictFeedback(admin, feedbackId, 'keyword-restrict')
+      restricted = true
+    }
+
     // Sensitive feedback is never sent to an external AI provider.
-    if (decision === 'sensitive') {
+    if (restricted) {
       if (existing?.status === 'completed') {
         return jsonResponse({ feedbackId, status: existing.status }, 200, headers)
       }
@@ -391,9 +426,15 @@ Deno.serve(async (req: Request) => {
       )
     }
 
-    // The only feedback modification in the pipeline: a conditional update
-    // while the row is still 'submitted'.  Failures here never affect the
-    // stored submission.
+    // AI escalation: restrict before anything else so the submission leaves
+    // the teacher view as early as possible.
+    if (analysis.seriousConcern) {
+      await restrictFeedback(admin, feedbackId, 'ai-restrict')
+    }
+
+    // Apart from restriction, the only feedback modification in the
+    // pipeline: a conditional update while the row is still 'submitted'.
+    // Failures here never affect the stored submission.
     const feedbackUpdate = buildFeedbackUpdate(feedback.status, analysis.detectedLanguage)
     if (feedbackUpdate) {
       const { error: feedbackError } = await admin
@@ -402,6 +443,15 @@ Deno.serve(async (req: Request) => {
         .eq('id', feedbackId)
         .eq('status', 'submitted')
       if (feedbackError) safeLog(feedbackId, 'feedback-status', feedbackError.message)
+    }
+
+    // A restricted serious concern is never clustered for teachers.
+    if (analysis.seriousConcern) {
+      return jsonResponse(
+        { feedbackId, status: 'completed', requiresHumanReview: true },
+        200,
+        headers,
+      )
     }
 
     // Clustering is a separate, idempotent database step. A clustering error
