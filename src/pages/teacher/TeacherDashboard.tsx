@@ -7,13 +7,12 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react'
-import type { TeacherClusterRow, TeacherFeedbackRow, TeacherActionRow, TeacherAnalysisRow } from '@/lib/types'
+import type { TeacherClusterRow, TeacherFeedbackRow, TeacherActionRow, TeacherAnalysisRow, ActionUpdate } from '@/lib/types'
 import {
   PRIORITY_LABELS,
   TREND_LABELS,
   TREND_ARROWS,
   TREND_COLOURS,
-  ACTION_STATUS_LABELS,
   SENTIMENT_LABELS,
 } from '@/lib/constants'
 import {
@@ -38,6 +37,8 @@ import {
   PriorityReasons,
   OverlayDialog,
   Toast,
+  ActionTrackingCard,
+  type ActionEditValues,
 } from '@/components'
 import { supabase } from '@/lib/supabase'
 import { callRpc, callRpcNoArgs, friendlyError } from '@/lib/rpc'
@@ -81,6 +82,10 @@ const FILTER_OPTIONS: { value: TeacherFilter; label: string }[] = [
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
+const TEACHER_ACTION_STATUSES = ['planned', 'in_progress', 'completed'] as const
+
+const DASHBOARD_OPENED_AT = new Date().getTime()
+
 // ---------------------------------------------------------------------------
 // Teacher Dashboard
 // ---------------------------------------------------------------------------
@@ -96,6 +101,7 @@ export default function TeacherDashboard({
   const [clusters, setClusters] = useState<TeacherClusterRow[]>([])
   const [feedbacks, setFeedbacks] = useState<TeacherFeedbackRow[]>([])
   const [actions, setActions] = useState<TeacherActionRow[]>([])
+  const [actionUpdates, setActionUpdates] = useState<ActionUpdate[]>([])
   const [analyses, setAnalyses] = useState<TeacherAnalysisRow[]>([])
   const [membershipRows, setMembershipRows] = useState<ClusterMembershipRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -175,6 +181,19 @@ export default function TeacherDashboard({
       cancelled = true
     }
   }, [authLoading, profile])
+
+  // Follow-up history is only needed on the tracking page. A failure leaves
+  // the history empty without blocking the rest of the dashboard.
+  useEffect(() => {
+    let cancelled = false
+    if (view !== 'actions' || authLoading || profile?.role !== 'teacher') return
+    callRpcNoArgs('teacher_read_my_updates').then(({ data }) => {
+      if (!cancelled) setActionUpdates(data ?? [])
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [view, authLoading, profile])
 
   // ── Computed: metric counts ─────────────────────────────────────────────
   const metrics = useMemo(() => {
@@ -391,6 +410,41 @@ export default function TeacherDashboard({
       setTimeout(closeDialog, 700)
     },
     [selectedCluster, formTitle, formStatus, formUpdate, submitting, showToast, closeDialog],
+  )
+
+  const handleActionSave = useCallback(
+    async (actionId: string, values: ActionEditValues): Promise<string | null> => {
+      // The teacher RPC keeps existing values for empty optional fields.
+      const { data, error: err } = await callRpc('teacher_update_my_action', {
+        p_action_id: actionId,
+        p_title: values.title.trim(),
+        p_status: values.status,
+        p_responsible_person: values.responsible_person.trim() || null,
+        p_deadline: values.deadline || null,
+      })
+      if (err || !data?.length) {
+        return friendlyError(err?.message ?? 'Could not update action.')
+      }
+      setActions((prev) => prev.map((a) => (a.id === actionId ? data[0] : a)))
+      showToast('Action updated.')
+      return null
+    },
+    [showToast],
+  )
+
+  const handleFollowUpPublish = useCallback(
+    async (actionId: string, message: string): Promise<string | null> => {
+      const { error: err } = await callRpc('teacher_publish_update', {
+        p_action_id: actionId,
+        p_student_facing_message: message,
+      })
+      if (err) return friendlyError(err.message)
+      const { data } = await callRpcNoArgs('teacher_read_my_updates')
+      if (data) setActionUpdates(data)
+      showToast('Follow-up published to students.')
+      return null
+    },
+    [showToast],
   )
 
   const scrollToActions = useCallback(() => {
@@ -734,37 +788,18 @@ export default function TeacherDashboard({
                 ))}
               </div>
             ) : actions.length > 0 ? (
-              actions.map((a) => {
-                const linkedCluster = clusters.find((c) => c.id === a.cluster_id)
-                const actionStatusLabel =
-                  ACTION_STATUS_LABELS[a.status as keyof typeof ACTION_STATUS_LABELS] ?? a.status
-                return (
-                  <div key={a.id} className="rounded-[9px] border border-border p-3">
-                    <div className="flex items-center justify-between gap-2">
-                      <strong className="text-sm">{a.title}</strong>
-                      <span
-                        className={`inline-block rounded-full px-2 py-1 text-[11px] font-bold ${
-                          a.status === 'completed'
-                            ? 'bg-soft-teal text-success'
-                            : a.status === 'in_progress'
-                              ? 'bg-soft-amber text-warning'
-                              : 'bg-soft-blue text-ocean'
-                        }`}
-                      >
-                        {actionStatusLabel}
-                      </span>
-                    </div>
-                    <p className="mt-1.5 text-[13px] text-muted">
-                      Linked issue: {linkedCluster?.title ?? 'Unknown'}
-                    </p>
-                    <ProgressBar
-                      value={
-                        a.status === 'completed' ? 100 : a.status === 'in_progress' ? 60 : 20
-                      }
-                    />
-                  </div>
-                )
-              })
+              actions.map((a) => (
+                <ActionTrackingCard
+                  key={`${a.id}-${a.updated_at}`}
+                  action={a}
+                  linkedIssue={clusters.find((c) => c.id === a.cluster_id)?.title}
+                  updates={actionUpdates.filter((u) => u.action_id === a.id)}
+                  statusOptions={[...TEACHER_ACTION_STATUSES]}
+                  now={DASHBOARD_OPENED_AT}
+                  onSave={(values) => handleActionSave(a.id, values)}
+                  onPublish={(message) => handleFollowUpPublish(a.id, message)}
+                />
+              ))
             ) : (
               <p className="py-4 text-center text-sm text-muted">
                 No teaching actions created yet.

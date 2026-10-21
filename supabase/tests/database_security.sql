@@ -114,7 +114,8 @@ DECLARE
     'teacher_read_my_actions', 'teacher_create_action',
     'teacher_update_my_action', 'teacher_publish_update',
     'teacher_read_my_updates',
-    'admin_create_action'
+    'admin_create_action', 'admin_update_action',
+    'admin_publish_action_update'
   ];
   v_private_funcs text[] := ARRAY[
     'get_user_role', 'get_teacher_section_ids',
@@ -231,7 +232,9 @@ DECLARE
     'teacher_update_my_action(uuid,text,text,text,text,date)',
     'teacher_publish_update(uuid,text)',
     'teacher_read_my_updates()',
-    'admin_create_action(uuid,text,text,text,text,date,text,text)'
+    'admin_create_action(uuid,text,text,text,text,date,text,text)',
+    'admin_update_action(uuid,text,text,text,text,date,text)',
+    'admin_publish_action_update(uuid,text)'
   ];
   v_rpc text;
 BEGIN
@@ -274,7 +277,8 @@ DECLARE
     'teacher_acknowledge_cluster', 'teacher_read_my_actions',
     'teacher_create_action', 'teacher_update_my_action',
     'teacher_publish_update', 'teacher_read_my_updates',
-    'admin_create_action'
+    'admin_create_action', 'admin_update_action',
+    'admin_publish_action_update'
   ];
   v_fn text;
 BEGIN
