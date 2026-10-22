@@ -6,6 +6,8 @@ import { getInitials } from '@/lib/utils'
 interface TopbarProps {
   /** Primary heading (e.g. "Good Morning, S. Maryam"). */
   greeting: string
+  /** Shorter heading for phones (e.g. first name only), so it is not cut off. */
+  mobileGreeting?: string
   /** Secondary subtitle (e.g. "BS Computer Science · Semester 3"). */
   subtitle?: string
   /** User's full name for the avatar in the top-right corner. */
@@ -32,6 +34,7 @@ interface TopbarProps {
  */
 export function Topbar({
   greeting,
+  mobileGreeting,
   subtitle,
   avatarName,
   avatarHref,
@@ -59,7 +62,14 @@ export function Topbar({
           <Menu className="h-6 w-6" aria-hidden="true" />
         </button>
         <div className="min-w-0">
-          <h1 className="m-0 truncate text-lg font-bold tracking-[-0.02em] text-navy md:whitespace-normal md:text-[27px]">{greeting}</h1>
+          <h1 className="m-0 truncate text-lg font-bold tracking-[-0.02em] text-navy md:whitespace-normal md:text-[27px]">
+            {mobileGreeting ? (
+              <>
+                <span className="md:hidden">{mobileGreeting}</span>
+                <span className="max-md:hidden">{greeting}</span>
+              </>
+            ) : greeting}
+          </h1>
           {subtitle && (
             <p className="mt-0.5 truncate text-xs text-muted md:mt-[5px] md:whitespace-normal md:text-base">{subtitle}</p>
           )}

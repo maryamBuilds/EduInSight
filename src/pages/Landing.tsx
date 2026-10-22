@@ -87,13 +87,13 @@ const EXAMPLES = [
 function JourneyPreview() {
   return (
     <div
-      className="relative rounded-[18px] border border-white/15 bg-white p-5 text-left shadow-[0_24px_60px_rgba(0,0,0,0.35)]"
+      className="motion-fade-up motion-delay-1 relative rounded-[18px] border border-white/15 bg-white p-5 text-left shadow-[0_24px_60px_rgba(0,0,0,0.35)]"
       aria-label="Illustrative example of one feedback journey"
     >
       <span className="absolute -top-3 right-5 rounded-full bg-soft-amber px-3 py-1 text-xs font-bold text-[#7A4D0F]">
         Illustrative example
       </span>
-      <ol className="grid gap-3">
+      <ol className="motion-stagger grid gap-3">
         <li className="rounded-xl border border-border bg-[#FCFCFA] p-4">
           <p className="text-xs font-bold uppercase tracking-wide text-muted">1 · Students write, each in their own way</p>
           <ul className="mt-2 grid gap-1.5 text-[15px] leading-relaxed text-text">
@@ -159,7 +159,7 @@ export default function Landing() {
         </nav>
 
         <div className="mx-auto grid max-w-[1180px] items-center gap-12 px-6 pb-20 pt-10 max-sm:px-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
-          <div>
+          <div className="motion-fade-up">
             <p className="mb-4 inline-block rounded-full border border-aqua/40 px-3 py-1 text-sm font-semibold text-[#9FE3DC]">
               Multilingual student feedback for universities
             </p>
@@ -187,7 +187,7 @@ export default function Landing() {
         </div>
       </header>
 
-      <main>
+      <main className="motion-page">
         {/* Problem */}
         <section className="mx-auto max-w-[1180px] px-6 py-16 max-sm:px-4" aria-labelledby="problem-heading">
           <p className="text-sm font-bold uppercase tracking-wide text-teal-dark">The problem</p>
@@ -196,7 +196,7 @@ export default function Landing() {
           </h2>
           <div className="mt-8 grid gap-5 md:grid-cols-3">
             {PROBLEMS.map(({ icon: Icon, title, text }) => (
-              <article key={title} className="rounded-[14px] border border-border bg-white p-6">
+              <article key={title} className="motion-lift rounded-[14px] border border-border bg-white p-6">
                 <span className="grid h-11 w-11 place-items-center rounded-full bg-soft-red text-[#A33545]">
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>
@@ -216,7 +216,7 @@ export default function Landing() {
             </h2>
             <ol className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
               {STEPS.map(({ icon: Icon, title, text }, index) => (
-                <li key={title} className="rounded-[14px] border border-border bg-ivory p-6">
+                <li key={title} className="motion-lift rounded-[14px] border border-border bg-ivory p-6">
                   <div className="flex items-center gap-3">
                     <span className="grid h-11 w-11 place-items-center rounded-full bg-navy text-[#18D0C2]">
                       <Icon className="h-5 w-5" aria-hidden="true" />
@@ -308,7 +308,7 @@ export default function Landing() {
               { icon: ListChecks, title: 'Teachers', text: 'See feedback for their own sections, grouped by theme, and respond with actions.' },
               { icon: UserCheck, title: 'Administrators', text: 'Review institution-wide issues, assign owners and publish updates to students.' },
             ].map(({ icon: Icon, title, text }) => (
-              <article key={title} className="rounded-[14px] border border-border bg-white p-6">
+              <article key={title} className="motion-lift rounded-[14px] border border-border bg-white p-6">
                 <Icon className="h-6 w-6 text-teal-dark" aria-hidden="true" />
                 <h3 className="mt-3 text-lg font-bold text-navy">{title}</h3>
                 <p className="mt-2 leading-relaxed text-muted">{text}</p>

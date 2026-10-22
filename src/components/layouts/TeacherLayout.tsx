@@ -18,6 +18,7 @@ export function TeacherLayout() {
   const { profile } = useAuth()
   const location = useLocation()
   const fullName = profile?.full_name ?? 'Teacher'
+  const firstName = fullName.trim().split(/\s+/)[0] || 'Teacher'
   const defaultSubtitle = profile?.programme
     ? `${profile.programme} · Teacher feedback workspace`
     : 'Teacher feedback workspace'
@@ -74,6 +75,7 @@ export function TeacherLayout() {
       <section className="min-w-0">
         <Topbar
           greeting={isProfilePage ? 'My Profile' : `${getTimeGreeting()}, ${fullName}`}
+          mobileGreeting={isProfilePage ? undefined : `${getTimeGreeting()}, ${firstName}`}
           subtitle={isProfilePage ? 'Review your teacher account and institutional details.' : defaultSubtitle}
           avatarName={fullName}
           avatarHref="/teacher/profile"

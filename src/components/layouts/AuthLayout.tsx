@@ -28,7 +28,7 @@ export function AuthLayout() {
           <Logo className="text-white" />
         </Link>
 
-        <div className="mx-auto my-auto max-w-[520px] text-center max-md:mt-4">
+        <div className="motion-fade-up mx-auto my-auto max-w-[520px] text-center max-md:mt-4">
           <h1 className="mb-[18px] text-[40px] leading-[1.2] text-white max-md:mb-0 max-md:text-[24px]">
             Student voice. Clear insight.
             <span className="block text-[#18D0C2]">Visible action.</span>
@@ -66,7 +66,7 @@ export function AuthLayout() {
 
       {/* Right — form panel */}
       <section className="grid place-items-center bg-ivory px-10 py-10 max-md:items-start max-md:px-4 max-md:py-6">
-        <div className="w-full max-w-[500px]">
+        <div className="motion-fade-up motion-delay-1 w-full max-w-[500px]">
           <Outlet />
         </div>
       </section>

@@ -18,6 +18,7 @@ export function AdminLayout() {
   const { profile } = useAuth()
   const location = useLocation()
   const fullName = profile?.full_name ?? 'Administrator'
+  const firstName = fullName.trim().split(/\s+/)[0] || 'Administrator'
   const isProfilePage = location.pathname === '/admin/profile'
 
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -71,6 +72,7 @@ export function AdminLayout() {
       <section className="min-w-0">
         <Topbar
           greeting={isProfilePage ? 'My Profile' : `${getTimeGreeting()}, ${fullName}`}
+          mobileGreeting={isProfilePage ? undefined : `${getTimeGreeting()}, ${firstName}`}
           subtitle={isProfilePage ? 'Review your administrator account and institutional details.' : 'Institutional feedback intelligence'}
           avatarName={fullName}
           avatarHref="/admin/profile"
