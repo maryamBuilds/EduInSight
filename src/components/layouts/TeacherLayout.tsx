@@ -81,7 +81,7 @@ export function TeacherLayout() {
           menuExpanded={drawerOpen}
           menuControlsId="mobile-nav-teacher"
         />
-        <div className="mx-auto max-w-[1500px] px-8 py-6 max-md:p-4">
+        <div className="motion-page mx-auto max-w-[1500px] px-8 py-6 max-md:p-4">
           <Outlet />
         </div>
       </section>

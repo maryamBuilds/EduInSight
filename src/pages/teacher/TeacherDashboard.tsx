@@ -647,7 +647,7 @@ export default function TeacherDashboard({
                   {bar.count}
                 </span>
                 <div
-                  className={`w-full rounded-t-md ${
+                  className={`motion-grow-y w-full rounded-t-md ${
                     bar.count === 0
                       ? 'bg-[#E3E9EA]'
                       : bar.isPeak

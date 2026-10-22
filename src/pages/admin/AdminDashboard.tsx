@@ -896,7 +896,7 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
                 {weeklyFeedback.map((week) => (
                   <div key={week.label} className="flex h-full flex-1 flex-col items-center justify-end gap-2 text-[11px] text-muted">
                     <span className="font-bold text-ocean">{week.count}</span>
-                    <span className="w-full rounded-t-md bg-gradient-to-t from-teal to-aqua" style={{ height: `${week.height}%` }} />
+                    <span className="motion-grow-y w-full rounded-t-md bg-gradient-to-t from-teal to-aqua" style={{ height: `${week.height}%` }} />
                     <span>{week.label}</span>
                   </div>
                 ))}
@@ -994,7 +994,7 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
                   {weeklyFeedback.map((week) => (
                     <div key={week.label} className="flex h-full flex-1 flex-col items-center justify-end gap-2 text-[11px] text-muted">
                       <span className="font-bold text-ocean">{week.count}</span>
-                      <span className="w-full max-w-16 rounded-t-md bg-gradient-to-t from-teal to-aqua" style={{ height: `${week.height}%` }} />
+                      <span className="motion-grow-y w-full max-w-16 rounded-t-md bg-gradient-to-t from-teal to-aqua" style={{ height: `${week.height}%` }} />
                       <span>{week.label}</span>
                     </div>
                   ))}

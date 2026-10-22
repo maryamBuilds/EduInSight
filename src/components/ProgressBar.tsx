@@ -31,7 +31,7 @@ export function ProgressBar({ value, label, valueText }: ProgressBarProps) {
         aria-label={label ?? 'Progress'}
       >
         <div
-          className="h-full rounded-full bg-gradient-to-r from-aqua to-teal"
+          className="motion-grow-x h-full rounded-full bg-gradient-to-r from-aqua to-teal"
           style={{ width: `${clamped}%` }}
         />
       </div>

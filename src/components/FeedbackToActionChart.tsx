@@ -221,7 +221,7 @@ export function FeedbackToActionChart({
                   </span>
                   <div className="flex items-center gap-2">
                     <div
-                      className="relative flex h-4 gap-[2px]"
+                      className="motion-grow-x relative flex h-4 gap-[2px]"
                       style={{ width: `${(row.total / maxTotal) * 100}%`, minWidth: '0.5rem' }}
                       role="img"
                       aria-label={`${row.title}: ${row.total} linked submissions, ${LANGUAGE_SERIES.filter((s) => row.byLanguage[s.key] > 0)
