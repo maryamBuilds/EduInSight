@@ -138,20 +138,20 @@ export default function Landing() {
           `,
         }}
       >
-        <nav className="mx-auto flex max-w-[1180px] items-center justify-between gap-4 px-6 py-5 max-sm:px-4" aria-label="Main">
+        <nav className="mx-auto flex max-w-[1180px] items-center justify-between gap-4 px-6 py-5 max-sm:gap-2 max-sm:px-4" aria-label="Main">
           <Link to="/" aria-label="EduInSight home" className="rounded-md focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-aqua/60">
             <Logo className="text-white" />
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 max-sm:gap-1">
             <Link
               to="/login"
-              className="rounded-[9px] px-4 py-2.5 font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-aqua/60"
+              className="rounded-[9px] px-4 py-2.5 font-semibold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-aqua/60 max-sm:px-3 max-sm:py-2 max-sm:text-sm"
             >
               Sign in
             </Link>
             <Link
               to="/register"
-              className="rounded-[9px] bg-white px-4 py-2.5 font-bold text-navy transition-colors hover:bg-ivory focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-aqua/60 max-sm:hidden"
+              className="rounded-[9px] bg-white px-4 py-2.5 font-bold text-navy transition-colors hover:bg-ivory focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-aqua/60 max-sm:px-3 max-sm:py-2 max-sm:text-sm"
             >
               Sign up
             </Link>
