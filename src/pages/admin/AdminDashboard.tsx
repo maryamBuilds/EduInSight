@@ -48,13 +48,17 @@ import {
   type ActionEditValues,
 } from '@/components'
 import { supabase } from '@/lib/supabase'
-import { formatShortDate } from '@/lib/utils'
+import { countLabel, formatShortDate } from '@/lib/utils'
 import {
   updateClusterStatus,
   callRpc,
   friendlyError,
 } from '@/lib/rpc'
+import { Link } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
+
+/** Problems shown on the admin overview before "See all". */
+const OVERVIEW_PROBLEM_LIMIT = 5
 
 // ---------------------------------------------------------------------------
 // Filter constants
@@ -291,6 +295,11 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
       return matchFilter && matchSearch
     })
   }, [clusters, priorityFilter, search])
+
+  // The overview shows the top problems only; Priority Issues lists them all.
+  const visibleProblems = view === 'overview'
+    ? filteredProblems.slice(0, OVERVIEW_PROBLEM_LIMIT)
+    : filteredProblems
 
   const feedbackById = useMemo(() => new Map(feedbacks.map((f) => [f.id, f])), [feedbacks])
 
@@ -602,7 +611,7 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
                 </tr>
               </thead>
               <tbody className="max-md:block">
-                {filteredProblems.map((c) => {
+                {visibleProblems.map((c) => {
                   const statusLabel =
                     CLUSTER_STATUS_LABELS[c.status] ??
                     ACTION_STATUS_LABELS[c.status as keyof typeof ACTION_STATUS_LABELS] ??
@@ -647,6 +656,13 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
               </p>
             )}
           </div>
+          {view === 'overview' && filteredProblems.length > OVERVIEW_PROBLEM_LIMIT && (
+            <div className="border-t border-border px-5 py-3 text-center">
+              <Link to="/admin/issues" className="inline-flex items-center gap-1 text-sm font-bold text-teal-dark hover:underline">
+                See all {filteredProblems.length} problems →
+              </Link>
+            </div>
+          )}
           {/* Search row */}
           <div className="border-t border-border px-5 py-3">
             <input
@@ -962,10 +978,10 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
             <section className="overflow-hidden rounded-xl border border-border bg-white">
               <div className="border-b border-border px-5 py-[18px]"><h3 className="m-0 text-[19px] text-navy">Action Delivery</h3></div>
               <div className="grid gap-4 p-5">
-                <ProgressBar label="Assigned or planned" value={actions.length ? Math.round((actions.filter((action) => action.status === 'assigned' || action.status === 'planned').length / actions.length) * 100) : 0} valueText={`${actions.filter((action) => action.status === 'assigned' || action.status === 'planned').length} actions`} />
-                <ProgressBar label="In progress" value={actions.length ? Math.round((actions.filter((action) => action.status === 'in_progress').length / actions.length) * 100) : 0} valueText={`${actions.filter((action) => action.status === 'in_progress').length} actions`} />
-                <ProgressBar label="Completed" value={actions.length ? Math.round((actions.filter((action) => action.status === 'completed').length / actions.length) * 100) : 0} valueText={`${actions.filter((action) => action.status === 'completed').length} actions`} />
-                <ProgressBar label="Overdue" value={actions.length ? Math.round((metrics.overdue / actions.length) * 100) : 0} valueText={`${metrics.overdue} actions`} />
+                <ProgressBar label="Assigned or planned" value={actions.length ? Math.round((actions.filter((action) => action.status === 'assigned' || action.status === 'planned').length / actions.length) * 100) : 0} valueText={countLabel(actions.filter((action) => action.status === 'assigned' || action.status === 'planned').length, 'action')} />
+                <ProgressBar label="In progress" value={actions.length ? Math.round((actions.filter((action) => action.status === 'in_progress').length / actions.length) * 100) : 0} valueText={countLabel(actions.filter((action) => action.status === 'in_progress').length, 'action')} />
+                <ProgressBar label="Completed" value={actions.length ? Math.round((actions.filter((action) => action.status === 'completed').length / actions.length) * 100) : 0} valueText={countLabel(actions.filter((action) => action.status === 'completed').length, 'action')} />
+                <ProgressBar label="Overdue" value={actions.length ? Math.round((metrics.overdue / actions.length) * 100) : 0} valueText={countLabel(metrics.overdue, 'action')} />
               </div>
             </section>
           </div>
@@ -992,7 +1008,7 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
               <div className="grid gap-4 p-5">
                 {analysisCounts ? (['completed', 'processing', 'pending', 'failed'] as const).map((status) => {
                   const count = analysisCounts[status]
-                  return <ProgressBar key={status} label={status.charAt(0).toUpperCase() + status.slice(1)} value={feedbacks.length ? Math.round((count / feedbacks.length) * 100) : 0} valueText={`${count} of ${feedbacks.length} submissions`} />
+                  return <ProgressBar key={status} label={status.charAt(0).toUpperCase() + status.slice(1)} value={feedbacks.length ? Math.round((count / feedbacks.length) * 100) : 0} valueText={`${count} of ${countLabel(feedbacks.length, 'submission')}`} />
                 }) : <p className="text-sm text-muted">Analysis totals are unavailable right now.</p>}
                 {analysisCounts && feedbacks.length > 0 && (
                   <p className="text-xs text-muted">

@@ -42,8 +42,12 @@ import {
 } from '@/components'
 import { supabase } from '@/lib/supabase'
 import { callRpc, callRpcNoArgs, friendlyError } from '@/lib/rpc'
-import { formatShortDate } from '@/lib/utils'
+import { countLabel, formatShortDate } from '@/lib/utils'
+import { Link } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
+
+/** Bottlenecks shown on the teacher overview before "See all". */
+const OVERVIEW_BOTTLENECK_LIMIT = 5
 
 // ---------------------------------------------------------------------------
 // Filter constants
@@ -268,6 +272,11 @@ export default function TeacherDashboard({
       return matchPriority && matchSearch
     })
   }, [clusters, priorityFilter, search])
+
+  // The overview shows the top bottlenecks only; Learning Insights lists them all.
+  const visibleBottlenecks = view === 'overview'
+    ? filteredBottlenecks.slice(0, OVERVIEW_BOTTLENECK_LIMIT)
+    : filteredBottlenecks
 
   // ── Analysis lookup by feedback ID (teacher-visible rows only) ─────────
   const analysisById = useMemo(() => {
@@ -561,7 +570,7 @@ export default function TeacherDashboard({
                 </tr>
               </thead>
               <tbody className="max-md:block">
-                {filteredBottlenecks.map((c) => (
+                {visibleBottlenecks.map((c) => (
                   <tr
                     key={c.id}
                     className="cursor-pointer transition-colors hover:bg-[#F7FAF9] max-md:grid max-md:grid-cols-2 max-md:gap-x-4 max-md:gap-y-3 max-md:border-b max-md:border-[#E8E2D9] max-md:px-5 max-md:py-4"
@@ -593,6 +602,13 @@ export default function TeacherDashboard({
               </p>
             )}
           </div>
+          {view === 'overview' && filteredBottlenecks.length > OVERVIEW_BOTTLENECK_LIMIT && (
+            <div className="border-t border-border px-5 py-3 text-center">
+              <Link to="/teacher/insights" className="inline-flex items-center gap-1 text-sm font-bold text-teal-dark hover:underline">
+                See all {filteredBottlenecks.length} learning problems →
+              </Link>
+            </div>
+          )}
           {/* Search row below table */}
           <div className="border-t border-border px-5 py-3">
             <input
@@ -884,17 +900,17 @@ export default function TeacherDashboard({
                 <ProgressBar
                   label="Completed"
                   value={feedbacks.length ? Math.round((completedAnalyses / feedbacks.length) * 100) : 0}
-                  valueText={`${completedAnalyses} records`}
+                  valueText={countLabel(completedAnalyses, 'record')}
                 />
                 <ProgressBar
                   label="Pending or processing"
                   value={feedbacks.length ? Math.round((pendingAnalyses / feedbacks.length) * 100) : 0}
-                  valueText={`${pendingAnalyses} records`}
+                  valueText={countLabel(pendingAnalyses, 'record')}
                 />
                 <ProgressBar
                   label="Human review required"
                   value={feedbacks.length ? Math.round((reviewRequiredAnalyses / feedbacks.length) * 100) : 0}
-                  valueText={`${reviewRequiredAnalyses} records`}
+                  valueText={countLabel(reviewRequiredAnalyses, 'record')}
                 />
               </div>
               <p className="mt-5 text-xs leading-relaxed text-muted">

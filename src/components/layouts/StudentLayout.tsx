@@ -27,37 +27,19 @@ export function StudentLayout() {
     .filter(Boolean)
     .join(' · ') || 'Student View'
   const isSubmitPage = location.pathname === '/student/submit'
-  const isFeedbackHistory = location.pathname === '/student/feedback'
-  const isFeedbackDetail = location.pathname.startsWith('/student/feedback/')
-  const isUpdatesPage = location.pathname === '/student/updates'
-  const isNotificationsPage = location.pathname === '/student/notifications'
   const isProfilePage = location.pathname === '/student/profile'
+  // Pages with their own in-page heading keep the greeting here, so the
+  // title is not shown twice (matches the teacher and admin layouts).
   const pageGreeting = isSubmitPage
     ? 'Submit Feedback'
-    : isFeedbackHistory
-      ? 'My Feedback'
-      : isFeedbackDetail
-        ? 'Feedback Details'
-        : isUpdatesPage
-          ? 'University Updates'
-          : isNotificationsPage
-            ? 'Notifications'
-            : isProfilePage
-              ? 'My Profile'
-        : `${getTimeGreeting()}, ${displayName}`
+    : isProfilePage
+      ? 'My Profile'
+      : `${getTimeGreeting()}, ${displayName}`
   const pageSubtitle = isSubmitPage
     ? 'Help your university understand what needs attention.'
-    : isFeedbackHistory
-      ? 'Track your submissions and approved responses.'
-      : isFeedbackDetail
-        ? 'Review your original feedback and its progress.'
-        : isUpdatesPage
-          ? 'View approved responses and action announcements.'
-          : isNotificationsPage
-            ? 'See new responses connected to your feedback.'
-            : isProfilePage
-              ? 'Review your student account and educational details.'
-        : subtitle
+    : isProfilePage
+      ? 'Review your student account and educational details.'
+      : subtitle
 
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)

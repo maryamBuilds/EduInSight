@@ -26,6 +26,11 @@ export function formatRelativeDate(isoDate: string): string {
   })
 }
 
+/** "1 action", "3 actions": a count with its correctly pluralised noun. */
+export function countLabel(count: number, singular: string, plural = `${singular}s`): string {
+  return `${count} ${count === 1 ? singular : plural}`
+}
+
 /**
  * Compact date for dense lists and cards (e.g. "18 Aug 2026"). Day-first so
  * it reads the same way as the rest of the app.

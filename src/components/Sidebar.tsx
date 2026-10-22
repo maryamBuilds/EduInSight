@@ -157,7 +157,7 @@ export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose, co
         </div>
 
         {/* Navigation */}
-        <nav className="grid flex-1 gap-[7px]" aria-label={`${role} mobile navigation`}>
+        <nav className="grid flex-1 content-start gap-[7px]" aria-label={`${role} mobile navigation`}>
           {navItems.map(({ label, to, icon: Icon }) => (
             <NavLink
               key={to}
@@ -240,7 +240,7 @@ export function Sidebar({ role, fullName, extra, onNavigate, mobile, onClose, co
 
       {/* Navigation */}
       <nav
-        className="grid flex-1 gap-[7px]"
+        className="grid flex-1 content-start gap-[7px]"
         aria-label={`${role} navigation`}
       >
         {navItems.map(({ label, to, icon: Icon }) => (

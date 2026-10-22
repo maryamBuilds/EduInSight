@@ -13,7 +13,7 @@ import { Logo } from '../Logo'
  */
 export function AuthLayout() {
   return (
-    <main className="grid min-h-screen grid-cols-1 md:grid-cols-[45%_55%]">
+    <main className="grid min-h-screen grid-cols-1 max-md:grid-rows-[auto_1fr] md:grid-cols-[45%_55%]">
       {/* Left — brand panel */}
       <section
         className="flex flex-col px-12 py-12 max-md:px-4 max-md:py-5 max-md:border-b-2 max-md:border-border md:border-r md:border-border"
@@ -65,7 +65,7 @@ export function AuthLayout() {
       </section>
 
       {/* Right — form panel */}
-      <section className="grid place-items-center bg-ivory px-10 py-10 max-md:px-4 max-md:py-6">
+      <section className="grid place-items-center bg-ivory px-10 py-10 max-md:items-start max-md:px-4 max-md:py-6">
         <div className="w-full max-w-[500px]">
           <Outlet />
         </div>
