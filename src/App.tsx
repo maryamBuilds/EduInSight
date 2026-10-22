@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, Outlet, useNavigate } from 'react-router-dom'
+import { Routes, Route, Navigate, Outlet, Link, useNavigate } from 'react-router-dom'
 import {
   AuthLayout,
   MinimalLayout,
@@ -171,14 +171,22 @@ function UnauthorizedPage() {
 }
 
 // ---------------------------------------------------------------------------
-// Placeholder for routes not yet implemented
+// Not found page: explains the problem and offers a way back
 // ---------------------------------------------------------------------------
 
-function Placeholder({ label }: { label: string }) {
+function NotFoundPage() {
   return (
-    <div className="rounded-2xl border border-border bg-white px-8 py-6 text-center shadow-sm">
-      <h2 className="mb-2 text-2xl font-bold text-navy">EduInSight</h2>
-      <p className="text-muted">{label}</p>
+    <div>
+      <h2 className="mb-3 text-2xl font-bold text-navy">Page not found</h2>
+      <p className="mb-6 text-muted">
+        This link may be old or mistyped. Go back to EduInSight to continue.
+      </p>
+      <Link
+        to="/"
+        className="inline-flex rounded-[9px] bg-teal px-6 py-3 font-bold text-white shadow-[0_8px_20px_rgba(42,157,143,0.22)] transition-all hover:-translate-y-px hover:bg-teal-dark"
+      >
+        Go to home
+      </Link>
     </div>
   )
 }
@@ -210,7 +218,7 @@ export default function App() {
       {/* ── Minimal routes (no sidebar) ── */}
       <Route element={<MinimalLayout />}>
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
-        <Route path="*" element={<Placeholder label="404 — Page Not Found" />} />
+        <Route path="*" element={<NotFoundPage />} />
       </Route>
 
       {/* ── Student routes ── */}

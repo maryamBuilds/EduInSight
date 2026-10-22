@@ -33,7 +33,7 @@ export function MetricCard({
         {icon}
       </div>
       <div className="min-w-0">
-        <small className="text-muted">{label}</small>
+        <small className="block leading-snug text-muted">{label}</small>
         <strong className="mt-1 block text-[27px] text-navy max-sm:text-2xl">{value}</strong>
       </div>
     </article>

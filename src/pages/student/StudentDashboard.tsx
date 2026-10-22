@@ -215,8 +215,9 @@ export default function StudentDashboard() {
                 ['Under Review', 'The relevant team is reviewing the evidence.'],
                 ['Action Update', 'You will be notified when action is taken.'],
               ].map(([label, description], index) => {
-                const complete = index < 3 ? progressIndex > index : latestHasUpdate
-                const current = index < 3 ? progressIndex === index : progressIndex >= 3 && !latestHasUpdate
+                // A published update means every earlier step has happened.
+                const complete = index < 3 ? latestHasUpdate || progressIndex > index : latestHasUpdate
+                const current = !latestHasUpdate && (index < 3 ? progressIndex === index : progressIndex >= 3)
                 return (
                   <li key={label} className="relative min-h-[67px] pl-10 last:min-h-0">
                     {index < 3 && <span className="absolute left-[8px] top-5 h-[47px] w-0.5 bg-[#D5DCDE]" aria-hidden="true" />}
@@ -235,7 +236,7 @@ export default function StudentDashboard() {
         <Panel
           title="Latest University Updates"
           action={updates.length > 0 ? (
-            <Link to="/student/updates" className="inline-flex items-center gap-1 text-sm font-bold text-teal-dark hover:underline">
+            <Link to="/student/updates" className="inline-flex items-center gap-1 whitespace-nowrap text-sm font-bold text-teal-dark hover:underline">
               View all updates <ArrowRight className="h-4 w-4" aria-hidden="true" />
             </Link>
           ) : undefined}
@@ -265,7 +266,7 @@ export default function StudentDashboard() {
           <div className="flex h-full flex-col justify-between gap-5 sm:flex-row sm:items-center xl:flex-col xl:items-start">
             <div>
               <p className="max-w-md leading-6 text-muted">View examples and practical guidance for writing clear and useful feedback.</p>
-              <Link to="/student/submit" className="mt-5 inline-flex items-center gap-2 rounded-lg bg-teal px-5 py-3 font-bold text-white hover:bg-teal-dark">
+              <Link to="/student/submit#feedback-guide" className="mt-5 inline-flex items-center gap-2 rounded-lg bg-teal px-5 py-3 font-bold text-white hover:bg-teal-dark">
                 View Feedback Guide <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
