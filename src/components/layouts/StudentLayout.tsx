@@ -110,7 +110,7 @@ export function StudentLayout() {
           menuExpanded={drawerOpen}
           menuControlsId="mobile-nav-student"
         />
-        <div className="px-[30px] py-6 max-md:p-4">
+        <div className="motion-page px-[30px] py-6 max-md:p-4">
           <Outlet />
         </div>
       </section>

@@ -46,3 +46,56 @@ body {
 *, *::before, *::after {
   box-sizing: border-box;
 }
+
+/*
+  Motion — subtle and CSS-only.
+  - .motion-page: sections and cards fade up gently when they appear
+    (on page load and when switching views).
+  - .motion-grow-x / .motion-grow-y: bars grow in from their baseline.
+  - Buttons and button-like links press in slightly when clicked.
+  Everything is switched off for people who ask for reduced motion.
+*/
+@keyframes motion-fade-up {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes motion-grow-x {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes motion-grow-y {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+
+.motion-page :is(section, article) {
+  animation: motion-fade-up 280ms ease-out both;
+}
+
+.motion-grow-x {
+  transform-origin: left center;
+  animation: motion-grow-x 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.motion-grow-y {
+  transform-origin: center bottom;
+  animation: motion-grow-y 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+:where(button, a[class*="rounded"]):not(:disabled):active {
+  scale: 0.98;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  :where(button, a[class*="rounded"]):not(:disabled):active {
+    scale: none;
+  }
+}

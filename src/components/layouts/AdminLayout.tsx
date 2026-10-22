@@ -78,7 +78,7 @@ export function AdminLayout() {
           menuExpanded={drawerOpen}
           menuControlsId="mobile-nav-admin"
         />
-        <div className="mx-auto max-w-[1500px] px-8 py-6 max-md:p-4">
+        <div className="motion-page mx-auto max-w-[1500px] px-8 py-6 max-md:p-4">
           <Outlet />
         </div>
       </section>
