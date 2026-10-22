@@ -27,6 +27,18 @@ export function formatRelativeDate(isoDate: string): string {
 }
 
 /**
+ * Compact date for dense lists and cards (e.g. "18 Aug 2026"). Day-first so
+ * it reads the same way as the rest of the app.
+ */
+export function formatShortDate(isoDate: string): string {
+  return new Date(isoDate).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
+}
+
+/**
  * Format an ISO timestamp as a short date string (e.g. "18 August 2026").
  */
 export function formatDate(isoDate: string): string {

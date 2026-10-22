@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 import {
   AlertCircle,
   Check,
@@ -126,9 +126,18 @@ export default function SubmitFeedback() {
   const [reference, setReference] = useState('')
   const [analysisNote, setAnalysisNote] = useState('')
 
+  const location = useLocation()
+
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'auto' })
-  }, [])
+    if (location.hash !== '#feedback-guide') window.scrollTo({ top: 0, behavior: 'auto' })
+  }, [location.hash])
+
+  // The dashboard's "View Feedback Guide" link opens the writing tips directly.
+  useEffect(() => {
+    if (location.hash === '#feedback-guide' && !catalogLoading) {
+      document.getElementById('feedback-guide')?.scrollIntoView({ block: 'start' })
+    }
+  }, [location.hash, catalogLoading])
 
   useEffect(() => {
     let cancelled = false
@@ -591,7 +600,7 @@ export default function SubmitFeedback() {
             </div>
           </form>
 
-          <aside className="h-fit rounded-[14px] border border-border bg-white p-[22px] lg:sticky lg:top-5" aria-labelledby="tips-heading">
+          <aside id="feedback-guide" className="h-fit scroll-mt-4 rounded-[14px] border border-border bg-white p-[22px] lg:sticky lg:top-5" aria-labelledby="tips-heading">
             <h2 id="tips-heading" className="text-xl font-bold text-navy">Writing useful feedback</h2>
             <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-text">
               <li>Name the course, service or place.</li>

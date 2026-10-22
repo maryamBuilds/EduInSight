@@ -2,6 +2,7 @@ import { useState, useId, type FormEvent } from 'react'
 import { ProgressBar } from './ProgressBar'
 import { ACTION_STATUS_LABELS } from '@/lib/constants'
 import type { ActionStatus } from '@/lib/types'
+import { formatShortDate } from '@/lib/utils'
 
 /** The editable fields of an action, shared by teacher and admin tracking. */
 export interface ActionEditValues {
@@ -169,7 +170,7 @@ export function ActionTrackingCard({
             {linkedIssue ? `Linked issue: ${linkedIssue}` : 'Linked issue unavailable'}
             {action.responsible_department && ` · ${action.responsible_department}`}
             {action.responsible_person ? ` · Owner: ${action.responsible_person}` : ' · No owner yet'}
-            {action.deadline && ` · Due ${new Date(action.deadline).toLocaleDateString()}`}
+            {action.deadline && ` · Due ${formatShortDate(action.deadline)}`}
           </p>
         </div>
         <div className="flex items-center gap-1.5">
@@ -232,8 +233,8 @@ export function ActionTrackingCard({
                 </p>
                 <span className="text-[11px] text-muted">
                   {update.is_published && update.published_at
-                    ? `Published ${new Date(update.published_at).toLocaleDateString()}`
-                    : `Draft · ${new Date(update.created_at).toLocaleDateString()}`}
+                    ? `Published ${formatShortDate(update.published_at)}`
+                    : `Draft · ${formatShortDate(update.created_at)}`}
                 </span>
               </li>
             ))}

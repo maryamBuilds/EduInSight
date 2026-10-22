@@ -42,6 +42,7 @@ import {
 } from '@/components'
 import { supabase } from '@/lib/supabase'
 import { callRpc, callRpcNoArgs, friendlyError } from '@/lib/rpc'
+import { formatShortDate } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 
 // ---------------------------------------------------------------------------
@@ -731,7 +732,7 @@ export default function TeacherDashboard({
                         />
                       </div>
                       <span className="text-xs text-muted">
-                        {new Date(feedback.submitted_at).toLocaleDateString()}
+                        {formatShortDate(feedback.submitted_at)}
                       </span>
                     </div>
                     <p className="leading-relaxed text-text">{feedback.original_text}</p>
@@ -915,7 +916,7 @@ export default function TeacherDashboard({
                     <article key={feedback.id} className="flex flex-col gap-2 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <strong className="text-sm text-navy">{feedback.feedback_area || feedback.university_service || 'General feedback'}</strong>
-                        <p className="mt-1 text-xs text-muted">{feedback.reference_number} · {new Date(feedback.submitted_at).toLocaleDateString()}</p>
+                        <p className="mt-1 text-xs text-muted">{feedback.reference_number} · {formatShortDate(feedback.submitted_at)}</p>
                       </div>
                       <span className={`w-fit rounded-full px-2.5 py-1 text-xs font-semibold ${analysis?.status === 'completed' ? 'bg-soft-teal text-success' : 'bg-soft-amber text-warning'}`}>
                         {analysis ? analysisStatusLabel(analysis) : 'Analysis not started'}
@@ -999,7 +1000,7 @@ export default function TeacherDashboard({
               <div className="rounded-lg bg-soft-blue p-3">
                 <small className="text-muted">Submitted</small>
                 <strong className="mt-1 block">
-                  {new Date(selectedFeedback.submitted_at).toLocaleDateString()}
+                  {formatShortDate(selectedFeedback.submitted_at)}
                 </strong>
               </div>
               <div className="rounded-lg bg-soft-blue p-3">

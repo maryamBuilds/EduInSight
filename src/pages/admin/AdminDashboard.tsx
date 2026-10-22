@@ -48,6 +48,7 @@ import {
   type ActionEditValues,
 } from '@/components'
 import { supabase } from '@/lib/supabase'
+import { formatShortDate } from '@/lib/utils'
 import {
   updateClusterStatus,
   callRpc,
@@ -744,7 +745,7 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
                     <div className="mt-3 flex flex-wrap items-center gap-3">
                       <span className="text-xs text-muted">
                         {analysis.feedback?.submitted_at
-                          ? `Submitted ${new Date(analysis.feedback.submitted_at).toLocaleDateString()}`
+                          ? `Submitted ${formatShortDate(analysis.feedback.submitted_at)}`
                           : ''}
                         {analysis.attempts > 0
                           ? ` · ${analysis.attempts} attempt${analysis.attempts === 1 ? '' : 's'}`
@@ -925,8 +926,8 @@ export default function AdminDashboard({ view = 'overview' }: { view?: AdminDash
                   <p className="mt-2 leading-relaxed text-text">{update.student_facing_message}</p>
                   <p className="mt-2 text-xs text-muted">
                     {update.published_at
-                      ? `Published ${new Date(update.published_at).toLocaleDateString()}`
-                      : `Created ${new Date(update.created_at).toLocaleDateString()}`}
+                      ? `Published ${formatShortDate(update.published_at)}`
+                      : `Created ${formatShortDate(update.created_at)}`}
                   </p>
                 </article>
               ))
